@@ -1,32 +1,45 @@
-app.post('/api/minerar-orulo', async (req, res) => {
-    const { url } = req.body;
-    try {
-        const { data } = await axios.get(url, {
-            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
-        });
-        const $ = cheerio.load(data);
+const express = require('express');
+const app = express();
+const path = require('path');
 
-        // O Órulo usa h1 para o título do empreendimento
-        const titulo = $('h1').first().text().trim() || 'Imóvel sem título';
-        const preco = $('.price').first().text().trim() || 'Sob consulta';
-        const foto = $('img').first().attr('src');
+app.use(express.json());
+app.use(express.static(__dirname));
 
-        const novoImovel = {
-            id: Date.now(),
-            titulo: titulo,
-            preco: preco,
-            foto: foto,
-            localizacao: 'São Paulo', // Ajustaremos depois
-            area: 'A definir',
-            dormitorios: 'A definir'
-        };
-
-        const imoveis = JSON.parse(fs.readFileSync('imoveis.json', 'utf-8'));
-        imoveis.push(novoImovel);
-        fs.writeFileSync('imoveis.json', JSON.stringify(imoveis, null, 2));
-
-        res.json({ success: true, dados: novoImovel });
-    } catch (e) {
-        res.status(500).json({ error: e.message });
+// Lista de imóveis (Fixo para teste, garantindo que o site funcione)
+const imoveis = [
+    {
+        id: 1,
+        titulo: "Apartamento Luxo - Pinheiros",
+        preco: "R$ 1.200.000",
+        localizacao: "Pinheiros, São Paulo",
+        foto: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?q=80&w=600",
+        area: "110m²",
+        dormitorios: "3 Quartos",
+        lazer: ["Piscina", "Academia"]
+    },
+    {
+        id: 2,
+        titulo: "Casa em Condomínio - Alphaville",
+        preco: "R$ 2.800.000",
+        localizacao: "Alphaville, São Paulo",
+        foto: "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?q=80&w=600",
+        area: "250m²",
+        dormitorios: "4 Quartos",
+        lazer: ["Churrasqueira", "Quadra"]
     }
+];
+
+app.get('/api/imoveis', (req, res) => {
+    res.json(imoveis);
 });
+
+// Rota de mineração (Simplificada para teste)
+app.post('/api/minerar-orulo', (req, res) => {
+    // Aqui você integrará o robô real depois
+    res.json({ success: true, dados: { titulo: "Imóvel Minerado do Órulo" } });
+});
+
+app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+
+app.listen(process.env.PORT || 3000);
