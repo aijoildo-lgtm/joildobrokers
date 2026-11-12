@@ -1,48 +1,26 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <title>Admin | Joildo Brokers</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root { --primary: #002d72; --accent: #d4af37; }
-        body { font-family: sans-serif; background: #f4f6f9; display: flex; justify-content: center; padding-top: 50px; }
-        .card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 400px; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; }
-        button { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
-    </style>
-</head>
-<body>
-    <div class="card">
-        <h2 style="color: var(--primary);">Painel Joildo Brokers</h2>
-        <p>Cole o link do Órulo para minerar:</p>
-        <input type="url" id="oruloUrl" placeholder="https://www.orulo.com.br/buildings/...">
-        <button id="btnPublicar" onclick="processar()">PROGAMA / PUBLICAR</button>
-    </div>
-
-    <script>
-        async function processar() {
-            const url = document.getElementById('oruloUrl').value;
-            const btn = document.getElementById('btnPublicar');
-            if(!url) return alert('Cole o link!');
-
-            btn.innerText = "⌛ MINERANDO...";
-            btn.disabled = true;
-
-            try {
-                const response = await fetch('/api/importar-orulo', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url })
-                });
-                const data = await response.json();
-                if(data.success) {
-                    alert('✅ SUCESSO! Imóvel ' + data.imovel.titulo + ' minerado.');
-                    window.location.href = "/";
-                } else { alert('❌ Erro: ' + data.error); }
-            } catch (e) { alert('❌ Erro de conexão.'); }
-            finally { btn.innerText = "PROGAMA / PUBLICAR"; btn.disabled = false; }
-        }
-    </script>
-</body>
-</html>
+async function preMinerar() {
+    const url = document.getElementById('urlOrulo').value;
+    const btn = document.getElementById('btnPublicar');
+    
+    // LIMPA ANTES DE BUSCAR
+    document.getElementById('editTitulo').value = "Buscando...";
+    
+    const res = await fetch('/api/pre-minerar', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ url })
+    });
+    
+    const result = await res.json();
+    if(result.success) {
+        // PREENCHE COM O NOVO IMÓVEL
+        document.getElementById('editTitulo').value = result.dados.titulo;
+        document.getElementById('editResumo').value = result.dados.resumo;
+        document.getElementById('editFoto').value = result.dados.foto;
+        document.getElementById('editPreco').value = result.dados.preco;
+        document.getElementById('editLoc').value = result.dados.localizacao;
+        document.getElementById('formEdicao').style.display = 'block';
+    } else {
+        alert("Erro: " + result.error);
+    }
+}
