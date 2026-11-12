@@ -1,20 +1,20 @@
-async function publicarImovel() {
-    const imovel = {
-        titulo: document.getElementById('editTitulo').value,
-        preco: document.getElementById('editPreco').value,
-        foto: document.getElementById('editFoto').value,
-        localizacao: document.getElementById('editLoc').value,
-        area: "A definir",
-        dormitorios: "A definir"
-    };
-
-    const res = await fetch('/api/salvar-imovel', {
+async function minerarOrulo() {
+    const url = document.getElementById('urlOrulo').value;
+    const btn = document.getElementById('btnPublicar');
+    
+    // LIMPA ANTES DE BUSCAR
+    document.getElementById('editTitulo').value = "Minerando...";
+    
+    const res = await fetch('/api/minerar-orulo', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(imovel)
+        body: JSON.stringify({ url })
     });
     
-    if((await res.json()).success) {
-        alert("Imóvel publicado com sucesso no site!");
+    const result = await res.json();
+    if(result.success) {
+        alert("Imóvel extraído do Orulo com sucesso e publicado no site!");
+    } else {
+        alert("Erro: " + result.error);
     }
 }
