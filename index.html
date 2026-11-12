@@ -3,100 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Joildo Brokers | Portal Imobiliário</title>
+    <title>Joildo Brokers | Hub Imobiliário</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --primary: #002d72;
             --accent: #d4af37;
-            --dark: #1a1a1a;
-            --light: #f4f6f9;
+            --glass: rgba(255, 255, 255, 0.7);
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { background: var(--light); color: var(--dark); }
-        header { background: var(--primary); color: white; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; }
-        .logo { font-size: 1.8rem; font-weight: bold; color: var(--accent); }
-        nav ul { list-style: none; display: flex; gap: 20px; }
-        nav a { color: white; text-decoration: none; font-weight: 600; }
-        .hero { height: 80vh; background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1560518427-0c683966a44b?auto=format&fit=crop&w=1200&q=80'); background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; text-align: center; color: white; }
-        .hero h1 { font-size: 3rem; margin-bottom: 10px; }
-        .hero p { font-size: 1.2rem; color: var(--accent); }
-        .container { max-width: 1100px; margin: 40px auto; padding: 0 20px; }
-        .search-box { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        .search-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
-        .search-grid input, .search-grid select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; }
-        .btn { background: var(--primary); color: white; padding: 12px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; width: 100%; }
-        .imoveis-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; margin-top: 40px; }
-        .card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 3px 10px rgba(0,0,0,0.08); }
-        .card-img { height: 200px; background-size: cover; background-position: center; }
-        .card-body { padding: 15px; }
-        .card-price { font-size: 1.3rem; color: var(--primary); font-weight: bold; }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #f0f2f5; }
+
+        /* MENU EFEITO VIDRO (Glassmorphism) */
+        header {
+            position: fixed;
+            top: 0; width: 100%;
+            z-index: 1000;
+            background: var(--glass);
+            backdrop-filter: blur(15px); /* O segredo do efeito vidro */
+            -webkit-backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+            padding: 15px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: 0.4s;
+        }
+
+        .logo { font-size: 1.5rem; font-weight: 800; color: var(--primary); text-transform: uppercase; }
+        .logo span { color: var(--accent); }
+
+        nav ul { display: flex; list-style: none; gap: 25px; }
+        nav a { text-decoration: none; color: var(--primary); font-weight: 600; font-size: 0.9rem; transition: 0.3s; }
+        nav a:hover { color: var(--accent); transform: scale(1.1); }
+
+        /* HERO SECTION DINÂMICA */
+        .hero {
+            height: 70vh;
+            background: linear-gradient(45deg, rgba(0,45,114,0.8), rgba(0,0,0,0.3)), url('https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1600&q=80');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            padding: 0 5%;
+            color: white;
+            margin-bottom: 50px;
+        }
+
+        /* CARDS QUADRADOS COM TAGS PISCANTES/COLORIDAS */
+        .imoveis-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            padding: 50px 5%;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            transition: 0.4s;
+            position: relative;
+        }
+
+        .card:hover { transform: translateY(-10px); box-shadow: 0 15px 30px rgba(0,0,0,0.15); }
+
+        .card-img {
+            width: 100%;
+            height: 300px; /* Foto mais quadrada/alta */
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* TAGS ARREDONDADAS */
+        .tag {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .tag-lancamento { background: #28a745; }
+        .tag-pronto { background: var(--primary); }
+        .tag-oportunidade { background: #ff4757; animation: pulse 1.5s infinite; }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        .card-info { padding: 20px; }
+        .card-info h3 { color: var(--primary); margin-bottom: 10px; }
+        .price { font-size: 1.4rem; color: var(--accent); font-weight: 700; }
+
     </style>
 </head>
 <body>
 
-    <!-- MENU PÚBLICO -->
-    <header>
-        <div class="logo">JOILDO<span>BROKERS</span></div>
+    <header id="main-header">
+        <div class="logo">Joildo<span>Brokers</span></div>
         <nav>
             <ul>
                 <li><a href="#">Início</a></li>
-                <li><a href="#">Comprar</a></li>
-                <li><a href="#">Alugar</a></li>
+                <li><a href="#">Quem Somos</a></li>
+                <li><a href="#">Oportunidades</a></li>
                 <li><a href="#">Lançamentos</a></li>
                 <li><a href="#">Blog</a></li>
-                <li><a href="#" style="color: var(--accent);">Painel Admin</a></li>
+                <li><a href="/admin" style="background: var(--primary); color: white; padding: 8px 15px; border-radius: 5px;">Painel</a></li>
             </ul>
         </nav>
     </header>
 
-    <!-- HERO SECTION COM CARROSSEL DE DESTAQUES -->
     <section class="hero">
         <div>
-            <h1>Portal Imobiliário de Alto Padrão</h1>
-            <p>Os melhores imóveis de São Paulo e Grande SP em um só lugar</p>
+            <h1 style="font-size: 3.5rem;">O Seu Próximo <br> Capítulo Começa Aqui.</h1>
+            <p style="font-size: 1.2rem; color: var(--accent);">Curadoria exclusiva de imóveis em São Paulo e Brasil.</p>
         </div>
     </section>
 
-    <!-- BUSCA RÁPIDA -->
-    <div class="container">
-        <div class="search-box">
-            <h3 style="color: var(--primary); margin-bottom: 15px;">Encontre seu imóvel ideal</h3>
-            <form class="search-grid">
-                <select>
-                    <option>Tipo de Imóvel</option>
-                    <option>Apartamento</option>
-                    <option>Casa</option>
-                    <option>Terreno</option>
-                    <option>Comercial</option>
-                </select>
-                <input type="text" placeholder="Bairro / Cidade">
-                <input type="number" placeholder="Preço Máximo (R$)">
-                <button type="submit" class="btn">BUSCAR</button>
-            </form>
-        </div>
-
-        <!-- LISTA DE IMÓVEIS (Exemplo) -->
-        <h3 style="color: var(--primary); margin-top: 50px;">Destaques Recentes</h3>
-        <div class="imoveis-grid">
-            <div class="card">
-                <div class="card-img" style="background-image: url('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=600&q=80');"></div>
-                <div class="card-body">
-                    <h4>Edifício Grand Horizon</h4>
-                    <p style="color:#777; font-size:0.85rem;"><i class="fa-solid fa-location-dot"></i> Pinheiros, São Paulo</p>
-                    <div class="card-price">R$ 1.200.000</div>
-                </div>
-            </div>
-            <div class="card">
-                <div class="card-img" style="background-image: url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80');"></div>
-                <div class="card-body">
-                    <h4>Residencial Vista Panorâmica</h4>
-                    <p style="color:#777; font-size:0.85rem;"><i class="fa-solid fa-location-dot"></i> Morumbi, São Paulo</p>
-                    <div class="card-price">R$ 920.000</div>
-                </div>
+    <div class="imoveis-grid" id="vitrine">
+        <!-- O ROBÔ VAI JOGAR OS IMÓVEIS AQUI -->
+        <div class="card">
+            <div class="tag tag-oportunidade">Oportunidade</div>
+            <div class="card-img" style="background-image: url('https://images.unsplash.com/photo-1560518427-0c683966a44b?auto=format&fit=crop&w=600&q=80');"></div>
+            <div class="card-info">
+                <h3>Edifício Lavvi Tatuapé</h3>
+                <p>3 Suítes | 120m² | 2 Vagas</p>
+                <div class="price">R$ 1.250.000</div>
             </div>
         </div>
     </div>
 
+    <script>
+        // Script para carregar imóveis do servidor real
+        async function carregarImoveis() {
+            try {
+                const response = await fetch('/api/imoveis');
+                const imoveis = await response.json();
+                const vitrine = document.getElementById('vitrine');
+                
+                // Limpa a vitrine e coloca os reais
+                if(imoveis.length > 0) vitrine.innerHTML = '';
+                
+                imoveis.forEach(imob => {
+                    vitrine.innerHTML += `
+                        <div class="card">
+                            <div class="tag tag-lancamento">Lançamento</div>
+                            <div class="card-img" style="background-image: url('${imob.foto || 'https://via.placeholder.com/400'}');"></div>
+                            <div class="card-info">
+                                <h3>${imob.titulo}</h3>
+                                <p>${imob.localizacao || ''}</p>
+                                <div class="price">${imob.preco}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (e) { console.log("Ainda não há imóveis minerados."); }
+        }
+        carregarImoveis();
+    </script>
 </body>
 </html>
