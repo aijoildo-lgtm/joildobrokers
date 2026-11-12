@@ -36,7 +36,7 @@
         const user = document.getElementById('username').value;
         const pass = document.getElementById('password').value;
 
-        // DEFINA AQUI SEU USUÁRIO E SENHA
+        // Credenciais Fixas
         if(user === 'joildo' && pass === 'broker2024') {
             document.getElementById('login').style.display = 'none';
             document.getElementById('painel').style.display = 'block';
@@ -48,6 +48,13 @@
     async function minerar() {
         const url = document.getElementById('urlOrulo').value;
         const status = document.getElementById('status');
+        
+        if(!url) {
+            alert("Cole uma URL válida!");
+            return;
+        }
+
+        status.style.color = "black";
         status.innerText = "Processando... aguarde a extração...";
         
         try {
