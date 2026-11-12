@@ -1,180 +1,47 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel de Controle | Joildo Brokers</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary: #002d72;
-            --accent: #d4af37;
-            --dark: #1a1a1a;
-            --light: #f4f6f9;
-            --success: #28a745;
+// Função para disparar a mineração real
+async function processarOrulo() {
+    const url = document.getElementById('oruloUrl').value;
+    if (!url) return alert('Por favor, cole a URL do Órulo!');
+
+    // Mostra que está processando
+    const btn = document.querySelector('.btn-submit');
+    const originalText = btn.innerText;
+    btn.innerText = "⏳ MINERANDO DADOS... AGUARDE";
+    btn.disabled = true;
+
+    try {
+        const response = await fetch('/api/importar-orulo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: url })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            alert('✅ SUCESSO!\n\nImóvel: ' + data.imovel.titulo + '\nStatus: Publicado e postado nas Redes Sociais.');
+            window.location.href = "/"; // Volta para a home para ver o resultado
+        } else {
+            alert('❌ ERRO: ' + (data.error || 'Falha ao minerar o site.'));
         }
+    } catch (error) {
+        console.error(error);
+        alert('❌ Erro de conexão com o servidor.');
+    } finally {
+        btn.innerText = originalText;
+        btn.disabled = false;
+    }
+}
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { background: var(--light); color: var(--dark); }
+// Vincula o clique do botão à função real
+document.querySelector('.btn-submit').onclick = processarOrulo;
 
-        /* Login */
-        .login-overlay { position: fixed; inset: 0; background: var(--primary); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-        .login-card { background: white; padding: 40px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); text-align: center; }
-        .login-card h2 { color: var(--primary); margin-bottom: 20px; }
-        .login-card input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 6px; }
-        .btn-login { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
-
-        /* Layout Admin */
-        .header-admin { background: white; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .container { max-width: 1100px; margin: 30px auto; padding: 0 20px; }
-
-        .mode-selector { display: flex; gap: 15px; margin-bottom: 25px; }
-        .mode-btn { flex: 1; padding: 15px; background: white; border: 2px solid #ddd; border-radius: 8px; font-weight: bold; font-size: 1.05rem; cursor: pointer; text-align: center; transition: 0.3s; }
-        .mode-btn.active { border-color: var(--primary); color: var(--primary); background: #eef4ff; }
-
-        .card-form { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: none; }
-        .card-form.active { display: block; }
-        
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; font-weight: 600; margin-bottom: 8px; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; outline: none; }
-        
-        .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; }
-
-        .media-box { background: #f0f7ff; padding: 20px; border-radius: 8px; border: 1px solid #b8daff; margin: 20px 0; }
-        .media-box h4 { color: var(--primary); margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
-
-        .social-box { background: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px dashed var(--primary); margin: 25px 0; }
-        .social-options { display: flex; gap: 20px; margin-top: 10px; }
-        .social-option { display: flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer; }
-
-        .btn-submit { background: var(--success); color: white; border: none; padding: 15px 30px; font-size: 1.1rem; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%; }
-    </style>
-</head>
-<body>
-
-    <!-- TELA DE LOGIN -->
-    <div class="login-overlay" id="loginOverlay">
-        <div class="login-card">
-            <h2>JOILDO<span>BROKERS</span></h2>
-            <p style="margin-bottom: 20px; color: #666;">Painel de Controle</p>
-            <input type="text" id="user" placeholder="Usuário Admin">
-            <input type="password" id="pass" placeholder="Senha de Acesso">
-            <button class="btn-login" onclick="fazerLogin()">Entrar</button>
-        </div>
-    </div>
-
-    <!-- CABEÇALHO -->
-    <header class="header-admin">
-        <h2 style="color: var(--primary);">JOILDO BROKERS | Painel CRM</h2>
-        <div>
-            <span style="margin-right: 15px;"><i class="fa-solid fa-user-check"></i> Joildo (Broker)</span>
-            <button onclick="location.reload()" style="padding: 6px 12px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">Sair</button>
-        </div>
-    </header>
-
-    <div class="container">
-        
-        <div class="mode-selector">
-            <div class="mode-btn active" id="tabOrulo" onclick="alternarModo('orulo')">
-                <i class="fa-solid fa-link"></i> 1. Importar do Órulo
-            </div>
-            <div class="mode-btn" id="tabManual" onclick="alternarModo('manual')">
-                <i class="fa-solid fa-pen-to-square"></i> 2. Cadastro Manual (Tipo MigMídia)
-            </div>
-        </div>
-
-        <!-- IMPORTAÇÃO ÓRULO -->
-        <div class="card-form active" id="formOrulo">
-            <h3 style="color: var(--primary); margin-bottom: 15px;">Importador Automático</h3>
-            <div class="form-group">
-                <label>Link do Órulo:</label>
-                <input type="url" id="oruloUrl" placeholder="https://www.orulo.com.br/buildings/85514">
-            </div>
-
-            <div class="media-box">
-                <h4><i class="fa-solid fa-photo-film"></i> Adicionar Mídias (YouTube e Tour Virtual 360°):</h4>
-                <div class="form-row">
-                    <div class="form-group" style="margin-bottom:0;">
-                        <label>Vídeo do YouTube (URL):</label>
-                        <input type="url" placeholder="https://www.youtube.com/watch?v=...">
-                    </div>
-                    <div class="form-group" style="margin-bottom:0;">
-                        <label>Tour Virtual 360° (Matterport/Kuula):</label>
-                        <input type="url" placeholder="https://my.matterport.com/show/?m=...">
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-group" style="background: #fff8e6; padding: 15px; border-radius: 8px; border: 1px solid #ffe082;">
-                <label><i class="fa-solid fa-clock"></i> Agendar Publicação:</label>
-                <input type="datetime-local">
-            </div>
-
-            <div class="social-box">
-                <h4>Publicar nas Redes Sociais:</h4>
-                <div class="social-options">
-                    <label class="social-option"><input type="checkbox" checked> Instagram</label>
-                    <label class="social-option"><input type="checkbox" checked> Facebook</label>
-                </div>
-            </div>
-
-            <button class="btn-submit" onclick="alert('Importando, agendando e postando nas Redes Sociais!')">PROGAMA/PUBLICAR</button>
-        </div>
-
-        <!-- CADASTRO MANUAL -->
-        <div class="card-form" id="formManual">
-            <h3 style="color: var(--primary); margin-bottom: 15px;">Ficha de Cadastro Manual</h3>
-            <div class="form-group">
-                <label>Título do Imóvel:</label>
-                <input type="text" placeholder="Ex: Apartamento Médio Padrão">
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Categoria de Exibição:</label>
-                    <select>
-                        <option>🔥 Oportunidade Especial</option>
-                        <option>🏠 Minha Casa Minha Vida</option>
-                        <option>💎 Médio e Alto Padrão</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Preço (R$):</label>
-                    <input type="text" placeholder="Preço do imóvel">
-                </div>
-            </div>
-
-            <button class="btn-submit" onclick="alert('Cadastrado!')">SALVAR IMÓVEL</button>
-        </div>
-
-    </div>
-
-    <script>
-        function fazerLogin() {
-            const u = document.getElementById('user').value;
-            const p = document.getElementById('pass').value;
-            if(u === 'admin' && p === '1234') {
-                document.getElementById('loginOverlay').style.display = 'none';
-            } else {
-                alert('Incorreto! Use: admin / 1234');
-            }
-        }
-
-        function alternarModo(modo) {
-            document.getElementById('formOrulo').classList.remove('active');
-            document.getElementById('formManual').classList.remove('active');
-            document.getElementById('tabOrulo').classList.remove('active');
-            document.getElementById('tabManual').classList.remove('active');
-
-            if(modo === 'orulo') {
-                document.getElementById('formOrulo').classList.add('active');
-                document.getElementById('tabOrulo').classList.add('active');
-            } else {
-                document.getElementById('formManual').classList.add('active');
-                document.getElementById('tabManual').classList.add('active');
-            }
-        }
-    </script>
-</body>
-</html>
+function fazerLogin() {
+    const u = document.getElementById('user').value;
+    const p = document.getElementById('pass').value;
+    if (u === 'admin' && p === '1234') {
+        document.getElementById('loginOverlay').style.display = 'none';
+    } else {
+        alert('Incorreto! Use: admin / 1234');
+    }
+}
