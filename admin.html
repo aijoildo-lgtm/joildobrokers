@@ -1,20 +1,210 @@
-async function minerarOrulo() {
-    const url = document.getElementById('urlOrulo').value;
-    const btn = document.getElementById('btnPublicar');
-    
-    // LIMPA ANTES DE BUSCAR
-    document.getElementById('editTitulo').value = "Minerando...";
-    
-    const res = await fetch('/api/minerar-orulo', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ url })
-    });
-    
-    const result = await res.json();
-    if(result.success) {
-        alert("Imóvel extraído do Orulo com sucesso e publicado no site!");
-    } else {
-        alert("Erro: " + result.error);
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Painel de Controle | Joildo Brokers</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #f0f2f5; }
+        .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+        .card { background: white; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); padding: 25px; margin-bottom: 20px; }
+        .header { background: var(--primary); color: white; padding: 15px; border-radius: 10px 10px 0 0; text-align: center; }
+        .header h2 { margin: 0; font-size: 1.5rem; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        .btn-submit { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 5px; font-weight: bold; cursor: pointer; width: 100%; }
+        .btn-submit:hover { background: #001f50; }
+        .tab-section { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px; text-align: center; cursor: pointer; }
+        .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .btn-group { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-group button { flex: 1; padding: 10px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        .btn-minerar { background: var(--accent); color: white; }
+        .btn-cadastrar { background: var(--success); color: white; }
+        .status-message { margin-top: 15px; padding: 10px; border-radius: 5px; text-align: center; font-weight: bold; display: none; }
+        .status-success { background: #d4edda; color: #155724; }
+        .status-error { background: #f8d7da; color: #721c24; }
+        .login-form { background: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid #e9ecef; }
+        .login-form input { margin-bottom: 10px; }
+        .login-btn { background: var(--primary); color: white; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Formulário de Login -->
+    <div id="loginForm" class="card">
+        <div class="header">
+            <h2>Entrar no Painel</h2>
+        </div>
+        <div class="login-form">
+            <div class="form-group">
+                <label for="username">Usuário</label>
+                <input type="text" id="username" placeholder="admin" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Senha</label>
+                <input type="password" id="password" placeholder="1234" required>
+            </div>
+            <button class="btn-submit login-btn" onclick="fazerLogin()">Entrar</button>
+        </div>
+    </div>
+
+    <!-- Painel de Controle (aparece após login) -->
+    <div id="dashboard" class="card" style="display: none;">
+        <div class="header">
+            <h2>Painel de Controle | Joildo Brokers</h2>
+        </div>
+
+        <!-- Seletor de Modo -->
+        <div class="tab-section">
+            <button class="tab-btn active" id="tabManual">Cadastrar Manualmente</button>
+            <button class="tab-btn" id="tabOrulo">Minerar do Orulo</button>
+        </div>
+
+        <!-- Formulário de Cadastro Manual -->
+        <div id="formManual" class="card-form active">
+            <h3>Cadastrar Novo Imóvel</h3>
+            <div class="form-group">
+                <label for="titulo">Título do Imóvel</label>
+                <input type="text" id="titulo" placeholder="Ex: Casa em Condomínio Fechado - Alphaville">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="preco">Preço (R$)</label>
+                    <input type="text" id="preco" placeholder="Ex: 850.000">
+                </div>
+                <div class="form-group">
+                    <label for="localizacao">Localização</label>
+                    <input type="text" id="localizacao" placeholder="São Paulo - Pinheiros">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="area">Área (m²)</label>
+                    <input type="number" id="area" placeholder="120">
+                </div>
+                <div class="form-group">
+                    <label for="dormitorios">Dormitórios</label>
+                    <input type="number" id="dormitorios" placeholder="3">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="foto">URL da Foto Principal</label>
+                <input type="url" id="foto" placeholder="https://...">
+            </div>
+            <div class="btn-group">
+                <button class="btn-cadastrar" onclick="salvarImovel()">Publicar no Site</button>
+            </div>
+        </div>
+
+        <!-- Formulário de Mineração do Orulo -->
+        <div id="formOrulo" class="card-form">
+            <h3>Minerar Dados do Orulo</h3>
+            <div class="form-group">
+                <label for="urlOrulo">Cole a URL do Orulo:</label>
+                <input type="url" id="urlOrulo" placeholder="https://www.orulo.com.br/buildings/85514">
+            </div>
+            <div class="btn-group">
+                <button class="btn-minerar" onclick="minerarOrulo()">Minerar e Publicar</button>
+            </div>
+        </div>
+
+        <!-- Mensagem de Status -->
+        <div id="statusMessage" class="status-message"></div>
+    </div>
+</div>
+
+<script>
+    let loggedIn = false;
+
+    function fazerLogin() {
+        const user = document.getElementById('username').value;
+        const pass = document.getElementById('password').value;
+
+        if (user === 'admin' && pass === '1234') {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            loggedIn = true;
+        } else {
+            alert('Usuário ou senha incorretos!');
+        }
     }
-}
+
+    document.getElementById('tabManual').addEventListener('click', () => {
+        document.getElementById('formManual').classList.add('active');
+        document.getElementById('formOrulo').classList.remove('active');
+        document.getElementById('tabManual').classList.add('active');
+        document.getElementById('tabOrulo').classList.remove('active');
+    });
+
+    document.getElementById('tabOrulo').addEventListener('click', () => {
+        document.getElementById('formOrulo').classList.add('active');
+        document.getElementById('formManual').classList.remove('active');
+        document.getElementById('tabOrulo').classList.add('active');
+        document.getElementById('tabManual').classList.remove('active');
+    });
+
+    async function salvarImovel() {
+        const imovel = {
+            titulo: document.getElementById('titulo').value,
+            preco: document.getElementById('preco').value,
+            localizacao: document.getElementById('localizacao').value,
+            area: document.getElementById('area').value,
+            dormitorios: document.getElementById('dormitorios').value,
+            foto: document.getElementById('foto').value,
+            area: 'A definir',
+            dormitorios: 'A definir'
+        };
+
+        const res = await fetch('/api/salvar-imovel', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(imovel)
+        });
+
+        const result = await res.json();
+        mostrarMensagem(result.success, result.message || 'Imóvel salvo com sucesso!');
+    }
+
+    async function minerarOrulo() {
+        const url = document.getElementById('urlOrulo').value;
+        if (!url) {
+            mostrarMensagem(false, 'Por favor, insira uma URL do Orulo.');
+            return;
+        }
+
+        document.getElementById('statusMessage').style.display = 'block';
+        document.getElementById('statusMessage').className = 'status-message status-error';
+        document.getElementById('statusMessage').textContent = 'Processando...';
+
+        const res = await fetch('/api/minerar-orulo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url })
+        });
+
+        const result = await res.json();
+        if (result.success) {
+            mostrarMensagem(true, 'Imóvel extraído do Orulo e publicado com sucesso!');
+        } else {
+            mostrarMensagem(false, result.error || 'Falha ao minerar.');
+        }
+    }
+
+    function mostrarMensagem(sucesso, mensagem) {
+        const element = document.getElementById('statusMessage');
+        element.style.display = 'block';
+        if (sucesso) {
+            element.className = 'status-message status-success';
+        } else {
+            element.className = 'status-message status-error';
+        }
+        element.textContent = mensagem;
+    }
+</script>
+
+</body>
+</html>
