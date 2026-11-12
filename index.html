@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Joildo Brokers | Portal Imobiliário</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #002d72;
+            --accent: #d4af37;
+            --dark: #1a1a1a;
+            --light: #f4f6f9;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: var(--light); color: var(--dark); }
+        header { background: var(--primary); color: white; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.8rem; font-weight: bold; color: var(--accent); }
+        nav ul { list-style: none; display: flex; gap: 20px; }
+        nav a { color: white; text-decoration: none; font-weight: 600; }
+        .hero { height: 80vh; background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1560518427-0c683966a44b?auto=format&fit=crop&w=1200&q=80'); background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; text-align: center; color: white; }
+        .hero h1 { font-size: 3rem; margin-bottom: 10px; }
+        .hero p { font-size: 1.2rem; color: var(--accent); }
+        .container { max-width: 1100px; margin: 40px auto; padding: 0 20px; }
+        .search-box { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .search-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .search-grid input, .search-grid select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; }
+        .btn { background: var(--primary); color: white; padding: 12px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; width: 100%; }
+        .imoveis-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; margin-top: 40px; }
+        .card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 3px 10px rgba(0,0,0,0.08); }
+        .card-img { height: 200px; background-size: cover; background-position: center; }
+        .card-body { padding: 15px; }
+        .card-price { font-size: 1.3rem; color: var(--primary); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <!-- MENU PÚBLICO -->
+    <header>
+        <div class="logo">JOILDO<span>BROKERS</span></div>
+        <nav>
+            <ul>
+                <li><a href="#">Início</a></li>
+                <li><a href="#">Comprar</a></li>
+                <li><a href="#">Alugar</a></li>
+                <li><a href="#">Lançamentos</a></li>
+                <li><a href="#">Blog</a></li>
+                <li><a href="#" style="color: var(--accent);">Painel Admin</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- HERO SECTION COM CARROSSEL DE DESTAQUES -->
+    <section class="hero">
+        <div>
+            <h1>Portal Imobiliário de Alto Padrão</h1>
+            <p>Os melhores imóveis de São Paulo e Grande SP em um só lugar</p>
+        </div>
+    </section>
+
+    <!-- BUSCA RÁPIDA -->
+    <div class="container">
+        <div class="search-box">
+            <h3 style="color: var(--primary); margin-bottom: 15px;">Encontre seu imóvel ideal</h3>
+            <form class="search-grid">
+                <select>
+                    <option>Tipo de Imóvel</option>
+                    <option>Apartamento</option>
+                    <option>Casa</option>
+                    <option>Terreno</option>
+                    <option>Comercial</option>
+                </select>
+                <input type="text" placeholder="Bairro / Cidade">
+                <input type="number" placeholder="Preço Máximo (R$)">
+                <button type="submit" class="btn">BUSCAR</button>
+            </form>
+        </div>
+
+        <!-- LISTA DE IMÓVEIS (Exemplo) -->
+        <h3 style="color: var(--primary); margin-top: 50px;">Destaques Recentes</h3>
+        <div class="imoveis-grid">
+            <div class="card">
+                <div class="card-img" style="background-image: url('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=600&q=80');"></div>
+                <div class="card-body">
+                    <h4>Edifício Grand Horizon</h4>
+                    <p style="color:#777; font-size:0.85rem;"><i class="fa-solid fa-location-dot"></i> Pinheiros, São Paulo</p>
+                    <div class="card-price">R$ 1.200.000</div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-img" style="background-image: url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80');"></div>
+                <div class="card-body">
+                    <h4>Residencial Vista Panorâmica</h4>
+                    <p style="color:#777; font-size:0.85rem;"><i class="fa-solid fa-location-dot"></i> Morumbi, São Paulo</p>
+                    <div class="card-price">R$ 920.000</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

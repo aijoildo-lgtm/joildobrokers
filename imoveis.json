@@ -1,0 +1,11 @@
+[
+  {
+    "id": 1,
+    "titulo": "Exemplo de Imovel",
+    "preco": "R$ 500.000",
+    "foto": "https://via.placeholder.com/300",
+    "localizacao": "Sao Paulo",
+    "youtube": "",
+    "tour360": ""
+  }
+]
