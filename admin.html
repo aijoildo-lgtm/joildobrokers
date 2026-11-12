@@ -1,47 +1,51 @@
-// Função para disparar a mineração real
-async function processarOrulo() {
+async function buscarLista() {
     const url = document.getElementById('oruloUrl').value;
-    if (!url) return alert('Por favor, cole a URL do Órulo!');
+    if(!url) return alert('Cole um link do Órulo!');
 
-    // Mostra que está processando
+    // Mostra um carregando para você saber que o robô está trabalhando
     const btn = document.querySelector('.btn-submit');
-    const originalText = btn.innerText;
-    btn.innerText = "⏳ MINERANDO DADOS... AGUARDE";
-    btn.disabled = true;
-
+    btn.innerText = "⏳ ANALISANDO LINK...";
+    
     try {
-        const response = await fetch('/api/importar-orulo', {
+        const response = await fetch('/api/analisar-lista', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url: url })
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ url })
         });
-
         const data = await response.json();
 
-        if (data.success) {
-            alert('✅ SUCESSO!\n\nImóvel: ' + data.imovel.titulo + '\nStatus: Publicado e postado nas Redes Sociais.');
-            window.location.href = "/"; // Volta para a home para ver o resultado
+        const divLista = document.getElementById('listaResultados');
+        divLista.innerHTML = '';
+
+        // SE FOR UM LINK ÚNICO (Projeto Específico)
+        if (url.includes('/buildings/') && !url.includes('?')) {
+            divLista.innerHTML = `
+                <div style="padding: 15px; background: #eef4ff; border: 1px solid #002d72; border-radius: 8px;">
+                    <p><strong>📍 Projeto Específico Detectado</strong></p>
+                    <input type="checkbox" id="checkSingle" value="${url}" checked>
+                    <label for="checkSingle">Confirmar importação deste imóvel único</label>
+                </div>
+            `;
+        } 
+        // SE FOR UM LINK DE BUSCA (Bairro ou Construtora)
+        else if (data.links && data.links.length > 0) {
+            data.links.forEach((link, index) => {
+                divLista.innerHTML += `
+                    <div style="padding: 10px; border-bottom: 1px solid #eee;">
+                        <input type="checkbox" id="check${index}" value="${link}" checked>
+                        <label for="check${index}">${link}</label>
+                    </div>
+                `;
+            });
         } else {
-            alert('❌ ERRO: ' + (data.error || 'Falha ao minerar o site.'));
+            alert('Nenhum imóvel encontrado neste link. Verifique se o link está correto.');
         }
+
+        document.getElementById('listaImportacao').style.display = 'block';
+
     } catch (error) {
-        console.error(error);
-        alert('❌ Erro de conexão com o servidor.');
+        alert('Erro ao conectar com o robô de mineração.');
     } finally {
-        btn.innerText = originalText;
-        btn.disabled = false;
-    }
-}
-
-// Vincula o clique do botão à função real
-document.querySelector('.btn-submit').onclick = processarOrulo;
-
-function fazerLogin() {
-    const u = document.getElementById('user').value;
-    const p = document.getElementById('pass').value;
-    if (u === 'admin' && p === '1234') {
-        document.getElementById('loginOverlay').style.display = 'none';
-    } else {
-        alert('Incorreto! Use: admin / 1234');
+        btn.innerText = "LISTAR IMÓVEIS";
     }
 }
