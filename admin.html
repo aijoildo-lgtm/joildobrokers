@@ -1,26 +1,20 @@
-async function preMinerar() {
-    const url = document.getElementById('urlOrulo').value;
-    const btn = document.getElementById('btnPublicar');
-    
-    // LIMPA ANTES DE BUSCAR
-    document.getElementById('editTitulo').value = "Buscando...";
-    
-    const res = await fetch('/api/pre-minerar', {
+async function publicarImovel() {
+    const imovel = {
+        titulo: document.getElementById('editTitulo').value,
+        preco: document.getElementById('editPreco').value,
+        foto: document.getElementById('editFoto').value,
+        localizacao: document.getElementById('editLoc').value,
+        area: "A definir",
+        dormitorios: "A definir"
+    };
+
+    const res = await fetch('/api/salvar-imovel', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ url })
+        body: JSON.stringify(imovel)
     });
     
-    const result = await res.json();
-    if(result.success) {
-        // PREENCHE COM O NOVO IMÓVEL
-        document.getElementById('editTitulo').value = result.dados.titulo;
-        document.getElementById('editResumo').value = result.dados.resumo;
-        document.getElementById('editFoto').value = result.dados.foto;
-        document.getElementById('editPreco').value = result.dados.preco;
-        document.getElementById('editLoc').value = result.dados.localizacao;
-        document.getElementById('formEdicao').style.display = 'block';
-    } else {
-        alert("Erro: " + result.error);
+    if((await res.json()).success) {
+        alert("Imóvel publicado com sucesso no site!");
     }
 }
