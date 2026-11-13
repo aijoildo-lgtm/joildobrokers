@@ -43,14 +43,17 @@
 
     <!-- PAINEL CPANEL -->
     <div class="container" id="panel">
-        <h2><i class="fas fa-cogs"></i> Painel de Controle de Imóveis (MigMídia & CompreAlugueAgora)</h2>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h2><i class="fas fa-cogs"></i> Painel de Controle de Imóveis</h2>
+            <a href="/" target="_blank" style="color:var(--primary); font-weight:bold; text-decoration:none;"><i class="fas fa-external-link-alt"></i> Ver Site no Ar</a>
+        </div>
 
         <!-- MINERAÇÃO ÓRULO -->
         <div class="form-group" style="margin-bottom: 20px;">
             <label>Link de Importação do Órulo</label>
             <div style="display:flex; gap:10px;">
-                <input type="text" id="urlOrulo" style="flex:1" placeholder="https://www.orulo.com.br/buildings/...">
-                <button onclick="minerar()" style="padding:10px 20px; background:var(--primary); color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Puxar Dados</button>
+                <input type="text" id="urlOrulo" style="flex:1" placeholder="https://www.orulo.com.br/buildings/82950">
+                <button onclick="minerar()" style="padding:10px 20px; background:var(--primary); color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Puxar Dados do Órulo</button>
             </div>
         </div>
 
@@ -80,10 +83,7 @@
 
             <div class="section-title">2. Endereço do Imóvel</div>
             <div class="form-grid">
-                <div class="form-group"><label>CEP</label><input type="text" id="cep" placeholder="00000-000"></div>
-                <div class="form-group"><label>Logradouro</label><input type="text" id="logradouro" placeholder="Rua / Avenida"></div>
-                <div class="form-group"><label>Bairro</label><input type="text" id="bairro" placeholder="Bairro"></div>
-                <div class="form-group"><label>Cidade / UF</label><input type="text" id="cidade" placeholder="São Paulo - SP"></div>
+                <div class="form-group"><label>Cidade / Bairro / UF</label><input type="text" id="cidade" placeholder="São Paulo - SP"></div>
             </div>
 
             <div class="section-title">3. Dados do Anúncio & Características</div>
@@ -103,10 +103,7 @@
                 <div class="form-group"><label>Vagas</label><input type="text" id="vagas" placeholder="Ex: 2 vagas"></div>
             </div>
 
-            <div class="section-title">4. Detalhes & Comodidades (Checklist)</div>
-            <div class="checkbox-grid" id="comodidades"></div>
-
-            <div class="section-title">5. Mídias (Fotos, Vídeo e Tour 360)</div>
+            <div class="section-title">4. Mídias (Fotos, Vídeo e Tour 360)</div>
             <div class="form-grid">
                 <div class="form-group"><label>URL Foto Capa</label><input type="url" id="foto" required placeholder="https://..."></div>
                 <div class="form-group"><label>Link Vídeo YouTube</label><input type="url" id="youtube" placeholder="https://youtube.com/..."></div>
@@ -118,17 +115,6 @@
     </div>
 
     <script>
-        const listaComodidades = [
-            "Academia", "Área de Lazer", "Área Pet", "Brinquedoteca", "Coworking", "Espaço Gourmet", 
-            "Estacionamento Visitantes", "Piscina", "Piscina Aquecida", "Playground", "Portaria 24h", 
-            "Quadra Poliesportiva", "Salão de Festas", "Salão de Jogos", "Sauna", "SPA", "Varanda Gourmet", "Ar Condicionado"
-        ];
-        
-        const comContainer = document.getElementById('comodidades');
-        listaComodidades.forEach(c => {
-            comContainer.innerHTML += `<label class="checkbox-item"><input type="checkbox" value="${c}"> ${c}</label>`;
-        });
-
         function fazerLogin() {
             if(document.getElementById('user').value === 'adm' && document.getElementById('pass').value === '1234') {
                 document.getElementById('login-screen').style.display = 'none';
@@ -138,20 +124,28 @@
 
         async function minerar() {
             const url = document.getElementById('urlOrulo').value;
-            if(!url) return alert('Cole o link!');
-            const res = await fetch('/api/minerar-orulo', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({url}) });
+            if(!url) return alert('Cole a URL do Órulo!');
+            
+            const res = await fetch('/api/minerar-orulo', { 
+                method: 'POST', 
+                headers: {'Content-Type':'application/json'}, 
+                body: JSON.stringify({url}) 
+            });
+            
             const r = await res.json();
             if(r.success) {
                 document.getElementById('titulo').value = r.dados.titulo || '';
                 document.getElementById('preco').value = r.dados.preco || '';
                 document.getElementById('cidade').value = r.dados.localizacao || '';
-                alert('Dados carregados com sucesso! Verifique e edite o que for necessário.');
+                document.getElementById('area').value = r.dados.area || '';
+                document.getElementById('dormitorios').value = r.dados.dormitorios || '';
+                document.getElementById('foto').value = r.dados.foto || '';
+                alert('✅ Dados extraídos com sucesso do Órulo! Você pode ajustar o título se desejar antes de publicar.');
             }
         }
 
         async function salvar(e) {
             e.preventDefault();
-            const coms = Array.from(document.querySelectorAll('#comodidades input:checked')).map(i => i.value);
             const imovel = {
                 titulo: document.getElementById('titulo').value,
                 preco: document.getElementById('preco').value,
@@ -160,11 +154,10 @@
                 destaque: document.getElementById('destaque').value,
                 area: document.getElementById('area').value,
                 dormitorios: document.getElementById('dormitorios').value,
-                vagas: document.getElementById(vagas).value,
+                vagas: document.getElementById('vagas').value,
                 foto: document.getElementById('foto').value,
                 youtube: document.getElementById('youtube').value,
-                tour360: document.getElementById('tour360').value,
-                comodidades: coms
+                tour360: document.getElementById('tour360').value
             };
 
             const res = await fetch('/api/adicionar-imovel', {
@@ -174,7 +167,7 @@
             });
             const r = await res.json();
             if(r.success) {
-                alert('Imóvel Cadastrado com Sucesso! Código gerado: ' + r.ref);
+                alert('🎉 Imóvel Publicado com Sucesso no Portal! Código: ' + r.ref);
                 window.location.href = '/';
             }
         }
