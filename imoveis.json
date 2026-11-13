@@ -1,13 +1,19 @@
 [
   {
-    "id": 1,
-    "titulo": "Exemplo de Imovel",
-    "preco": "R$ 500.000",
-    "foto": "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800&q=80",
-    "localizacao": "São Paulo",
-    "area": "120m²",
-    "dormitorios": "3 quartos",
-    "link_origem": "dados_iniciais",
-    "data_extracao": "2024-11-12T00:00:00.000Z"
+    "id": 1700000000000,
+    "ref": "REF-883210",
+    "titulo": "Town Residences Jardins",
+    "preco": "R$ 2.450.000",
+    "foto": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80",
+    "localizacao": "Jardins, São Paulo - SP",
+    "estagio": "lancamentos",
+    "destaque": "exclusivo",
+    "area": "142m²",
+    "dormitorios": "3 Suítes",
+    "vagas": "2 vagas",
+    "construtora": "Lindenberg",
+    "youtube": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    "tour360": "https://my.matterport.com/show/?m=sample",
+    "comodidades": ["Academia", "Piscina", "Varanda Gourmet", "Portaria 24h"]
   }
 ]
