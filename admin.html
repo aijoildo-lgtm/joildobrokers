@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel Joildo Brokers | Login</title>
+    <title>Painel Joildo Brokers | Mineração e Revisão</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #002d72; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
@@ -14,15 +14,16 @@
         button { width: 100%; padding: 12px; background: #002d72; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 10px; font-size: 1rem; transition: 0.3s; }
         button:hover { background: #001f50; }
         
-        #painel { display: none; width: 90%; max-width: 600px; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: left; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: 600; color: #444; }
-        input[type="url"] { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; }
-        
-        .status-msg { margin-top: 15px; padding: 10px; border-radius: 5px; font-weight: bold; display: none; }
-        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; display: block; }
-        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; display: block; }
-        .loading { text-align: center; margin-top: 15px; color: #002d72; display: none; }
+        #painel { display: none; width: 95%; max-width: 900px; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: left; max-height: 90vh; overflow-y: auto; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 6px; font-weight: 600; color: #444; font-size: 0.9rem; }
+        .form-control { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; }
+        .section-title { color: #002d72; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; margin-top: 25px; margin-bottom: 15px; font-size: 1.1rem; }
+        .grid-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; }
+        .btn-green { background: #28a745; }
+        .btn-green:hover { background: #218838; }
+        .btn-gray { background: #6c757d; }
+        .btn-gray:hover { background: #5a6268; }
     </style>
 </head>
 <body>
@@ -36,25 +37,27 @@
     <button onclick="fazerLogin()"><i class="fas fa-lock"></i> ACESSAR PAINEL</button>
 </div>
 
-<!-- PAINEL APÓS LOGIN -->
+<!-- PAINEL DE MINERAÇÃO E REVISÃO -->
 <div id="painel">
-    <h2 style="color: #002d72; margin-bottom: 5px;"><i class="fas fa-cloud-download-alt"></i> Mineração de Dados Orulo</h2>
-    <p style="color: #666; margin-bottom: 20px; font-size: 0.9rem;">Cole o link do imóvel do Orulo para extração automática de título, preço, localização e fotos.</p>
+    <!-- Tela Inicial: Input de URL -->
+    <div id="screen-minerar">
+        <h2 style="color: #002d72; margin-bottom: 5px;"><i class="fas fa-cloud-download-alt"></i> Mineração de Dados Orulo</h2>
+        <p style="color: #666; margin-bottom: 20px; font-size: 0.9rem;">Cole o link do imóvel do Orulo para extração automática de todas as especificações técnicas, tipologias e preços.</p>
 
-    <div class="form-group">
-        <label for="urlOrulo">URL do Orulo (Ex: https://www.orulo.com.br/...):</label>
-        <input type="url" id="urlOrulo" placeholder="https://www.orulo.com.br/buildings/...">
+        <div class="form-group">
+            <label for="urlOrulo">URL do Orulo (Ex: https://www.orulo.com.br/buildings/...):</label>
+            <input type="url" id="urlOrulo" placeholder="https://www.orulo.com.br/buildings/">
+        </div>
+
+        <button onclick="minerar()" style="width: 100%; padding: 12px; background: #002d72; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+            <i class="fas fa-search"></i> Buscar Dados Automáticos
+        </button>
+
+        <div id="status" class="status-msg" style="display:none; margin-top: 15px; padding: 10px; border-radius: 5px;"></div>
     </div>
 
-    <button onclick="minerar()" style="width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
-        <i class="fas fa-play"></i> Iniciar Extração e Publicação
-    </button>
-
-    <div id="loading" class="loading">
-        <i class="fas fa-spinner fa-spin"></i> Conectando ao Orulo e parseando dados...
-    </div>
-
-    <div id="status" class="status-msg"></div>
+    <!-- Tela de Revisão (Gerada Dinamicamente) -->
+    <div id="screen-revisao" style="display:none;"></div>
 </div>
 
 <script>
@@ -62,17 +65,15 @@
         const user = document.getElementById('username').value;
         const pass = document.getElementById('password');
 
-        // Validação hardcoded conforme configurado
         if(user === 'joildo' && pass.value === 'broker2024') {
             document.getElementById('login').style.display = 'none';
             document.getElementById('painel').style.display = 'block';
         } else {
-            alert('Credenciais inválidas! Verifique seu usuário e senha.');
+            alert('Credenciais inválidas! Usuário: joildo | Senha: broker2024');
             pass.value = '';
         }
     }
 
-    // Permite ENTER no formulário de login
     document.addEventListener('keypress', function(e) {
         if (e.key === 'Enter' && document.getElementById('login').style.display !== 'none') {
             fazerLogin();
@@ -82,17 +83,21 @@
     async function minerar() {
         const url = document.getElementById('urlOrulo').value;
         const status = document.getElementById('status');
-        const loading = document.getElementById('loading');
 
         if(!url) {
             status.className = 'status-msg error';
+            status.style.display = 'block';
             status.innerText = '⚠️ Por favor, cole a URL do Orulo antes de minerar.';
             return;
         }
 
-        // Feedback visual de loading
-        loading.style.display = 'block';
         status.style.display = 'none';
+        status.innerText = '';
+
+        // Simula loading visual
+        const originalBtn = event.target.innerHTML;
+        event.target.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Consultando Orulo...';
+        event.target.disabled = true;
 
         try {
             const res = await fetch('/api/minerar-orulo', {
@@ -104,21 +109,242 @@
             const data = await res.json();
 
             if(data.success) {
-                status.className = 'status-msg success';
-                status.innerText = '✅ Sucesso! Imóvel "' + data.dados.título + '" minerado e salvo no banco de dados.';
-                
-                // Limpa o campo de URL após o sucesso
-                document.getElementById('urlOrulo').value = '';
+                // Mostra o formulário de revisão preenchido com os dados extraídos
+                renderReviewForm(data.dados);
+                document.getElementById('screen-minerar').style.display = 'none';
+                document.getElementById('screen-revisao').style.display = 'block';
             } else {
-                throw new Error(data.error || 'Erro desconhecido na mineração');
+                throw new Error(data.error || 'Erro na extração');
             }
         } catch (e) {
             status.className = 'status-msg error';
+            status.style.display = 'block';
             status.innerText = '❌ ' + e.message;
         } finally {
-            loading.style.display = 'none';
-            status.style.display = 'block';
+            event.target.innerHTML = originalBtn;
+            event.target.disabled = false;
         }
+    }
+
+    function renderReviewForm(dados) {
+        const container = document.getElementById('screen-revisao');
+        
+        // Converte tipologias em texto para exibição no textarea
+        const tipologiasRaw = dados.tipologias ? dados.tipologias.map(t => 
+            `${t.tipo || ''} | ${t.area || ''} | ${t.dormitivos || ''} | ${t.banheiros || ''} | ${t.preco || ''}`
+        ).join('\n') : '';
+
+        container.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 style="color: #002d72; margin: 0;"><i class="fas fa-edit"></i> Revisão e Publicação</h2>
+                <button onclick="voltarMineracao()" class="btn btn-gray" style="width: auto; padding: 8px 15px;">Voltar</button>
+            </div>
+            <p style="color: #666; margin-bottom: 20px; font-size: 0.9rem;">
+                Revise os dados extraídos do Orulo. Você pode corrigir informações e adicionar as URLs de mídia (YouTube, Tour Virtual e fotos adicionais) antes de publicar.
+            </p>
+
+            <form id="form-publicacao">
+                <div class="section-title"><i class="fas fa-images"></i> Mídia e Imagens</div>
+                <div class="grid-form">
+                    <div class="form-group">
+                        <label for="foto_principal">URL da Foto Principal (Capa):</label>
+                        <input type="url" name="foto_principal" id="foto_principal" value="${dados.foto_principal}" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="fotos_extras">Fotos Extras (URLs separadas por vírgula):</label>
+                        <input type="text" name="fotos_extras" id="fotos_extras" value="${dados.fotos_extras.join(', ')}" class="form-control" placeholder="https://...">
+                    </div>
+                    <div class="form-group">
+                        <label for="youtube_url">Vídeo do YouTube:</label>
+                        <input type="url" name="youtube_url" id="youtube_url" value="${dados.youtube_url}" class="form-control" placeholder="https://www.youtube.com/watch?v=...">
+                    </div>
+                    <div class="form-group">
+                        <label for="tour_virtual_url">Tour Virtual 360°:</label>
+                        <input type="url" name="tour_virtual_url" id="tour_virtual_url" value="${dados.tour_virtual_url}" class="form-control" placeholder="https://...">
+                    </div>
+                </div>
+
+                <div class="section-title"><i class="fas fa-building"></i> Dados do Projeto e Construtora</div>
+                <div class="grid-form">
+                    <div class="form-group">
+                        <label for="nome_do_projeto">Nome do Projeto:</label>
+                        <input type="text" name="nome_do_projeto" id="nome_do_projeto" value="${dados.nome_do_projeto}" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="construtora">Construtora / Incorporadora:</label>
+                        <input type="text" name="construtora" id="construtora" value="${dados.construtora}" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="localizacao">Localização:</label>
+                        <input type="text" name="localizacao" id="localizacao" value="${dados.localizacao}" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="preco_a_partir">Preço a partir de:</label>
+                        <input type="text" name="preco_a_partir" id="preco_a_partir" value="${dados.preco_a_partir}" class="form-control">
+                    </div>
+                </div>
+
+                <div class="section-title"><i class="fas fa-ruler-combined"></i> Características Técnicas</div>
+                <div class="grid-form">
+                    <div class="form-group">
+                        <label for="area_util">Área útil:</label>
+                        <input type="text" name="area_util" id="area_util" value="${dados.area_util}" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="dormitorios">Dormitórios:</label>
+                        <input type="text" name="dormitorios" id="dormitorios" value="${dados.dormitorios}" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="suites">Suítes:</label>
+                        <input type="text" name="suites" id="suites" value="${dados.suites}" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="banheiros">Banheiros:</label>
+                        <input type="text" name="banheiros" id="banheiros" value="${dados.banheiros}" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="vagas">Vagas de carro:</label>
+                        <input type="text" name="vagas" id="vagas" value="${dados.vagas}" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="estagio">Estágio:</label>
+                        <input type="text" name="estagio" id="estagio" value="${dados.estagio}" class="form-control">
+                    </div>
+                </div>
+
+                <div class="section-title"><i class="fas fa-key"></i> Informações Comerciais e Condomínio</div>
+                <div class="grid-form">
+                    <div class="form-group">
+                        <label for="estoque">Estoque:</label>
+                        <input type="text" name="estoque" id="estoque" value="${dados.estoque}" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="lancamento">Lançamento:</label>
+                        <input type="text" name="lancamento" id="lancamento" value="${dados.lancamento}" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="unidades_andar">Unidades por Andar:</label>
+                        <input type="text" name="unidades_andar" id="unidades_andar" value="${dados.unidades_andar}" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="entrega">Entrega:</label>
+                        <input type="text" name="entrega" id="entrega" value="${dados.entrega}" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="total_unidades">Total de Unidades:</label>
+                        <input type="text" name="total_unidades" id="total_unidades" value="${dados.total_unidades}" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="numero_andares">Número de Andares:</label>
+                        <input type="text" name="numero_andares" id="numero_andares" value="${dados.numero_andares}" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="area_terreno">Área do Terreno:</label>
+                        <input type="text" name="area_terreno" id="area_terreno" value="${dados.area_terreno}" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="area_laje">Área da Laje:</label>
+                        <input type="text" name="area_laje" id="area_laje" value="${dados.area_laje}" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="condominio">Condomínio:</label>
+                        <input type="text" name="condominio" id="condominio" value="${dados.condominio}" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="iptu">IPTU:</label>
+                        <input type="text" name="iptu" id="iptu" value="${dados.iptu}" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="ri">RI:</label>
+                        <input type="text" name="ri" id="ri" value="${dados.ri}" class="form-control">
+                    </div>
+                </div>
+
+                <div class="section-title"><i class="fas fa-swimming-pool"></i> Condomínio e Tipologias</div>
+                <div class="grid-form">
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label for="lazer">Características do Condomínio / Lazer:</label>
+                        <textarea name="lazer" id="lazer" class="form-control" rows="3">${dados.lazer}</textarea>
+                    </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label for="tipologias_raw">Tipologias (uma por linha: Tipo | Área | Dormitórios | Banheiros | Preço):</label>
+                        <textarea name="tipologias_raw" id="tipologias_raw" class="form-control" rows="5" placeholder="Ex: Apartamento 2 quartos | 80m² | 2 | 1 | R$ 400.000">${tipologiasRaw}</textarea>
+                        <input type="hidden" name="tipologias_json" id="tipologias_json" value="${JSON.stringify(dados.tipologias || [])}">
+                    </div>
+                </div>
+
+                <div style="margin-top: 30px; display: flex; gap: 15px;">
+                    <button type="submit" class="btn btn-green" style="flex: 1; padding: 15px; font-size: 1.1rem;">
+                        <i class="fas fa-save"></i> Confirmar e Publicar Imóvel
+                    </button>
+                </div>
+            </form>
+        `;
+
+        document.getElementById('form-publicacao').addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitPublicacao(new FormData(this));
+        });
+    }
+
+    function voltarMineracao() {
+        document.getElementById('screen-revisao').style.display = 'none';
+        document.getElementById('screen-minerar').style.display = 'block';
+    }
+
+    function submitPublicacao(formData) {
+        const data = {};
+        for (let [key, value] of formData.entries()) {
+            data[key] = value;
+        }
+
+        // Processa as tipologias do textarea
+        if (data.tipologias_raw && data.tipologias_raw.trim() !== '') {
+            const lines = data.tipologias_raw.split('\n').filter(l => l.trim() !== '');
+            data.tipologias = lines.map(line => {
+                const parts = line.split('|').map(p => p.trim());
+                return {
+                    tipo: parts[0] || '',
+                    area: parts[1] || '',
+                    dormitivos: parts[2] || '',
+                    banheiros: parts[3] || '',
+                    preco: parts[4] || ''
+                };
+            });
+        } else {
+            try {
+                data.tipologias = JSON.parse(data.tipologias_json || '[]');
+            } catch(e) {
+                data.tipologias = [];
+            }
+        }
+
+        // Converte fotos_extras string para array
+        if (data.fotos_extras) {
+            data.fotos_extras = data.fotos_extras.split(',').map(url => url.trim()).filter(url => url !== '');
+        }
+
+        data.id = Date.now();
+        data.data_extracao = new Date().toISOString();
+
+        fetch('/api/adicionar-imovel', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(res => res.json())
+        .then(resp => {
+            if(resp.success) {
+                alert('✅ Imóvel publicado com sucesso!');
+                window.location.href = '/';
+            } else {
+                alert('Erro ao publicar: ' + (resp.error || 'Erro desconhecido'));
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Falha de conexão ao publicar.');
+        });
     }
 </script>
 </body>
