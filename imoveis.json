@@ -1,11 +1,13 @@
 [
   {
     "id": 1,
-    "titulo": "Exemplo de Imóvel",
+    "titulo": "Exemplo de Imovel",
     "preco": "R$ 500.000",
+    "foto": "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800&q=80",
     "localizacao": "São Paulo",
-    "foto": "https://via.placeholder.com/300",
-    "area": "A definir",
-    "dormitorios": "A definir"
+    "area": "120m²",
+    "dormitorios": "3 quartos",
+    "link_origem": "dados_iniciais",
+    "data_extracao": "2024-11-12T00:00:00.000Z"
   }
 ]

@@ -2,13 +2,14 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Joildo Brokers | Portal Imobiliário</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { --primary: #002d72; --accent: #d4af37; --glass: rgba(255, 255, 255, 0.85); }
-        * { margin:0; padding:0; box-sizing:border-box; font-family: 'Poppins', sans-serif; }
-        body { background: #eef2f3; }
+        * { margin:0; padding:0; box-sizing:border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: #eef2f3; color: #333; }
 
         header { position:fixed; top:0; width:100%; z-index:1000; background:var(--glass); backdrop-filter:blur(15px); padding:15px 5%; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.3); }
         .logo { font-size:1.4rem; font-weight:800; color:var(--primary); text-decoration:none; }
@@ -16,7 +17,7 @@
 
         .swiper { width: 100%; height: 550px; margin-top: 60px; }
         .swiper-slide { background-size:cover; background-position:center; display:flex; align-items:flex-end; padding: 50px; }
-        .glass-box { background: rgba(0,0,0,0.5); backdrop-filter:blur(10px); padding:30px; border-radius:15px; color:white; border:1px solid rgba(255,255,255,0.2); }
+        .glass-box { background: rgba(0,0,0,0.5); backdrop-filter:blur(10px); padding:30px; border-radius:15px; color:white; border:1px solid rgba(255,255,255,0.2); max-width: 800px; }
 
         .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(350px, 1fr)); gap:30px; padding:50px 5%; }
         .card { background:white; border-radius:20px; overflow:hidden; box-shadow:0 15px 35px rgba(0,0,0,0.1); position:relative; transition:0.4s; }
@@ -28,22 +29,10 @@
         .card-body { padding:25px; }
         .card-body h3 { color:var(--primary); font-size:1.3rem; margin-bottom:5px; }
         .details { display:flex; gap:15px; color:#666; font-size:0.85rem; margin:10px 0; }
-        .lazer-tags { display:flex; flex-wrap:wrap; gap:5px; margin-top:15px; }
-        .lazer-tag { background:#f0f0f0; padding:3px 10px; border-radius:5px; font-size:0.65rem; color:#444; border:1px solid #ddd; }
         .price { color:var(--primary); font-weight:800; font-size:1.5rem; margin-top:15px; display:block; }
 
-        footer {
-            background: var(--primary);
-            color: white;
-            text-align: center;
-            padding: 20px;
-            margin-top: 50px;
-        }
-        footer a {
-            color: white;
-            text-decoration: none;
-            font-weight: bold;
-        }
+        footer { background: var(--primary); color: white; text-align: center; padding: 30px; margin-top: 50px; }
+        footer a { color: var(--accent); text-decoration: none; font-weight: bold; font-size: 1.1rem; }
     </style>
 </head>
 <body>
@@ -57,55 +46,92 @@
     <div class="swiper-wrapper" id="slider-content"></div>
 </div>
 
-<div class="grid" id="vitrine"></div>
+<div class="grid" id="vitrine">
+    <div style="grid-column: 1/-1; text-align: center; padding: 50px;">
+        <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--primary);"></i>
+        <p style="margin-top: 10px;">Carregando imóveis de destaque...</p>
+    </div>
+</div>
+
+<footer>
+    <p>Portal Imobiliário de Alta Performance &copy; 2024 Joildo Brokers</p>
+    <p style="margin-top: 10px;">Para adicionar novos imóveis, acesse o <a href="/admin">Painel de Administração</a></p>
+</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 <script>
     async function carregar() {
-        const res = await fetch('/api/imoveis');
-        const imoveis = await res.json();
-        const vitrine = document.getElementById('vitrine');
-        const slider = document.getElementById('slider-content');
+        try {
+            const res = await fetch('/api/imoveis');
+            const imoveis = await res.json();
+            const vitrine = document.getElementById('vitrine');
+            const slider = document.getElementById('slider-content');
 
-        imoveis.forEach((imob, index) => {
-            const lazerHtml = imob.lazer ? imob.lazer.map(l => `<span class="lazer-tag">${l}</span>`).join('') : '';
-            
-            vitrine.innerHTML += `
-                <div class="card">
-                    <div class="tag-status">LANÇAMENTO</div>
-                    <div class="card-img" style="background-image: url('${imob.foto}')"></div>
-                    <div class="card-body">
-                        <h3>${imob.titulo}</h3>
-                        <p style="color:#accent; font-weight:bold; font-size:0.8rem;">${imob.subtitulo || 'Lavvi'}</p>
-                        <p style="color:#777; font-size:0.75rem;"><i class="fas fa-map-marker-alt"></i> ${imob.localizacao}</p>
-                        <div class="details">
-                            <span><i class="fas fa-ruler-combined"></i> ${imob.area}</span>
-                            <span><i class="fas fa-bed"></i> ${imob.dormitorios}</span>
-                        </div>
-                        <div class="lazer-tags">${lazerHtml}</div>
-                        <span class="price">${imob.preco}</span>
-                    </div>
-                </div>`;
-            
-            if(index < 5) {
-                slider.innerHTML += `
-                    <div class="swiper-slide" style="background-image:url('${imob.foto}')">
-                        <div class="glass-box">
-                            <h1>${imob.titulo}</h1>
-                            <p>${imob.localizacao}</p>
-                            <h2 style="color:var(--accent)">${imob.preco}</h2>
+            // Limpa o loading inicial
+            vitrine.innerHTML = '';
+            slider.innerHTML = '';
+
+            if (imoveis.length === 0) {
+                vitrine.innerHTML = `
+                    <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px; color: #666;">
+                        <i class="fas fa-home" style="font-size: 4rem; color: #ccc; margin-bottom: 15px;"></i>
+                        <h3>Nenhum imóvel disponível no momento</h3>
+                        <p>Acesse o painel de administração para minerar ou cadastrar imóveis.</p>
+                    </div>`;
+                return;
+            }
+
+            imoveis.forEach((imob, index) => {
+                // Fallback de imagem segura
+                const imgSrc = imob.foto && imob.foto.startsWith('http') ? imob.foto : 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800&q=80';
+                
+                // Card da Vitrine
+                vitrine.innerHTML += `
+                    <div class="card">
+                        <div class="tag-status">LANÇAMENTO</div>
+                        <div class="card-img" style="background-image: url('${imgSrc}')"></div>
+                        <div class="card-body">
+                            <h3>${imob.titulo}</h3>
+                            <p style="color:#777; font-size:0.8rem; margin-bottom:10px;">
+                                <i class="fas fa-map-marker-alt"></i> ${imob.localizacao}
+                            </p>
+                            <div class="details">
+                                <span><i class="fas fa-ruler-combined"></i> ${imob.area || 'A definir'}</span>
+                                <span><i class="fas fa-bed"></i> ${imob.dormitorios || 'A definir'}</span>
+                            </div>
+                            <span class="price">${imob.preco}</span>
                         </div>
                     </div>`;
-            }
-        });
-        new Swiper(".mySwiper", { autoplay: { delay: 5000 }, loop: true });
+
+                // Slider Principal (apenas os 5 primeiros)
+                if(index < 5) {
+                    slider.innerHTML += `
+                        <div class="swiper-slide" style="background-image:url('${imgSrc}')">
+                            <div class="glass-box">
+                                <h1>${imob.titulo}</h1>
+                                <p>${imob.localizacao}</p>
+                                <h2 style="color:var(--accent)">${imob.preco}</h2>
+                            </div>
+                        </div>`;
+                }
+            });
+
+            new Swiper(".mySwiper", { 
+                autoplay: { delay: 5000 }, 
+                loop: true,
+                pagination: { el: '.swiper-pagination', clickable: true }
+            });
+
+        } catch (error) {
+            console.error('Erro ao buscar imóveis:', error);
+            document.getElementById('vitrine').innerHTML = `
+                <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #dc3545;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 15px;"></i>
+                    <p>Erro de conexão com o banco de dados do site.</p>
+                </div>`;
+        }
     }
     carregar();
 </script>
-
-<footer>
-    <a href="/admin">Acesse o Painel de Administração</a>
-</footer>
-
 </body>
 </html>

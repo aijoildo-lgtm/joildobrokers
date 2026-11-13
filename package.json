@@ -1,7 +1,7 @@
 {
   "name": "joildobrokers",
   "version": "1.0.0",
-  "description": "Portal Imobiliário Joildo Brokers",
+  "description": "Portal Imobiliário Joildo Brokers com Mineração de Dados",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
