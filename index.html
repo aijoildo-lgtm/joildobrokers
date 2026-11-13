@@ -25,7 +25,7 @@
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Poppins', sans-serif; /* Fonte inovadora e moderna */
+            font-family: 'Poppins', sans-serif;
             color: var(--text-dark);
             background-color: var(--bg-light);
             line-height: 1.6;
@@ -127,7 +127,6 @@
             color: var(--white);
         }
 
-        /* Grid pattern overlay for futuristic feel */
         .hero-slider::before {
             content: '';
             position: absolute;
@@ -309,10 +308,10 @@
             margin-bottom: 60px;
         }
 
-        /* Card Layout Estilo Eztec / Lavvi */
+        /* Card Layout Estilo Eztec / Lavvi / Tishman */
         .card {
             background: var(--white);
-            border-radius: 24px; /* Bordas bem redondadas como a Eztec */
+            border-radius: 24px;
             overflow: hidden;
             box-shadow: var(--shadow-card);
             transition: var(--transition);
@@ -337,21 +336,53 @@
             border-radius: 24px 24px 0 0;
         }
 
-        /* Overlay gradient on image hover */
-        .card-img::after {
-            content: '';
+        /* Overlay with CTA (Tishman Speyer Style) */
+        .card-cta-overlay {
             position: absolute;
-            inset: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.6), transparent 40%);
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to top, rgba(10, 17, 40, 0.85), rgba(10, 17, 40, 0.2) 50%, transparent);
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding: 1.5rem;
             opacity: 0;
             transition: var(--transition);
         }
 
-        .card:hover .card-img::after {
+        .card:hover .card-cta-overlay {
             opacity: 1;
         }
 
-        /* Badge like "BREVE LANÇAMENTO" */
+        .btn-cadastre-se {
+            background: var(--gold);
+            color: var(--primary-dark);
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover .btn-cadastre-se {
+            transform: translateY(0);
+        }
+
+        .btn-cadastre-se:hover {
+            background: white;
+            color: var(--primary-dark);
+        }
+
         .card-badge {
             position: absolute;
             top: 15px;
@@ -366,32 +397,7 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            z-index: 2;
-        }
-
-        /* Heart/Favorite button */
-        .card-favorite {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(5px);
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: var(--transition);
-            color: var(--text-muted);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            z-index: 2;
-        }
-
-        .card-favorite:hover {
-            color: #d32f2f;
-            transform: scale(1.1);
+            z-index: 3;
         }
 
         .card-body {
@@ -401,13 +407,12 @@
             flex-grow: 1;
         }
 
-        /* Location in small caps, gold/accent color (Estilo Eztec) */
         .card-location-tag {
             font-size: 0.75rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 1px;
-            color: var(--red-accent); /* Usando o vermelho de destaque */
+            color: var(--red-accent);
             margin-bottom: 0.5rem;
         }
 
@@ -419,12 +424,31 @@
             line-height: 1.3;
         }
 
+        /* Dialogo style: Neighborhood info block */
+        .card-neighborhood-block {
+            background: #F1F5F9;
+            padding: 0.8rem 1rem;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 1.2rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.6rem;
+            border-left: 3px solid var(--gold);
+        }
+
+        .card-neighborhood-block i {
+            color: var(--primary-blue);
+            margin-top: 2px;
+        }
+
         /* Specs as rounded pills (Estilo Eztec) */
         .specs-container {
             display: flex;
             flex-wrap: wrap;
             gap: 0.5rem;
-            margin-bottom: 1.2rem;
+            margin-bottom: 1.5rem;
         }
 
         .spec-pill {
@@ -451,23 +475,13 @@
             transform: scale(1.03);
         }
 
-        .card-local {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: var(--text-muted);
-            margin-bottom: 1.5rem;
-            font-size: 0.85rem;
-            font-style: italic;
-            margin-top: auto;
-        }
-
         .card-footer {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding-top: 1rem;
             border-top: 1px solid #E2E8F0;
+            margin-top: auto;
         }
 
         .card-price {
@@ -476,7 +490,6 @@
             color: var(--primary-dark);
         }
 
-        /* Botão Ver Mais Estilo Eztec/Lavvi */
         .btn-ver-mais {
             background: transparent;
             color: var(--red-accent);
@@ -646,11 +659,12 @@
     <!-- BUSCA Rápida / Filtros -->
     <div class="filters-container">
         
-        <!-- Filtros Rápidos por Estágio -->
+        <!-- Filtros Rápidos por Estágio (Ordem Requerida) -->
         <div class="quick-filters-container">
             <button class="filter-btn active" data-filter="todos">Todos os Imóveis</button>
-            <button class="filter-btn" data-filter="prontos">Prontos</button>
+            <button class="filter-btn" data-filter="lancamentos">Lançamentos</button>
             <button class="filter-btn" data-filter="construção">Construção</button>
+            <button class="filter-btn" data-filter="prontos">Prontos</button>
             <button class="filter-btn" data-filter="oportunidades">Oportunidades</button>
         </div>
 
@@ -784,20 +798,23 @@
                         <div class="card" data-estagio="${dados.estagio}">
                             <div class="card-img" style="background-image: url('${dados.foto}')">
                                 <span class="card-badge">Destaque</span>
-                                <div class="card-favorite">
-                                    <i class="far fa-heart"></i>
+                                <div class="card-cta-overlay">
+                                    <button class="btn-cadastre-se" onclick="alert('Redirecionando para cadastro de informações...')">
+                                        <i class="fas fa-user-plus"></i> Cadastre-se para receber mais informações
+                                    </button>
                                 </div>
                             </div>
                             <div class="card-body">
                                 <div class="card-location-tag">${dados.localizacao.split(',')[0]}</div>
                                 <h3 class="card-title">${dados.titulo}</h3>
                                 
-                                <div class="specs-container">
-                                    ${specPills}
+                                <div class="card-neighborhood-block">
+                                    <i class="fas fa-map-marked-alt"></i>
+                                    <span>Localizado em ${dados.localizacao}. Região de alta valorização e fácil acesso a transporte.</span>
                                 </div>
                                 
-                                <div class="card-local">
-                                    <i class="fas fa-map-marker-alt"></i> ${dados.localizacao}
+                                <div class="specs-container">
+                                    ${specPills}
                                 </div>
                                 
                                 <div class="card-footer">
@@ -841,10 +858,12 @@
                 let show = false;
                 if (filter === 'todos') {
                     show = true;
-                } else if (filter === 'prontos') {
-                    show = estagio.includes('pronto') || estagio.includes('prontos');
+                } else if (filter === 'lancamentos') {
+                    show = estagio.includes('lançamento') || estagio.includes('lancamento') || estagio.includes('novo') || estagio.includes('breve');
                 } else if (filter === 'construção' || filter === 'construcao') {
                     show = estagio.includes('construção') || estagio.includes('construcao') || estagio.includes('obra');
+                } else if (filter === 'prontos') {
+                    show = estagio.includes('pronto') || estagio.includes('prontos');
                 } else if (filter === 'oportunidades') {
                     show = estagio.includes('oportunidade') || estagio.includes('oportunidades') || estagio.includes('promo');
                 } else {
@@ -903,7 +922,7 @@
         // --- MOSTRAR A TARJA VERMELHA APÓS UM TEMPO OU INTERAÇÃO ---
         setTimeout(() => {
             document.getElementById('contactRibbon').classList.add('active');
-        }, 3000); // Exibe a tarja após 3 segundos de visitação
+        }, 3000);
 
         document.addEventListener('DOMContentLoaded', carregarImoveis);
     </script>
