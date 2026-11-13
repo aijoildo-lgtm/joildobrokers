@@ -12,14 +12,15 @@ app.use(express.static(__dirname));
 
 const DATA_FILE = path.join(__dirname, 'imoveis.json');
 
-// Garante que o arquivo JSON existe
+// Garante que o arquivo JSON existe e está vazio inicialmente se não houver dados
 const getImoveis = () => {
     try {
         if (!fs.existsSync(DATA_FILE)) {
             fs.writeFileSync(DATA_FILE, JSON.stringify([], null, 2));
             return [];
         }
-        return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+        const data = fs.readFileSync(DATA_FILE, 'utf8');
+        return JSON.parse(data);
     } catch (error) {
         console.error("Erro ao ler imoveis.json:", error);
         return [];
@@ -27,7 +28,11 @@ const getImoveis = () => {
 };
 
 const saveImoveis = (imoveis) => {
-    fs.writeFileSync(DATA_FILE, JSON.stringify(imoveis, null, 2));
+    try {
+        fs.writeFileSync(DATA_FILE, JSON.stringify(imoveis, null, 2));
+    } catch (error) {
+        console.error("Erro ao salvar imoveis.json:", error);
+    }
 };
 
 // --- FUNÇÕES DE PARSE E EXTRAÇÃO AUTOMÁTICA DO ORULO ---
@@ -49,12 +54,10 @@ function extrairConstrutora($) {
 
 function parseCharacteristics($) {
     const chars = {};
-    // Varre toda a página buscando rótulos e valores comuns de imóveis
     $('dt, td, .characteristic-item, li, span, div').each((i, el) => {
         const label = $(el).text().trim().toLowerCase();
         let value = '';
 
-        // Tenta achar o valor associado
         if (el.tagName === 'dt') {
             const dd = $(el).next('dd');
             if (dd.length) value = dd.text().trim();
@@ -67,8 +70,8 @@ function parseCharacteristics($) {
             if (valueEl.length) value = valueEl.text().trim();
         }
 
-        if (value && value.length < 100) { // Evite pegar textos enormes
-            if (label.includes('área útil') || label.includes('area util') || label.includes('área') && label.includes('m²')) chars.area_util = value;
+        if (value && value.length < 100) {
+            if (label.includes('área útil') || label.includes('area util') || (label.includes('área') && label.includes('m²'))) chars.area_util = value;
             else if (label.includes('dormitório') || label.includes('dormitorios') || label.includes('quartos')) chars.dormitorios = value;
             else if (label.includes('suíte') || label.includes('suites')) chars.suites = value;
             else if (label.includes('banheiro') || label.includes('banheiros')) chars.banheiros = value;
@@ -126,7 +129,7 @@ function extrairTipologias($) {
     return tipologias;
 }
 
-// --- ROTAS ---
+// --- ROTAS DE SISTEMA ---
 
 app.get('/', (req, res) => {
     res.setHeader('Content-Type', 'text/html');
@@ -166,7 +169,7 @@ app.post('/api/minerar-orulo', async (req, res) => {
 
         const nome_do_projeto = $('h1').first().text().trim() || $('title').text().trim() || 'Imóvel Orulo';
         const construtora = extrairConstrutora($);
-        const incorporadora = construtora; // Mantém sincronizado
+        const incorporadora = construtora;
         const localizacao = $('.olx-dsorg__location, .address, [class*="location"], [class*="address"]').first().text().trim() || 'Localização não informada';
 
         let foto_principal = '';
@@ -198,7 +201,7 @@ app.post('/api/minerar-orulo', async (req, res) => {
             preco_a_partir: chars.preco_a_partir || "Consulte",
             lazer: lazer || "A definir",
             tipologias: tipologias.length > 0 ? tipologias : [{ tipo: "A definir", area: "A definir", dormitivos: "A definir", banheiros: "A definir", preco: "Consulte" }],
-            estagio: chars.estagio || "A definir",
+            estagio: chars.estagio || "outros", // Mapeamento doEstágio
             estoque: chars.estoque || "A definir",
             lancamento: chars.lancamento || "A definir",
             unidades_andar: chars.unidades_andar || "A definir",
@@ -221,7 +224,7 @@ app.post('/api/minerar-orulo', async (req, res) => {
     }
 });
 
-// API: Adicionar imóvel com verificação de duplicidade
+// API: Adicionar imóvel com verificação de duplicidade e salva estagio
 app.post('/api/adicionar-imovel', (req, res) => {
     const imovel = req.body;
     const imoveis = getImoveis();
@@ -248,12 +251,29 @@ app.post('/api/adicionar-imovel', (req, res) => {
         });
     }
 
+    // Garante que o campo estagio seja salvo corretamente, defaultizando para 'outros' se não for informado
+    imovel.estagio = imovel.estagio || "outros";
     imovel.id = Date.now();
     imovel.data_extracao = new Date().toISOString();
     imoveis.push(imovel);
     
     saveImoveis(imoveis);
     res.json({ success: true, imovel });
+});
+
+// API: Excluir imóvel por ID
+app.delete('/api/imoveis/:id', (req, res) => {
+    const id = parseInt(req.params.id);
+    let imoveis = getImoveis();
+    
+    const imoveisFiltrados = imoveis.filter(imovel => imovel.id !== id);
+    
+    if (imoveisFiltrados.length === imoveis.length) {
+        return res.status(404).json({ success: false, error: 'Imóvel não encontrado' });
+    }
+    
+    saveImoveis(imoveisFiltrados);
+    res.json({ success: true, message: 'Imóvel excluído com sucesso!' });
 });
 
 const PORT = process.env.PORT || 10000;

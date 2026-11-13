@@ -3,429 +3,570 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel Joildo Brokers | Mineração e Revisão</title>
+    <title>Painel Joildo Brokers | Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #002d72; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .login-box { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 380px; text-align: center; }
-        .login-box h2 { color: #002d72; margin-bottom: 25px; font-weight: 800; }
-        .login-box h2 span { color: #d4af37; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 1rem; }
-        button { width: 100%; padding: 12px; background: #002d72; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 10px; font-size: 1rem; transition: 0.3s; }
-        button:hover { background: #001f50; }
-        
-        #painel { display: none; width: 95%; max-width: 1000px; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: left; max-height: 90vh; overflow-y: auto; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 6px; font-weight: 600; color: #444; font-size: 0.9rem; }
-        .form-control { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; }
-        .section-title { color: #002d72; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; margin-top: 25px; margin-bottom: 15px; font-size: 1.1rem; display: flex; align-items: center; gap: 10px; }
-        .grid-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; }
-        .btn-green { background: #28a745; }
-        .btn-green:hover { background: #218838; }
-        .btn-gray { background: #6c757d; }
-        .btn-gray:hover { background: #5a6268; }
-        .btn-blue { background: #007bff; }
-        .btn-blue:hover { background: #0056b3; }
-        
-        /* Tabela de Tipologias */
-        .tipologias-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        .tipologias-table th, .tipologias-table td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 0.85rem; }
-        .tipologias-table th { background: #f8f9fa; }
-        .tipologias-table input { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; }
-
-        /* Rodapé fixo com credenciais */
-        .footer-credenciais {
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-            background: #002d72;
-            color: white;
-            text-align: center;
-            padding: 10px;
-            font-size: 0.9rem;
-            z-index: 999;
+        body { 
+            font-family: 'Montserrat', sans-serif; 
+            background: linear-gradient(135deg, #0A1128 0%, #1E3A8A 100%);
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+            color: #333;
         }
+
+        /* Container do Card de Login com Efeito Glass */
+        .login-box { 
+            background: rgba(255, 255, 255, 0.95); 
+            backdrop-filter: blur(20px); 
+            padding: 3rem; 
+            border-radius: 20px; 
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3); 
+            width: 100%; 
+            max-width: 440px; 
+            text-align: center; 
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            animation: fadeIn 0.8s ease;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .logo { 
+            font-size: 2.2rem; 
+            font-weight: 800; 
+            color: var(--primary-dark, #0A1128); 
+            text-decoration: none; 
+            letter-spacing: -1px; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            gap: 8px; 
+            margin-bottom: 1.5rem;
+        }
+        .logo span { color: var(--gold, #D4AF37); }
+
+        .login-subtitle {
+            color: #64748B;
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+            font-weight: 500;
+        }
+
+        /* Inputs Estilizados */
+        .form-group { margin-bottom: 1.5rem; text-align: left; }
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #475569;
+            margin-bottom: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-group {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-group i {
+            position: absolute;
+            left: 15px;
+            color: var(--gold, #D4AF37);
+            z-index: 2;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 1rem 1rem 1rem 3rem;
+            border: 1px solid #E2E8F0;
+            border-radius: 12px;
+            font-size: 1rem;
+            background: #F8FAFC;
+            transition: all 0.3s ease;
+            font-family: 'Montserrat', sans-serif;
+            color: #0F172A;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--gold, #D4AF37);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.15);
+        }
+
+        /* Botão de Login Premium */
+        .btn-login {
+            width: 100%;
+            padding: 1.1rem;
+            background: linear-gradient(135deg, #0A1128 0%, #1E3A8A 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 1rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-login:hover {
+            background: linear-gradient(135deg, #D4AF37 0%, #E5C158 100%);
+            color: #0A1128;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(212, 175, 55, 0.3);
+        }
+
+        /* Container do Painel Interno (Após Login) */
+        #painel {
+            display: none;
+            width: 95%;
+            max-width: 1000px;
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+            text-align: left;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .section-title {
+            color: #0A1128;
+            border-bottom: 2px solid var(--gold, #D4AF37);
+            padding-bottom: 0.5rem;
+            margin-top: 2rem;
+            margin-bottom: 1.5rem;
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .grid-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .form-control textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .btn-green {
+            background: #198754;
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-green:hover { background: #155724; }
+
+        .btn-gray {
+            background: #6C757D;
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-gray:hover { background: #5a6268; }
     </style>
 </head>
 <body>
 
-<!-- TELA DE LOGIN -->
-<div id="login" class="login-box">
-    <h2>JOILDO<span>BROKERS</span></h2>
-    <p style="color: #666; margin-bottom: 20px;">Acesso restrito a corretores e administradores</p>
-    <input type="text" id="username" placeholder="Usuário (adm)" autocomplete="off">
-    <input type="password" id="password" placeholder="Senha (1234)" autocomplete="off">
-    <button onclick="fazerLogin()"><i class="fas fa-lock"></i> ACESSAR PAINEL</button>
-</div>
-
-<!-- PAINEL DE MINERAÇÃO E REVISÃO -->
-<div id="painel">
-    <!-- Tela Inicial: Input de URL -->
-    <div id="screen-minerar">
-        <h2 style="color: #002d72; margin-bottom: 5px;"><i class="fas fa-cloud-download-alt"></i> Mineração de Dados Orulo</h2>
-        <p style="color: #666; margin-bottom: 20px; font-size: 0.9rem;">Cole o link do imóvel do Orulo para extração automática de todas as especificações técnicas, tipologias e preços.</p>
-
+    <!-- TELA DE LOGIN -->
+    <div id="login" class="login-box">
+        <a href="#" class="logo">JOILDO<span>BROKERS</span></a>
+        <p class="login-subtitle">Painel Administrativo e de Mineração</p>
+        
         <div class="form-group">
-            <label for="urlOrulo">URL do Orulo (Ex: https://www.orulo.com.br/buildings/...):</label>
-            <input type="url" id="urlOrulo" placeholder="https://www.orulo.com.br/buildings/">
+            <label for="username">Usuário de Acesso</label>
+            <div class="input-group">
+                <i class="fas fa-user"></i>
+                <input type="text" id="username" class="form-control" placeholder="adm" autocomplete="off">
+            </div>
         </div>
 
-        <button onclick="minerar()" style="width: 100%; padding: 12px; background: #002d72; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
-            <i class="fas fa-search"></i> Buscar Dados Automáticos
-        </button>
+        <div class="form-group">
+            <label for="password">Senha de Segurança</label>
+            <div class="input-group">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="password" class="form-control" placeholder="••••••••" autocomplete="off">
+            </div>
+        </div>
 
-        <div id="status" class="status-msg" style="display:none; margin-top: 15px; padding: 10px; border-radius: 5px;"></div>
+        <button class="btn-login" onclick="fazerLogin()">
+            <i class="fas fa-sign-in-alt"></i> ACESSAR PAINEL
+        </button>
     </div>
 
-    <!-- Tela de Revisão (Gerada Dinamicamente) -->
-    <div id="screen-revisao" style="display:none;"></div>
-</div>
+    <!-- PAINEL DE MINERAÇÃO E CADASTRO -->
+    <div id="painel">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid #eee; padding-bottom: 1rem;">
+            <h2 style="color: #0A1128; margin: 0; font-size: 1.8rem;"><i class="fas fa-cogs" style="color: var(--gold); margin-right: 10px;"></i> Painel do Corretor</h2>
+            <button onclick="logout()" class="btn-gray" style="width: auto; padding: 10px 20px;"><i class="fas fa-sign-out-alt"></i> Sair</button>
+        </div>
 
-<!-- Rodapé fixo com as credenciais -->
-<div class="footer-credenciais">
-    Link: https://joildobrokers.onrender.com/admin | Login: adm | Senha: 1234
-</div>
-
-<script>
-    function fazerLogin() {
-        const user = document.getElementById('username').value;
-        const pass = document.getElementById('password');
-
-        if(user === 'adm' && pass.value === '1234') {
-            document.getElementById('login').style.display = 'none';
-            document.getElementById('painel').style.display = 'block';
-        } else {
-            alert('Credenciais inválidas! Usuário: adm | Senha: 1234');
-            pass.value = '';
-        }
-    }
-
-    document.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter' && document.getElementById('login').style.display !== 'none') {
-            fazerLogin();
-        }
-    });
-
-    async function minerar() {
-        const url = document.getElementById('urlOrulo').value;
-        const status = document.getElementById('status');
-
-        if(!url) {
-            status.className = 'status-msg error';
-            status.style.display = 'block';
-            status.innerText = '⚠️ Por favor, cole a URL do Orulo antes de minerar.';
-            return;
-        }
-
-        status.style.display = 'none';
-        status.innerText = '';
-
-        const originalBtn = event.target.innerHTML;
-        event.target.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Consultando Orulo...';
-        event.target.disabled = true;
-
-        try {
-            const res = await fetch('/api/minerar-orulo', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url })
-            });
-
-            const data = await res.json();
-
-            if(data.success) {
-                renderReviewForm(data.dados);
-                document.getElementById('screen-minerar').style.display = 'none';
-                document.getElementById('screen-revisao').style.display = 'block';
-            } else {
-                throw new Error(data.error || 'Erro na extração');
-            }
-        } catch (e) {
-            status.className = 'status-msg error';
-            status.style.display = 'block';
-            status.innerText = '❌ ' + e.message;
-        } finally {
-            event.target.innerHTML = originalBtn;
-            event.target.disabled = false;
-        }
-    }
-
-    function renderReviewForm(dados) {
-        const container = document.getElementById('screen-revisao');
-        
-        // Converte tipologias em linhas de tabela para exibição
-        let tipologiasRows = '';
-        if (dados.tipologias && dados.tipologias.length > 0) {
-            dados.tipologias.forEach(t => {
-                tipologiasRows += `
-                    <tr>
-                        <td><input type="text" name="tipo[]" value="${t.tipo || ''}" placeholder="Tipo"></td>
-                        <td><input type="text" name="area_tipologia[]" value="${t.area || ''}" placeholder="Área"></td>
-                        <td><input type="text" name="dorm_tipologia[]" value="${t.dormitivos || ''}" placeholder="Dormitórios"></td>
-                        <td><input type="text" name="ban_tipologia[]" value="${t.banheiros || ''}" placeholder="Banheiros"></td>
-                        <td><input type="text" name="preco_tipologia[]" value="${t.preco || ''}" placeholder="Preço"></td>
-                    </tr>`;
-            });
-        } else {
-            tipologiasRows = `
-                <tr>
-                    <td><input type="text" name="tipo[]" value="" placeholder="Tipo"></td>
-                    <td><input type="text" name="area_tipologia[]" value="" placeholder="Área"></td>
-                    <td><input type="text" name="dorm_tipologia[]" value="" placeholder="Dormitórios"></td>
-                    <td><input type="text" name="ban_tipologia[]" value="" placeholder="Banheiros"></td>
-                    <td><input type="text" name="preco_tipologia[]" value="" placeholder="Preço"></td>
-                </tr>`;
-        }
-
-        container.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h2 style="color: #002d72; margin: 0;"><i class="fas fa-edit"></i> Revisão e Publicação</h2>
-                <button onclick="voltarMineracao()" class="btn btn-gray" style="width: auto; padding: 8px 15px;">Voltar</button>
-            </div>
-            <p style="color: #666; margin-bottom: 20px; font-size: 0.9rem;">
-                Revise os dados extraídos do Orulo. Você pode corrigir informações e adicionar as URLs de mídia (YouTube, Tour Virtual e fotos adicionais) antes de publicar.
+        <!-- Tela Inicial: Input de URL -->
+        <div id="screen-minerar">
+            <div class="section-title" style="margin-top: 0; border: none;"><i class="fas fa-cloud-download-alt"></i> Mineração de Dados Orulo</div>
+            <p style="color: #64748B; margin-bottom: 1.5rem; line-height: 1.6;">
+                Cole o link do imóvel do Orulo para extração automática de todas as especificações técnicas, tipologias e preços.
             </p>
 
-            <form id="form-publicacao">
-                <!-- SEÇÃO: MÍDIA E FOTOS -->
-                <div class="section-title"><i class="fas fa-images"></i> Mídia e Imagens</div>
-                <div class="grid-form">
-                    <div class="form-group">
-                        <label for="foto_principal">URL da Foto Principal (Capa):</label>
-                        <input type="url" name="foto_principal" id="foto_principal" value="${dados.foto_principal}" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label for="fotos_extras">Fotos Extras (URLs separadas por vírgula):</label>
-                        <input type="text" name="fotos_extras" id="fotos_extras" value="${dados.fotos_extras.join(', ')}" class="form-control" placeholder="https://...">
-                    </div>
-                    <div class="form-group">
-                        <label for="youtube_url">Vídeo do YouTube:</label>
-                        <input type="url" name="youtube_url" id="youtube_url" value="${dados.youtube_url}" class="form-control" placeholder="https://www.youtube.com/watch?v=...">
-                    </div>
-                    <div class="form-group">
-                        <label for="tour_virtual_url">Tour Virtual 360°:</label>
-                        <input type="url" name="tour_virtual_url" id="tour_virtual_url" value="${dados.tour_virtual_url}" class="form-control" placeholder="https://...">
-                    </div>
+            <div class="form-group">
+                <label for="urlOrulo">URL do Orulo (Ex: https://www.orulo.com.br/buildings/...):</label>
+                <div class="input-group">
+                    <i class="fas fa-link"></i>
+                    <input type="url" id="urlOrulo" class="form-control" placeholder="https://www.orulo.com.br/buildings/">
                 </div>
+            </div>
 
-                <!-- SEÇÃO: DADOS BÁSICOS -->
-                <div class="section-title"><i class="fas fa-building"></i> Dados do Projeto e Construtora</div>
-                <div class="grid-form">
-                    <div class="form-group">
-                        <label for="nome_do_projeto">Nome do Projeto:</label>
-                        <input type="text" name="nome_do_projeto" id="nome_do_projeto" value="${dados.nome_do_projeto}" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label for="construtora">Construtora / Incorporadora:</label>
-                        <input type="text" name="construtora" id="construtora" value="${dados.construtora}" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label for="localizacao">Localização:</label>
-                        <input type="text" name="localizacao" id="localizacao" value="${dados.localizacao}" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label for="preco_a_partir">Preço a partir de:</label>
-                        <input type="text" name="preco_a_partir" id="preco_a_partir" value="${dados.preco_a_partir}" class="form-control">
-                    </div>
+            <button class="btn-green" style="width: 100%; padding: 1.2rem; font-size: 1rem; margin-top: 1rem;" onclick="minerar()">
+                <i class="fas fa-search"></i> Iniciar Mineração Automática
+            </button>
+
+            <div id="status" class="status-msg" style="display:none; margin-top: 20px; padding: 15px; border-radius: 8px; font-weight: bold;"></div>
+        </div>
+
+        <!-- Tela de Revisão (Gerada Dinamicamente) -->
+        <div id="screen-revisao" style="display:none;"></div>
+    </div>
+
+    <script>
+        // --- LÓGICA DE LOGIN CORRIGIDA E ROBUSTA ---
+        function fazerLogin() {
+            const user = document.getElementById('username').value.trim();
+            const pass = document.getElementById('password').value;
+
+            // Validação de credenciais
+            if (user === 'adm' && pass === '1234') {
+                document.getElementById('login').style.display = 'none';
+                document.getElementById('painel').style.display = 'block';
+            } else {
+                // Feedback visual de erro nos campos
+                const userField = document.getElementById('username');
+                const passField = document.getElementById('password');
+                
+                userField.style.borderColor = '#dc3545';
+                passField.style.borderColor = '#dc3545';
+                
+                alert('Credenciais inválidas! Por favor, verifique:\nUsuário: adm\nSenha: 1234');
+                
+                setTimeout(() => {
+                    userField.style.borderColor = '#E2E8F0';
+                    passField.style.borderColor = '#E2E8F0';
+                }, 1500);
+            }
+        }
+
+        // Permite login ao pressionar Enter
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && document.getElementById('login').style.display !== 'none') {
+                fazerLogin();
+            }
+        });
+
+        function logout() {
+            document.getElementById('painel').style.display = 'none';
+            document.getElementById('login').style.display = 'block';
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        async function minerar() {
+            const url = document.getElementById('urlOrulo').value;
+            const status = document.getElementById('status');
+
+            if(!url) {
+                status.className = 'status-msg error';
+                status.style.display = 'block';
+                status.innerText = '⚠️ Por favor, cole a URL do Orulo antes de minerar.';
+                return;
+            }
+
+            status.style.display = 'none';
+            status.innerText = '';
+
+            const originalBtn = event.target.innerHTML;
+            event.target.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Consultando Orulo...';
+            event.target.disabled = true;
+
+            try {
+                const res = await fetch('/api/minerar-orulo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+
+                const data = await res.json();
+
+                if(data.success) {
+                    renderReviewForm(data.dados);
+                    document.getElementById('screen-minerar').style.display = 'none';
+                    document.getElementById('screen-revisao').style.display = 'block';
+                } else {
+                    throw new Error(data.error || 'Erro na extração');
+                }
+            } catch (e) {
+                status.className = 'status-msg error';
+                status.style.display = 'block';
+                status.style.background = '#F8D7DA';
+                status.style.color = '#721C24';
+                status.innerText = '❌ ' + e.message;
+            } finally {
+                event.target.innerHTML = originalBtn;
+                event.target.disabled = false;
+            }
+        }
+
+        function renderReviewForm(dados) {
+            const container = document.getElementById('screen-revisao');
+            
+            // Converte tipologias em linhas de tabela para exibição
+            let tipologiasRows = '';
+            if (dados.tipologias && dados.tipologias.length > 0) {
+                dados.tipologias.forEach(t => {
+                    tipologiasRows += `
+                        <tr>
+                            <td><input type="text" name="tipo[]" value="${t.tipo || ''}" placeholder="Tipo" class="form-control" style="padding: 6px;"></td>
+                            <td><input type="text" name="area_tipologia[]" value="${t.area || ''}" placeholder="Área" class="form-control" style="padding: 6px;"></td>
+                            <td><input type="text" name="dorm_tipologia[]" value="${t.dormitivos || ''}" placeholder="Dorm." class="form-control" style="padding: 6px;"></td>
+                            <td><input type="text" name="ban_tipologia[]" value="${t.banheiros || ''}" placeholder="Banheiros" class="form-control" style="padding: 6px;"></td>
+                            <td><input type="text" name="preco_tipologia[]" value="${t.preco || ''}" placeholder="Preço" class="form-control" style="padding: 6px;"></td>
+                        </tr>`;
+                });
+            } else {
+                tipologiasRows = `
+                    <tr>
+                        <td><input type="text" name="tipo[]" value="" placeholder="Tipo" class="form-control" style="padding: 6px;"></td>
+                        <td><input type="text" name="area_tipologia[]" value="" placeholder="Área" class="form-control" style="padding: 6px;"></td>
+                        <td><input type="text" name="dorm_tipologia[]" value="" placeholder="Dorm." class="form-control" style="padding: 6px;"></td>
+                        <td><input type="text" name="ban_tipologia[]" value="" placeholder="Banheiros" class="form-control" style="padding: 6px;"></td>
+                        <td><input type="text" name="preco_tipologia[]" value="" placeholder="Preço" class="form-control" style="padding: 6px;"></td>
+                    </tr>`;
+            }
+
+            container.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3 style="color: #0A1128; margin: 0;"><i class="fas fa-edit"></i> Revisão e Publicação</h3>
+                    <button onclick="voltarMineracao()" class="btn-gray" style="width: auto; padding: 10px 20px;">Voltar</button>
                 </div>
+                <p style="color: #64748B; margin-bottom: 1.5rem; line-height: 1.6;">
+                    Revise os dados extraídos do Orulo. Você pode corrigir informações e adicionar as URLs de mídia (YouTube, Tour Virtual e fotos adicionais) antes de publicar.
+                </p>
 
-                <!-- SEÇÃO: CARACTERÍSTICAS TÉCNICAS -->
-                <div class="section-title"><i class="fas fa-ruler-combined"></i> Características Técnicas</div>
-                <div class="grid-form">
-                    <div class="form-group">
-                        <label for="area_util">Área útil:</label>
-                        <input type="text" name="area_util" id="area_util" value="${dados.area_util}" class="form-control">
+                <form id="form-publicacao">
+                    <!-- SEÇÃO: MÍDIA E FOTOS -->
+                    <div class="section-title"><i class="fas fa-images"></i> Mídia e Imagens</div>
+                    <div class="grid-form">
+                        <div class="form-group">
+                            <label for="foto_principal">URL da Foto Principal (Capa):</label>
+                            <input type="url" name="foto_principal" id="foto_principal" value="${dados.foto_principal}" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="fotos_extras">Fotos Extras (URLs separadas por vírgula):</label>
+                            <input type="text" name="fotos_extras" id="fotos_extras" value="${dados.fotos_extras.join(', ')}" class="form-control" placeholder="https://...">
+                        </div>
+                        <div class="form-group">
+                            <label for="youtube_url">Vídeo do YouTube:</label>
+                            <input type="url" name="youtube_url" id="youtube_url" value="${dados.youtube_url}" class="form-control" placeholder="https://www.youtube.com/watch?v=...">
+                        </div>
+                        <div class="form-group">
+                            <label for="tour_virtual_url">Tour Virtual 360°:</label>
+                            <input type="url" name="tour_virtual_url" id="tour_virtual_url" value="${dados.tour_virtual_url}" class="form-control" placeholder="https://...">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="dormitorios">Dormitórios:</label>
-                        <input type="text" name="dormitorios" id="dormitorios" value="${dados.dormitorios}" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label for="suites">Suítes:</label>
-                        <input type="text" name="suites" id="suites" value="${dados.suites}" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label for="banheiros">Banheiros:</label>
-                        <input type="text" name="banheiros" id="banheiros" value="${dados.banheiros}" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label for="vagas">Vagas de carro:</label>
-                        <input type="text" name="vagas" id="vagas" value="${dados.vagas}" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label for="estagio">Estágio:</label>
-                        <input type="text" name="estagio" id="estagio" value="${dados.estagio}" class="form-control">
-                    </div>
-                </div>
 
-                <!-- SEÇÃO: INFORMAÇÕES COMERCIAIS E CONDOMÍNIO -->
-                <div class="section-title"><i class="fas fa-key"></i> Informações Comerciais e Condomínio</div>
-                <div class="grid-form">
-                    <div class="form-group">
-                        <label for="estoque">Estoque:</label>
-                        <input type="text" name="estoque" id="estoque" value="${dados.estoque}" class="form-control">
+                    <!-- SEÇÃO: DADOS BÁSICOS -->
+                    <div class="section-title"><i class="fas fa-building"></i> Dados do Projeto e Construtora</div>
+                    <div class="grid-form">
+                        <div class="form-group">
+                            <label for="nome_do_projeto">Nome do Projeto:</label>
+                            <input type="text" name="nome_do_projeto" id="nome_do_projeto" value="${dados.nome_do_projeto}" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="construtora">Construtora / Incorporadora:</label>
+                            <input type="text" name="construtora" id="construtora" value="${dados.construtora}" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="localizacao">Localização:</label>
+                            <input type="text" name="localizacao" id="localizacao" value="${dados.localizacao}" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="estagio">Estágio do Imóvel (Filtro):</label>
+                            <select name="estagio" id="estagio" class="form-control">
+                                <option value="outros">Outros / Geral</option>
+                                <option value="prontos">Pronto</option>
+                                <option value="construção">Construção / Obra</option>
+                                <option value="oportunidades">Oportunidade / Promoção</option>
+                                <option value="mcmv">MCMV / Minha Casa Minha Vida</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="preco_a_partir">Preço a partir de:</label>
+                            <input type="text" name="preco_a_partir" id="preco_a_partir" value="${dados.preco_a_partir}" class="form-control">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="lancamento">Lançamento:</label>
-                        <input type="text" name="lancamento" id="lancamento" value="${dados.lancamento}" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label for="unidades_andar">Unidades por Andar:</label>
-                        <input type="text" name="unidades_andar" id="unidades_andar" value="${dados.unidades_andar}" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label for="entrega">Entrega:</label>
-                        <input type="text" name="entrega" id="entrega" value="${dados.entrega}" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label for="total_unidades">Total de Unidades:</label>
-                        <input type="text" name="total_unidades" id="total_unidades" value="${dados.total_unidades}" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label for="numero_andares">Número de Andares:</label>
-                        <input type="text" name="numero_andares" id="numero_andares" value="${dados.numero_andares}" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label for="area_terreno">Área do Terreno:</label>
-                        <input type="text" name="area_terreno" id="area_terreno" value="${dados.area_terreno}" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label for="area_laje">Área da Laje:</label>
-                        <input type="text" name="area_laje" id="area_laje" value="${dados.area_laje}" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label for="condominio">Condomínio:</label>
-                        <input type="text" name="condominio" id="condominio" value="${dados.condominio}" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label for="iptu">IPTU:</label>
-                        <input type="text" name="iptu" id="iptu" value="${dados.iptu}" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label for="ri">RI:</label>
-                        <input type="text" name="ri" id="ri" value="${dados.ri}" class="form-control">
-                    </div>
-                </div>
 
-                <!-- SEÇÃO: CONDOMÍNIO E TIPOLOGIAS -->
-                <div class="section-title"><i class="fas fa-swimming-pool"></i> Condomínio e Tipologias</div>
-                <div class="grid-form">
-                    <div class="form-group" style="grid-column: 1 / -1;">
-                        <label for="lazer">Características do Condomínio / Lazer:</label>
-                        <textarea name="lazer" id="lazer" class="form-control" rows="3">${dados.lazer}</textarea>
+                    <!-- SEÇÃO: CARACTERÍSTICAS TÉCNICAS -->
+                    <div class="section-title"><i class="fas fa-ruler-combined"></i> Características Técnicas</div>
+                    <div class="grid-form">
+                        <div class="form-group">
+                            <label for="area_util">Área útil:</label>
+                            <input type="text" name="area_util" id="area_util" value="${dados.area_util}" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="dormitorios">Dormitórios:</label>
+                            <input type="text" name="dormitorios" id="dormitorios" value="${dados.dormitorios}" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="suites">Suítes:</label>
+                            <input type="text" name="suites" id="suites" value="${dados.suites}" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="banheiros">Banheiros:</label>
+                            <input type="text" name="banheiros" id="banheiros" value="${dados.banheiros}" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="vagas">Vagas de carro:</label>
+                            <input type="text" name="vagas" id="vagas" value="${dados.vagas}" class="form-control">
+                        </div>
                     </div>
-                    <div class="form-group" style="grid-column: 1 / -1;">
-                        <label>Tipologias Disponíveis (Editável):</label>
-                        <table class="tipologias-table">
-                            <thead>
-                                <tr>
-                                    <th>Tipo</th>
-                                    <th>Área</th>
-                                    <th>Dormitórios</th>
-                                    <th>Banheiros</th>
-                                    <th>Preço</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tipologias-tbody">
-                                ${tipologiasRows}
-                            </tbody>
-                        </table>
-                        <button type="button" class="btn btn-blue" style="margin-top: 10px; width: auto; padding: 6px 12px;" onclick="adicionarLinhaTipologia()">
-                            <i class="fas fa-plus"></i> Adicionar Linha
+
+                    <!-- SEÇÃO: CONDOMÍNIO E TIPOLOGIAS -->
+                    <div class="section-title"><i class="fas fa-swimming-pool"></i> Condomínio e Tipologias</div>
+                    <div class="grid-form">
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label for="lazer">Características do Condomínio / Lazer:</label>
+                            <textarea name="lazer" id="lazer" class="form-control" rows="3">${dados.lazer}</textarea>
+                        </div>
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label>Tipologias Disponíveis (Editável):</label>
+                            <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                                <thead>
+                                    <tr style="background: #F1F5F9;">
+                                        <th style="padding: 8px; text-align: left; border: 1px solid #E2E8F0;">Tipo</th>
+                                        <th style="padding: 8px; text-align: left; border: 1px solid #E2E8F0;">Área</th>
+                                        <th style="padding: 8px; text-align: left; border: 1px solid #E2E8F0;">Dormitórios</th>
+                                        <th style="padding: 8px; text-align: left; border: 1px solid #E2E8F0;">Banheiros</th>
+                                        <th style="padding: 8px; text-align: left; border: 1px solid #E2E8F0;">Preço</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tipologias-tbody">
+                                    ${tipologiasRows}
+                                </tbody>
+                            </table>
+                            <button type="button" class="btn-blue" style="margin-top: 10px; width: auto; padding: 6px 12px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;" onclick="adicionarLinhaTipologia()">
+                                <i class="fas fa-plus"></i> Adicionar Linha
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 2.5rem; display: flex; gap: 1rem; justify-content: flex-end;">
+                        <button type="button" onclick="voltarMineracao()" class="btn-gray" style="width: auto; padding: 1rem 2rem;">Voltar</button>
+                        <button type="submit" class="btn-green" style="width: auto; padding: 1rem 3rem; font-size: 1.05rem;">
+                            <i class="fas fa-save"></i> Confirmar e Publicar Imóvel
                         </button>
                     </div>
-                </div>
-
-                <div style="margin-top: 30px; display: flex; gap: 15px;">
-                    <button type="submit" class="btn btn-green" style="flex: 1; padding: 15px; font-size: 1.1rem;">
-                        <i class="fas fa-save"></i> Confirmar e Publicar Imóvel
-                    </button>
-                </div>
-            </form>
-        `;
-
-        document.getElementById('form-publicacao').addEventListener('submit', function(e) {
-            e.preventDefault();
-            submitPublicacao(new FormData(this));
-        });
-    }
-
-    function adicionarLinhaTipologia() {
-        const tbody = document.getElementById('tipologias-tbody');
-        const novaLinha = document.createElement('tr');
-        novaLinha.innerHTML = `
-            <td><input type="text" name="tipo[]" value="" placeholder="Tipo"></td>
-            <td><input type="text" name="area_tipologia[]" value="" placeholder="Área"></td>
-            <td><input type="text" name="dorm_tipologia[]" value="" placeholder="Dormitórios"></td>
-            <td><input type="text" name="ban_tipologia[]" value="" placeholder="Banheiros"></td>
-            <td><input type="text" name="preco_tipologia[]" value="" placeholder="Preço"></td>
-        `;
-        tbody.appendChild(novaLinha);
-    }
-
-    function voltarMineracao() {
-        document.getElementById('screen-revisao').style.display = 'none';
-        document.getElementById('screen-minerar').style.display = 'block';
-    }
-
-    function submitPublicacao(formData) {
-        const data = {};
-        for (let [key, value] of formData.entries()) {
-            data[key] = value;
+                </form>
+            `;
+            document.getElementById('form-publicacao').addEventListener('submit', function(e) {
+                e.preventDefault();
+                submitPublicacao(new FormData(this));
+            });
         }
 
-        // Processa as tipologias da tabela
-        const tipos = formData.getAll('tipo[]');
-        const areas = formData.getAll('area_tipologia[]');
-        const dorms = formData.getAll('dorm_tipologia[]');
-        const bans = formData.getAll('ban_tipologia[]');
-        const precos = formData.getAll('preco_tipologia[]');
-
-        data.tipologias = [];
-        for (let i = 0; i < tipos.length; i++) {
-            if (tipos[i] || areas[i] || precos[i]) {
-                data.tipologias.push({
-                    tipo: tipos[i],
-                    area: areas[i],
-                    dormitivos: dorms[i],
-                    banheiros: bans[i],
-                    preco: precos[i]
-                });
-            }
+        function adicionarLinhaTipologia() {
+            const tbody = document.getElementById('tipologias-tbody');
+            const novaLinha = document.createElement('tr');
+            novaLinha.innerHTML = `
+                <td><input type="text" name="tipo[]" value="" placeholder="Tipo" class="form-control" style="padding: 6px;"></td>
+                <td><input type="text" name="area_tipologia[]" value="" placeholder="Área" class="form-control" style="padding: 6px;"></td>
+                <td><input type="text" name="dorm_tipologia[]" value="" placeholder="Dorm." class="form-control" style="padding: 6px;"></td>
+                <td><input type="text" name="ban_tipologia[]" value="" placeholder="Banheiros" class="form-control" style="padding: 6px;"></td>
+                <td><input type="text" name="preco_tipologia[]" value="" placeholder="Preço" class="form-control" style="padding: 6px;"></td>
+            `;
+            tbody.appendChild(novaLinha);
         }
 
-        // Converte fotos_extras string para array
-        if (data.fotos_extras) {
-            data.fotos_extras = data.fotos_extras.split(',').map(url => url.trim()).filter(url => url !== '');
+        function voltarMineracao() {
+            document.getElementById('screen-revisao').style.display = 'none';
+            document.getElementById('screen-minerar').style.display = 'block';
         }
 
-        data.id = Date.now();
-        data.data_extracao = new Date().toISOString();
+        function submitPublicacao(formData) {
+            const data = {};
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
+            }
 
-        fetch('/api/adicionar-imovel', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(err => { throw err; });
+            // Processa as tipologias da tabela
+            const tipos = formData.getAll('tipo[]');
+            const areas = formData.getAll('area_tipologia[]');
+            const dorms = formData.getAll('dorm_tipologia[]');
+            const bans = formData.getAll('ban_tipologia[]');
+            const precos = formData.getAll('preco_tipologia[]');
+
+            data.tipologias = [];
+            for (let i = 0; i < tipos.length; i++) {
+                if (tipos[i] || areas[i] || precos[i]) {
+                    data.tipologias.push({
+                        tipo: tipos[i],
+                        area: areas[i],
+                        dormitivos: dorms[i],
+                        banheiros: bans[i],
+                        preco: precos[i]
+                    });
+                }
             }
-            return response.json();
-        })
-        .then(resp => {
-            if(resp.success) {
-                alert('✅ Imóvel publicado com sucesso!');
-                window.location.href = '/';
-            } else {
-                alert('❌ ' + (resp.error || 'Erro desconhecido ao publicar.'));
+
+            // Converte fotos_extras string para array
+            if (data.fotos_extras) {
+                data.fotos_extras = data.fotos_extras.split(',').map(url => url.trim()).filter(url => url !== '');
             }
-        })
-        .catch(err => {
-            console.error(err);
-            alert('⚠️ ' + (err.error || 'Falha de conexão ao publicar.'));
-        });
-    }
-</script>
+
+            data.id = Date.now();
+            data.data_extracao = new Date().toISOString();
+
+            fetch('/api/adicionar-imovel', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw err; });
+                }
+                return response.json();
+            })
+            .then(resp => {
+                if(resp.success) {
+                    alert('✅ Imóvel publicado com sucesso!');
+                    window.location.href = '/';
+                } else {
+                    alert('❌ ' + (resp.error || 'Erro desconhecido ao publicar.'));
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('⚠️ ' + (err.error || 'Falha de conexão ao publicar.'));
+            });
+        }
+    </script>
 </body>
 </html>
