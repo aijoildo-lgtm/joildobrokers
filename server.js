@@ -1,6 +1,8 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const axios = require('axios');
+const cheerio = require('cheerio');
 const puppeteer = require('puppeteer');
 const cors = require('cors');
 
@@ -11,7 +13,6 @@ app.use(express.static(__dirname));
 
 const DATA_FILE = path.join(__dirname, 'imoveis.json');
 
-// Garante que o arquivo JSON existe
 const getImoveis = () => {
     try {
         if (!fs.existsSync(DATA_FILE)) {
@@ -31,13 +32,13 @@ const saveImoveis = (imoveis) => {
 
 // --- FUNÇÃO DE EXTRAÇÃO COM PUPPETEER (ROBÔ DE NAVEGAÇÃO) ---
 
-async function extrairDadosOrulo(url) {
+async function extrairDadosOruloPuppeteer(url) {
     let browser = null;
     try {
         console.log(`🚀 Iniciando navegador headless para: ${url}`);
 
         browser = await puppeteer.launch({
-            headless: true, // Roda em segundo plano
+            headless: true,
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
@@ -47,22 +48,15 @@ async function extrairDadosOrulo(url) {
         });
 
         const page = await browser.newPage();
-        
-        // Configura User-Agent para parecer um navegador real
         await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
 
-        // Navega para a URL e espera o carregamento completo
         await page.goto(url, { waitUntil: 'networkidle2', timeout: 45000 });
-
-        // Espera um tempo extra para carregar elementos dinâmicos (React/Vue)
         await new Promise(r => setTimeout(r, 3000));
 
-        // Extrai os dados usando evaluate (injeta código JS na página)
         const dados = await page.evaluate(() => {
             const bodyText = document.body.innerText;
             const lines = bodyText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
 
-            // Helper de busca por rótulo
             const findValue = (labels) => {
                 for (let line of lines) {
                     const lower = line.toLowerCase();
@@ -78,29 +72,10 @@ async function extrairDadosOrulo(url) {
                 return '';
             };
 
-            // Imagens
             const imgs = Array.from(document.querySelectorAll('img'))
                 .map(img => img.src)
                 .filter(src => src && src.startsWith('http') && !src.includes('logo') && !src.includes('icon'))
                 .slice(0, 10);
-
-            // Tipologias (Tentativa de capturar linhas de tabela ou listas de unidades)
-            const tipologias = [];
-            document.querySelectorAll('table tr, .typology, .unit, [class*="typology"], [class*="unit"]').forEach(el => {
-                const text = el.innerText;
-                if (text.includes('m²') || text.includes('m2') || text.includes('R$')) {
-                    const cols = Array.from(el.querySelectorAll('td, div, span')).map(c => c.innerText.trim());
-                    if (cols.length >= 4) {
-                        tipologias.push({
-                            tipo: cols[0],
-                            area: cols[1],
-                            dormitivos: cols[2],
-                            banheiros: cols[3],
-                            preco: cols[4] || ''
-                        });
-                    }
-                }
-            });
 
             return {
                 nome_do_projeto: document.title || findValue(['Nome do Projeto', 'Imóvel']),
@@ -125,7 +100,7 @@ async function extrairDadosOrulo(url) {
                 iptu: findValue(['IPTU']) || 'A definir',
                 ri: findValue(['RI']) || 'A definir',
                 fotos: imgs,
-                tipologias: tipologias.length > 0 ? tipologias : [{ tipo: "A definir", area: "A definir", dormitivos: "A definir", banheiros: "A definir", preco: "Consulte" }]
+                tipologias: [{ tipo: "A definir", area: "A definir", dormitivos: "A definir", banheiros: "A definir", preco: "Consulte" }]
             };
         });
 
@@ -135,6 +110,82 @@ async function extrairDadosOrulo(url) {
     } catch (error) {
         console.error('❌ Erro na extração Puppeteer:', error.message);
         if (browser) await browser.close();
+        return { success: false, error: error.message };
+    }
+}
+
+// --- FUNÇÃO DE EXTRAÇÃO ESTÁTICA (FALLBACK) ---
+
+async function extrairDadosOruloEstático(url) {
+    try {
+        console.log(`🔍 Iniciando extração estática (Fallback) para: ${url}`);
+
+        const response = await axios.get(url, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7'
+            },
+            timeout: 15000
+        });
+
+        const $ = cheerio.load(response.data);
+
+        // Helper de busca de valor por rótulo
+        const findValue = (labels) => {
+            const bodyText = $('body').text();
+            const lines = bodyText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+
+            for (let line of lines) {
+                const lower = line.toLowerCase();
+                for (let label of labels) {
+                    if (lower.includes(label.toLowerCase())) {
+                        const parts = line.split(':');
+                        if (parts.length > 1) return parts.slice(1).join(':').trim();
+                        const idx = lines.indexOf(line);
+                        if (idx >= 0 && idx + 1 < lines.length) return lines[idx + 1].trim();
+                    }
+                }
+            }
+            return '';
+        };
+
+        const imgs = $('img')
+            .map((i, el) => $(el).attr('src'))
+            .get()
+            .filter(src => src && src.startsWith('http') && !src.includes('logo') && !src.includes('icon'))
+            .slice(0, 10);
+
+        const dados = {
+            nome_do_projeto: $('h1').first().text().trim() || $('title').text().trim() || 'Imóvel Orulo',
+            construtora: findValue(['Construtora', 'Incorporadora']) || 'Não informada',
+            localizacao: findValue(['Localização', 'Endereço', 'Bairro', 'Cidade']) || 'São Paulo',
+            area_util: findValue(['Área útil', 'Área total', 'Metragem']) || 'A definir',
+            dormitorios: findValue(['Dormitórios', 'Quartos']) || 'A definir',
+            suites: findValue(['Suítes']) || 'A definir',
+            banheiros: findValue(['Banheiros']) || 'A definir',
+            vagas: findValue(['Vagas', 'Garagem']) || 'A definir',
+            preco_a_partir: findValue(['Preço', 'Valor', 'Partida']) || 'Consulte',
+            estagio: findValue(['Estágio', 'Estagio', 'Situação']) || 'outros',
+            estoque: findValue(['Estoque']) || 'A definir',
+            lancamento: findValue(['Lançamento']) || 'A definir',
+            unidades_andar: findValue(['Unidades por andar', 'Unidades/andar']) || 'A definir',
+            entrega: findValue(['Entrega']) || 'A definir',
+            total_unidades: findValue(['Total de unidades', 'Unidades totais']) || 'A definir',
+            numero_andares: findValue(['Número de andares', 'Andares']) || 'A definir',
+            area_terreno: findValue(['Área do terreno']) || 'A definir',
+            area_laje: findValue(['Área da laje']) || 'A definir',
+            condominio: findValue(['Condomínio', 'Condominio']) || 'A definir',
+            iptu: findValue(['IPTU']) || 'A definir',
+            ri: findValue(['RI']) || 'A definir',
+            fotos: imgs,
+            tipologias: [{ tipo: "A definir", area: "A definir", dormitivos: "A definir", banheiros: "A definir", preco: "Consulte" }]
+        };
+
+        return { success: true, dados };
+
+    } catch (error) {
+        console.error('❌ Erro na extração estática:', error.message);
         return { success: false, error: error.message };
     }
 }
@@ -155,7 +206,7 @@ app.get('/api/imoveis', (req, res) => {
     res.json(getImoveis());
 });
 
-// API: Mineração de Dados do Orulo via Puppeteer
+// API: Mineração de Dados do Orulo
 app.post('/api/minerar-orulo', async (req, res) => {
     const { url } = req.body;
 
@@ -163,11 +214,17 @@ app.post('/api/minerar-orulo', async (req, res) => {
         return res.status(400).json({ success: false, error: 'URL inválida ou não pertence ao Orulo' });
     }
 
-    const resultado = await extrairDadosOrulo(url);
+    // 1. Tenta usar o Puppeteer (se houver Chrome instalado)
+    let resultado = await extrairDadosOruloPuppeteer(url);
+
+    // 2. Se falhar (ex: "Could not find Chrome"), faz o fallback para extração estática
+    if (!resultado.success) {
+        console.log('⚠️ Tentando fallback de extração estática...');
+        resultado = await extrairDadosOruloEstático(url);
+    }
 
     if (resultado.success) {
         const dados = resultado.dados;
-        // Salva no JSON local
         const imovel = {
             id: Date.now(),
             nome_do_projeto: dados.nome_do_projeto,
