@@ -11,7 +11,9 @@ app.use(express.json());
 app.use(express.static(__dirname));
 
 const DATA_FILE = path.join(__dirname, 'imoveis.json');
+const CONFIG_FILE = path.join(__dirname, 'config.json');
 
+// Helper Imóveis
 const getImoveis = () => {
     try {
         if (!fs.existsSync(DATA_FILE)) {
@@ -19,22 +21,54 @@ const getImoveis = () => {
             return [];
         }
         return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
-    } catch (error) {
-        return [];
-    }
+    } catch (error) { return []; }
 };
 
 const saveImoveis = (imoveis) => {
     fs.writeFileSync(DATA_FILE, JSON.stringify(imoveis, null, 2));
 };
 
+// Helper Configurações
+const getConfig = () => {
+    try {
+        if (!fs.existsSync(CONFIG_FILE)) {
+            const defaultConfig = {
+                logoUrl: "",
+                slogan: "Ética e dedicação para tornar seus sonhos realidade",
+                linkedin: "https://www.linkedin.com/in/joildo-costa-0154a29b/",
+                instagram: "https://www.instagram.com/joildobrokers",
+                facebook: "https://www.facebook.com/joildobrokers",
+                youtube: "https://www.youtube.com/@joildobrokers",
+                whatsapp: "5511999999999",
+                telefone: "(11) 99999-9999",
+                email: "contato@joildobrokers.com.br",
+                creci: "CRECI 245890-F"
+            };
+            fs.writeFileSync(CONFIG_FILE, JSON.stringify(defaultConfig, null, 2));
+            return defaultConfig;
+        }
+        return JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
+    } catch (error) { return {}; }
+};
+
+const saveConfig = (config) => {
+    fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2));
+};
+
 // Rotas de Páginas
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 app.get('/admin.html', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
-app.get('/api/imoveis', (req, res) => res.json(getImoveis()));
 
-// Mineração com Filtro Anti-Bloqueio (Resolve o bug do "Login")
+// APIs
+app.get('/api/imoveis', (req, res) => res.json(getImoveis()));
+app.get('/api/config', (req, res) => res.json(getConfig()));
+app.post('/api/config', (req, res) => {
+    saveConfig(req.body);
+    res.json({ success: true, message: "Configurações atualizadas!" });
+});
+
+// Mineração do Órulo
 app.post('/api/minerar-orulo', async (req, res) => {
     const { url } = req.body;
     if (!url || !url.includes('orulo.com.br')) {
@@ -44,21 +78,14 @@ app.post('/api/minerar-orulo', async (req, res) => {
     try {
         const response = await axios.get(url, {
             headers: { 
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-                'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
             },
             timeout: 8000
         });
 
         const $ = cheerio.load(response.data);
-        
-        // Tenta capturar das Meta Tags (ignora telas de login)
-        let titulo = $('meta[property="og:title"]').attr('content') || 
-                     $('meta[name="twitter:title"]').attr('content') || 
-                     $('h1').first().text().trim();
+        let titulo = $('meta[property="og:title"]').attr('content') || $('h1').first().text().trim();
 
-        // Filtro de Segurança: Se retornar "Login" ou algo genérico, limpa o nome
         if (!titulo || titulo.toLowerCase().includes('login') || titulo.toLowerCase() === 'órulo') {
             const buildingId = url.split('/').pop() || '';
             titulo = `Empreendimento Nobre #${buildingId}`;
@@ -69,7 +96,7 @@ app.post('/api/minerar-orulo', async (req, res) => {
         const fotos = [];
         $('img').each((i, el) => {
             const src = $(el).attr('src') || $(el).attr('data-src');
-            if (src && src.startsWith('http') && !src.includes('logo') && !src.includes('icon') && !fotos.includes(src)) {
+            if (src && src.startsWith('http') && !src.includes('logo') && !fotos.includes(src)) {
                 fotos.push(src);
             }
         });
@@ -87,7 +114,6 @@ app.post('/api/minerar-orulo', async (req, res) => {
         });
 
     } catch (e) {
-        // Fallback seguro caso o Órulo bloqueie a requisição do servidor
         const buildingId = url.split('/').pop() || '82950';
         res.json({
             success: true,

@@ -1,7 +1,7 @@
 {
   "name": "joildobrokers",
   "version": "1.0.0",
-  "description": "Portal Imobiliario Joildo Brokers - Premium Real Estate",
+  "description": "Portal Imobiliario Joildo Brokers - High Performance Real Estate Advisory",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
