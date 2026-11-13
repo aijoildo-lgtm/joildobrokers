@@ -12,15 +12,14 @@ app.use(express.static(__dirname));
 
 const DATA_FILE = path.join(__dirname, 'imoveis.json');
 
-// Garante que o arquivo JSON existe e está vazio inicialmente se não houver dados
+// Garante que o arquivo JSON existe
 const getImoveis = () => {
     try {
         if (!fs.existsSync(DATA_FILE)) {
             fs.writeFileSync(DATA_FILE, JSON.stringify([], null, 2));
             return [];
         }
-        const data = fs.readFileSync(DATA_FILE, 'utf8');
-        return JSON.parse(data);
+        return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
     } catch (error) {
         console.error("Erro ao ler imoveis.json:", error);
         return [];
@@ -28,105 +27,127 @@ const getImoveis = () => {
 };
 
 const saveImoveis = (imoveis) => {
-    try {
-        fs.writeFileSync(DATA_FILE, JSON.stringify(imoveis, null, 2));
-    } catch (error) {
-        console.error("Erro ao salvar imoveis.json:", error);
-    }
+    fs.writeFileSync(DATA_FILE, JSON.stringify(imoveis, null, 2));
 };
 
-// --- FUNÇÕES DE PARSE E EXTRAÇÃO AUTOMÁTICA DO ORULO ---
+// --- FUNÇÃO DE EXTRAÇÃO INTELIGENTE DO ORULO ---
 
-function extrairConstrutora($) {
-    const text = $('*').filter(function() {
-        const txt = $(this).text();
-        return txt.includes('Construtora') || txt.includes('Incorporadora');
-    }).first();
+function extrairDadosOrulo($) {
+    const dados = {
+        nome_do_projeto: '',
+        construtora: '',
+        localizacao: '',
+        area_util: '',
+        dormitorios: '',
+        suites: '',
+        banheiros: '',
+        vagas: '',
+        preco_a_partir: '',
+        lazer: '',
+        tipologias: [],
+        estagio: '',
+        estoque: '',
+        lancamento: '',
+        unidades_andar: '',
+        entrega: '',
+        total_unidades: '',
+        numero_andares: '',
+        area_terreno: '',
+        area_laje: '',
+        condominio: '',
+        iptu: '',
+        ri: ''
+    };
 
-    if (text.length) {
-        const parent = text.parent();
-        const fullText = parent.text();
-        const match = fullText.match(/(?:Construtora|Incorporadora)[:\s]+([^\n\r]+)/i);
-        if (match) return match[1].trim();
-    }
-    return 'Não informada';
-}
+    // 1. Título Principal
+    dados.nome_do_projeto = $('h1').first().text().trim() || $('title').text().trim();
 
-function parseCharacteristics($) {
-    const chars = {};
-    $('dt, td, .characteristic-item, li, span, div').each((i, el) => {
-        const label = $(el).text().trim().toLowerCase();
-        let value = '';
+    // Coleta todo o texto da página em linhas limpas para busca por palavras-chave
+    const bodyText = $('body').text();
+    const lines = bodyText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
 
-        if (el.tagName === 'dt') {
-            const dd = $(el).next('dd');
-            if (dd.length) value = dd.text().trim();
-        } else if ($(el).is('td')) {
-            const nextTd = $(el).next('td');
-            if (nextTd.length) value = nextTd.text().trim();
-        } else {
-            const parent = $(el).parent();
-            const valueEl = parent.find('.value, .characteristic-value, td:last-child, span:last-child');
-            if (valueEl.length) value = valueEl.text().trim();
+    // Helper de busca de valor por rótulo
+    const findValueByLabel = (labels) => {
+        for (let line of lines) {
+            const lowerLine = line.toLowerCase();
+            for (let label of labels) {
+                if (lowerLine.includes(label.toLowerCase())) {
+                    // Se a linha contém os dois (ex: "Área útil: 80m²")
+                    const parts = line.split(':');
+                    if (parts.length > 1) {
+                        return parts.slice(1).join(':').trim();
+                    } else {
+                        // Se for apenas o rótulo, pega a próxima linha
+                        const idx = lines.indexOf(line);
+                        if (idx >= 0 && idx + 1 < lines.length) {
+                            return lines[idx + 1].trim();
+                        }
+                    }
+                }
+            }
         }
+        return '';
+    };
 
-        if (value && value.length < 100) {
-            if (label.includes('área útil') || label.includes('area util') || (label.includes('área') && label.includes('m²'))) chars.area_util = value;
-            else if (label.includes('dormitório') || label.includes('dormitorios') || label.includes('quartos')) chars.dormitorios = value;
-            else if (label.includes('suíte') || label.includes('suites')) chars.suites = value;
-            else if (label.includes('banheiro') || label.includes('banheiros')) chars.banheiros = value;
-            else if (label.includes('vaga') || label.includes('garagem')) chars.vagas = value;
-            else if (label.includes('preço') || label.includes('valor') || label.includes('partida')) chars.preco_a_partir = value;
-            else if (label.includes('estágio') || label.includes('estagio')) chars.estagio = value;
-            else if (label.includes('estoque')) chars.estoque = value;
-            else if (label.includes('lançamento') || label.includes('lancamento')) chars.lancamento = value;
-            else if (label.includes('unidades por andar') || label.includes('unidades/andar')) chars.unidades_andar = value;
-            else if (label.includes('entrega')) chars.entrega = value;
-            else if (label.includes('total de unidades') || label.includes('unidades totais')) chars.total_unidades = value;
-            else if (label.includes('número de andares') || label.includes('numero de andares') || label.includes('andares')) chars.numero_andares = value;
-            else if (label.includes('área do terreno') || label.includes('area do terreno')) chars.area_terreno = value;
-            else if (label.includes('área da laje') || label.includes('area da laje')) chars.area_laje = value;
-            else if (label.includes('condomínio') || label.includes('condominio') && !label.includes('valor')) chars.condominio = value;
-            else if (label.includes('iptu')) chars.iptu = value;
-            else if (label.includes('ri')) chars.ri = value;
-        }
-    });
-    return chars;
-}
+    // Aplica os mapeamentos de rótulos comuns do Orulo
+    dados.construtora = findValueByLabel(['Construtora', 'Incorporadora']) || 'Não informada';
+    dados.localizacao = findValueByLabel(['Localização', 'Endereço', 'Cidade', 'Bairro']) || 'Localização não informada';
+    dados.area_util = findValueByLabel(['Área útil', 'Área total', 'Metragem', 'Área']) || 'A definir';
+    dados.dormitorios = findValueByLabel(['Dormitórios', 'Quartos', 'Dormitorios']) || 'A definir';
+    dados.suites = findValueByLabel(['Suítes', 'Suites']) || 'A definir';
+    dados.banheiros = findValueByLabel(['Banheiros', 'Banheiro']) || 'A definir';
+    dados.vagas = findValueByLabel(['Vagas', 'Garagem']) || 'A definir';
+    dados.preco_a_partir = findValueByLabel(['Preço a partir de', 'Valor de', 'Preço', 'Valor']) || 'Consulte';
+    dados.estagio = findValueByLabel(['Estágio', 'Estagio']) || 'outros';
+    dados.estoque = findValueByLabel(['Estoque']) || 'A definir';
+    dados.lancamento = findValueByLabel(['Lançamento']) || 'A definir';
+    dados.unidades_andar = findValueByLabel(['Unidades por andar', 'Unidades/andar']) || 'A definir';
+    dados.entrega = findValueByLabel(['Entrega']) || 'A definir';
+    dados.total_unidades = findValueByLabel(['Total de unidades', 'Unidades totais']) || 'A definir';
+    dados.numero_andares = findValueByLabel(['Número de andares', 'Andares']) || 'A definir';
+    dados.area_terreno = findValueByLabel(['Área do terreno', 'Área do terreno']) || 'A definir';
+    dados.area_laje = findValueByLabel(['Área da laje', 'Laje']) || 'A definir';
+    dados.condominio = findValueByLabel(['Condomínio', 'Condominio']) || 'A definir';
+    dados.iptu = findValueByLabel(['IPTU']) || 'A definir';
+    dados.ri = findValueByLabel(['RI']) || 'A definir';
 
-function extrairLazer($) {
+    // 2. Extração de Lazer / Características do Condomínio
+    // Procura por elementos listados sob cabeçalhos de "Lazer" ou "Condomínio"
     const lazerItems = [];
-    $('.lazer-item, .amenity-item, [class*="lazer"] span, [class*="amenity"]').each((i, el) => {
-        const text = $(el).text().trim();
-        if (text && lazerItems.indexOf(text) === -1) {
-            lazerItems.push(text);
+    $('h2, h3, h4, .section-title, .title, .header-title').each(function() {
+        const headerText = $(this).text().trim().toLowerCase();
+        if (headerText.includes('lazer') || headerText.includes('condomínio') || headerText.includes('amenities')) {
+            $(this).next().find('li, span, .item, a, .amenity-item').each(function() {
+                const itemText = $(this).text().trim();
+                if (itemText && itemText.length < 50 && lazerItems.indexOf(itemText) === -1) {
+                    lazerItems.push(itemText);
+                }
+            });
         }
     });
-    const header = $('h3, h4, .section-title').filter(function() {
-        return $(this).text().toLowerCase().includes('lazer') || $(this).text().toLowerCase().includes('condomínio');
-    });
-    if (header.length) {
-        header.next().find('li, span, .item').each((i, el) => {
-            const text = $(el).text().trim();
-            if (text && lazerItems.indexOf(text) === -1) lazerItems.push(text);
-        });
+    if (lazerItems.length > 0) {
+        dados.lazer = lazerItems.join(', ');
     }
-    return lazerItems.join(', ');
-}
 
-function extrairTipologias($) {
-    const tipologias = [];
-    $('.typology-item, .unit-type, table.units tr').each((i, el) => {
-        const tipo = $(el).find('.type, .unit-name').first().text().trim();
-        const area = $(el).find('.area').first().text().trim();
-        const dorm = $(el).find('.bedrooms, .rooms').first().text().trim();
-        const ban = $(el).find('.bathrooms').first().text().trim();
-        const prec = $(el).find('.price').first().text().trim();
-        if (tipo || prec) {
-            tipologias.push({ tipo, area, dormitivos: dorm, banheiros: ban, preco: prec });
+    // 3. Extração de Tipologias (Tabelas ou listas de unidades)
+    $('table tr, .typology-row, .unit-item, .row-unit').each(function() {
+        const rowText = $(this).text().trim();
+        // Tipologias geralmente possuem área (m²) e preço (R$)
+        if (rowText.includes('m²') || rowText.includes('m2') || rowText.includes('R$')) {
+            const cols = $(this).find('td, div, span');
+            if (cols.length >= 4) {
+                dados.tipologias.push({
+                    tipo: $(cols[0]).text().trim(),
+                    area: $(cols[1]).text().trim(),
+                    dormitivos: $(cols[2]).text().trim(),
+                    banheiros: $(cols[3]).text().trim(),
+                    preco: $(cols[4]) ? $(cols[4]).text().trim() : ''
+                });
+            }
         }
     });
-    return tipologias;
+
+    return dados;
 }
 
 // --- ROTAS DE SISTEMA ---
@@ -145,7 +166,7 @@ app.get('/api/imoveis', (req, res) => {
     res.json(getImoveis());
 });
 
-// API: Mineração Detalhada do Orulo
+// API: Mineração de Dados do Orulo
 app.post('/api/minerar-orulo', async (req, res) => {
     const { url } = req.body;
 
@@ -154,7 +175,7 @@ app.post('/api/minerar-orulo', async (req, res) => {
     }
 
     try {
-        console.log(`🔍 Iniciando mineração detalhada para: ${url}`);
+        console.log(`🔍 Iniciando extração inteligente para: ${url}`);
 
         const response = await axios.get(url, {
             headers: {
@@ -166,12 +187,9 @@ app.post('/api/minerar-orulo', async (req, res) => {
         });
 
         const $ = cheerio.load(response.data);
+        const dadosExtraidos = extrairDadosOrulo($);
 
-        const nome_do_projeto = $('h1').first().text().trim() || $('title').text().trim() || 'Imóvel Orulo';
-        const construtora = extrairConstrutora($);
-        const incorporadora = construtora;
-        const localizacao = $('.olx-dsorg__location, .address, [class*="location"], [class*="address"]').first().text().trim() || 'Localização não informada';
-
+        // Busca a foto principal
         let foto_principal = '';
         $('img').each((i, el) => {
             const src = $(el).attr('src');
@@ -180,43 +198,16 @@ app.post('/api/minerar-orulo', async (req, res) => {
             }
         });
 
-        const chars = parseCharacteristics($);
-        const lazer = extrairLazer($);
-        const tipologias = extrairTipologias($);
-
-        const dadosExtraidos = {
-            nome_do_projeto,
-            construtora,
-            incorporadora,
-            localizacao,
+        const resultado = {
+            ...dadosExtraidos,
             foto_principal: foto_principal || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800&q=80',
             youtube_url: "",
             tour_virtual_url: "",
-            fotos_extras: [],
-            area_util: chars.area_util || "A definir",
-            dormitorios: chars.dormitorios || "A definir",
-            suites: chars.suites || "A definir",
-            banheiros: chars.banheiros || "A definir",
-            vagas: chars.vagas || "A definir",
-            preco_a_partir: chars.preco_a_partir || "Consulte",
-            lazer: lazer || "A definir",
-            tipologias: tipologias.length > 0 ? tipologias : [{ tipo: "A definir", area: "A definir", dormitivos: "A definir", banheiros: "A definir", preco: "Consulte" }],
-            estagio: chars.estagio || "outros", // Mapeamento doEstágio
-            estoque: chars.estoque || "A definir",
-            lancamento: chars.lancamento || "A definir",
-            unidades_andar: chars.unidades_andar || "A definir",
-            entrega: chars.entrega || "A definir",
-            total_unidades: chars.total_unidades || "A definir",
-            numero_andares: chars.numero_andares || "A definir",
-            area_terreno: chars.area_terreno || "A definir",
-            area_laje: chars.area_laje || "A definir",
-            condominio: chars.condominio || "A definir",
-            iptu: chars.iptu || "A definir",
-            ri: chars.ri || "A definir"
+            fotos_extras: []
         };
 
-        console.log('✅ Dados detalhados extraídos:', dadosExtraidos);
-        res.json({ success: true, dados: dadosExtraidos });
+        console.log('✅ Dados extraídos com sucesso:', resultado);
+        res.json({ success: true, dados: resultado });
 
     } catch (error) {
         console.error('Erro ao processar mineração detalhada:', error.message);
@@ -224,7 +215,7 @@ app.post('/api/minerar-orulo', async (req, res) => {
     }
 });
 
-// API: Adicionar imóvel com verificação de duplicidade e salva estagio
+// API: Adicionar imóvel com verificação de duplicidade
 app.post('/api/adicionar-imovel', (req, res) => {
     const imovel = req.body;
     const imoveis = getImoveis();
@@ -251,7 +242,6 @@ app.post('/api/adicionar-imovel', (req, res) => {
         });
     }
 
-    // Garante que o campo estagio seja salvo corretamente, defaultizando para 'outros' se não for informado
     imovel.estagio = imovel.estagio || "outros";
     imovel.id = Date.now();
     imovel.data_extracao = new Date().toISOString();
