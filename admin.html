@@ -32,6 +32,19 @@
         .tipologias-table th, .tipologias-table td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 0.85rem; }
         .tipologias-table th { background: #f8f9fa; }
         .tipologias-table input { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; }
+
+        /* Rodapé fixo com credenciais */
+        .footer-credenciais {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background: #002d72;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            font-size: 0.9rem;
+            z-index: 999;
+        }
     </style>
 </head>
 <body>
@@ -66,6 +79,11 @@
 
     <!-- Tela de Revisão (Gerada Dinamicamente) -->
     <div id="screen-revisao" style="display:none;"></div>
+</div>
+
+<!-- Rodapé fixo com as credenciais -->
+<div class="footer-credenciais">
+    Link: https://joildobrokers.onrender.com/admin | Login: adm | Senha: 1234
 </div>
 
 <script>
@@ -296,4 +314,118 @@
                         <label for="lazer">Características do Condomínio / Lazer:</label>
                         <textarea name="lazer" id="lazer" class="form-control" rows="3">${dados.lazer}</textarea>
                     </div>
-                    <div class="form-group" style="grid-column: 1 / -
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label>Tipologias Disponíveis (Editável):</label>
+                        <table class="tipologias-table">
+                            <thead>
+                                <tr>
+                                    <th>Tipo</th>
+                                    <th>Área</th>
+                                    <th>Dormitórios</th>
+                                    <th>Banheiros</th>
+                                    <th>Preço</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tipologias-tbody">
+                                ${tipologiasRows}
+                            </tbody>
+                        </table>
+                        <button type="button" class="btn btn-blue" style="margin-top: 10px; width: auto; padding: 6px 12px;" onclick="adicionarLinhaTipologia()">
+                            <i class="fas fa-plus"></i> Adicionar Linha
+                        </button>
+                    </div>
+                </div>
+
+                <div style="margin-top: 30px; display: flex; gap: 15px;">
+                    <button type="submit" class="btn btn-green" style="flex: 1; padding: 15px; font-size: 1.1rem;">
+                        <i class="fas fa-save"></i> Confirmar e Publicar Imóvel
+                    </button>
+                </div>
+            </form>
+        `;
+
+        document.getElementById('form-publicacao').addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitPublicacao(new FormData(this));
+        });
+    }
+
+    function adicionarLinhaTipologia() {
+        const tbody = document.getElementById('tipologias-tbody');
+        const novaLinha = document.createElement('tr');
+        novaLinha.innerHTML = `
+            <td><input type="text" name="tipo[]" value="" placeholder="Tipo"></td>
+            <td><input type="text" name="area_tipologia[]" value="" placeholder="Área"></td>
+            <td><input type="text" name="dorm_tipologia[]" value="" placeholder="Dormitórios"></td>
+            <td><input type="text" name="ban_tipologia[]" value="" placeholder="Banheiros"></td>
+            <td><input type="text" name="preco_tipologia[]" value="" placeholder="Preço"></td>
+        `;
+        tbody.appendChild(novaLinha);
+    }
+
+    function voltarMineracao() {
+        document.getElementById('screen-revisao').style.display = 'none';
+        document.getElementById('screen-minerar').style.display = 'block';
+    }
+
+    function submitPublicacao(formData) {
+        const data = {};
+        for (let [key, value] of formData.entries()) {
+            data[key] = value;
+        }
+
+        // Processa as tipologias da tabela
+        const tipos = formData.getAll('tipo[]');
+        const areas = formData.getAll('area_tipologia[]');
+        const dorms = formData.getAll('dorm_tipologia[]');
+        const bans = formData.getAll('ban_tipologia[]');
+        const precos = formData.getAll('preco_tipologia[]');
+
+        data.tipologias = [];
+        for (let i = 0; i < tipos.length; i++) {
+            if (tipos[i] || areas[i] || precos[i]) {
+                data.tipologias.push({
+                    tipo: tipos[i],
+                    area: areas[i],
+                    dormitivos: dorms[i],
+                    banheiros: bans[i],
+                    preco: precos[i]
+                });
+            }
+        }
+
+        // Converte fotos_extras string para array
+        if (data.fotos_extras) {
+            data.fotos_extras = data.fotos_extras.split(',').map(url => url.trim()).filter(url => url !== '');
+        }
+
+        data.id = Date.now();
+        data.data_extracao = new Date().toISOString();
+
+        fetch('/api/adicionar-imovel', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => { throw err; });
+            }
+            return response.json();
+        })
+        .then(resp => {
+            if(resp.success) {
+                alert('✅ Imóvel publicado com sucesso!');
+                window.location.href = '/';
+            } else {
+                alert('❌ ' + (resp.error || 'Erro desconhecido ao publicar.'));
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('⚠️ ' + (err.error || 'Falha de conexão ao publicar.'));
+        });
+    }
+</script>
+</body>
+</html>
