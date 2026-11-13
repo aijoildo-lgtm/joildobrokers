@@ -18,9 +18,9 @@
             --text-dark: #0F172A;
             --text-muted: #475569;
             --white: #FFFFFF;
-            --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.06);
-            --shadow-hover: 0 20px 40px rgba(0, 0, 0, 0.12);
-            --transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+            --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.08);
+            --shadow-hover: 0 25px 50px rgba(0, 0, 0, 0.15);
+            --transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -40,51 +40,143 @@
         .nav-admin { background: var(--primary-dark); color: var(--gold); padding: 0.6rem 1.2rem; border-radius: 50px; text-decoration: none; font-weight: 700; font-size: 0.85rem; border: 1px solid var(--gold); transition: var(--transition); }
         .nav-admin:hover { background: var(--gold); color: var(--primary-dark); }
 
-        /* HERO */
-        .hero-slider { width: 100%; height: 500px; background: linear-gradient(135deg, #0A1128 0%, #1E3A8A 100%); display: flex; align-items: center; justify-content: center; text-align: center; color: var(--white); padding: 0 20px; }
+        /* HERO COM ANIMAÇÃO DE ENTRADA */
+        .hero-slider { width: 100%; height: 500px; background: linear-gradient(135deg, #0A1128 0%, #1E3A8A 100%); display: flex; align-items: center; justify-content: center; text-align: center; color: var(--white); padding: 0 20px; position: relative; overflow: hidden; }
+        .hero-content { animation: fadeInScale 1s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .hero-content h1 { font-size: 3rem; font-weight: 800; margin-bottom: 1rem; background: linear-gradient(to right, #FFFFFF, #D4AF37); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .hero-content p { font-size: 1.1rem; color: #CBD5E1; }
 
-        /* FILTROS (Ordem Exata Pedida) */
+        @keyframes fadeInScale {
+            0% { opacity: 0; transform: scale(0.95) translateY(20px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        /* FILTROS (Ordem Exata) */
         .filters-container { max-width: 1200px; margin: -40px auto 40px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); padding: 2rem; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); position: relative; z-index: 100; border: 1px solid rgba(255,255,255,0.8); }
         .quick-filters-container { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 1.5rem; justify-content: center; }
         .filter-btn { padding: 0.7rem 1.5rem; border-radius: 50px; border: 1px solid #CBD5E1; background: #F1F5F9; color: var(--text-dark); font-weight: 600; cursor: pointer; transition: var(--transition); font-size: 0.85rem; text-transform: uppercase; }
-        .filter-btn:hover { background: #E2E8F0; }
+        .filter-btn:hover { background: #E2E8F0; transform: translateY(-2px); }
         .filter-btn.active { background: var(--primary-dark); color: var(--gold); border-color: var(--primary-dark); box-shadow: 0 4px 15px rgba(10, 17, 40, 0.3); }
 
-        /* VITRINE (Estilo Tishman / Diálogo / Eztec) */
+        /* VITRINE (ESTILO EZTEC + TISHMAN SPEYER) */
         .container { max-width: 1300px; margin: 0 auto; padding: 2rem; }
         .section-title { font-size: 2rem; color: var(--primary-dark); margin-bottom: 30px; font-weight: 700; border-bottom: 3px solid var(--gold); display: inline-block; padding-bottom: 8px; }
         .imoveis-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 2.5rem; margin-bottom: 60px; }
 
-        .card { background: var(--white); border-radius: 20px; overflow: hidden; box-shadow: var(--shadow-card); transition: var(--transition); border: 1px solid #E2E8F0; display: flex; flex-direction: column; position: relative; }
-        .card:hover { transform: translateY(-8px); box-shadow: var(--shadow-hover); border-color: var(--gold); }
+        .card { 
+            background: var(--white); 
+            border-radius: 28px; /* Arredondado igual Eztec */
+            overflow: hidden; 
+            box-shadow: var(--shadow-card); 
+            transition: var(--transition); 
+            border: 1px solid #E2E8F0; 
+            display: flex; 
+            flex-direction: column; 
+            position: relative;
+            animation: cardEntrance 0.8s ease backwards;
+        }
 
-        /* Foto e Overlay Estilo Tishman Speyer */
-        .card-img { height: 260px; background-size: cover; background-position: center; position: relative; }
-        .card-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(10,17,40,0.8), transparent); display: flex; align-items: flex-end; padding: 1.2rem; opacity: 0; transition: var(--transition); }
+        @keyframes cardEntrance {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card:hover { 
+            transform: translateY(-12px); 
+            box-shadow: var(--shadow-hover); 
+            border-color: var(--gold); 
+        }
+
+        /* Foto com Zoom Animado ao Passar o Mouse (Tishman Style) */
+        .card-img-wrapper {
+            position: relative;
+            height: 270px;
+            overflow: hidden;
+            border-radius: 28px 28px 0 0;
+        }
+
+        .card-img { 
+            width: 100%;
+            height: 100%;
+            background-size: cover; 
+            background-position: center; 
+            transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .card:hover .card-img {
+            transform: scale(1.08); /* Efeito Zoom suave */
+        }
+
+        /* Overlay com botão de cadastro */
+        .card-overlay { 
+            position: absolute; 
+            inset: 0; 
+            background: linear-gradient(to top, rgba(10,17,40,0.85) 0%, rgba(10,17,40,0.2) 60%, transparent 100%); 
+            display: flex; 
+            align-items: flex-end; 
+            padding: 1.5rem; 
+            opacity: 0; 
+            transition: var(--transition); 
+        }
         .card:hover .card-overlay { opacity: 1; }
-        .btn-cadastre-topo { background: var(--gold); color: var(--primary-dark); border: none; padding: 0.7rem 1.2rem; border-radius: 50px; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
         
-        .card-ref { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); color: white; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; }
-        .card-badge { position: absolute; top: 15px; left: 15px; background: var(--white); color: var(--primary-dark); padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
+        .btn-cadastre-topo { 
+            background: var(--gold); 
+            color: var(--primary-dark); 
+            border: none; 
+            padding: 0.8rem 1.4rem; 
+            border-radius: 50px; 
+            font-weight: 700; 
+            font-size: 0.75rem; 
+            text-transform: uppercase; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4); 
+            transform: translateY(15px);
+            transition: var(--transition);
+        }
+        .card:hover .btn-cadastre-topo { transform: translateY(0); }
+        .btn-cadastre-topo:hover { background: white; }
+        
+        /* Badges e Referência */
+        .card-ref { position: absolute; top: 18px; right: 18px; background: rgba(0,0,0,0.75); backdrop-filter: blur(5px); color: white; padding: 5px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; z-index: 2; }
+        .card-badge { position: absolute; top: 18px; left: 18px; background: var(--white); color: var(--primary-dark); padding: 5px 14px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; z-index: 2; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
 
-        .card-body { padding: 1.5rem; display: flex; flex-direction: column; flex-grow: 1; }
-        .card-location { font-size: 0.75rem; font-weight: 700; color: var(--red-accent); text-transform: uppercase; margin-bottom: 4px; }
-        .card-title { font-size: 1.25rem; font-weight: 700; color: var(--primary-dark); margin-bottom: 10px; }
+        .card-body { padding: 1.8rem; display: flex; flex-direction: column; flex-grow: 1; }
+        .card-location { font-size: 0.75rem; font-weight: 700; color: var(--red-accent); text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px; }
+        .card-title { font-size: 1.35rem; font-weight: 700; color: var(--primary-dark); margin-bottom: 12px; }
 
-        /* Bloco de Entorno / Bairro (Estilo Diálogo) */
-        .neighborhood-block { background: #F8FAFC; border-left: 3px solid var(--gold); padding: 0.7rem 1rem; border-radius: 8px; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem; }
+        /* Bairro e proximidades (Estilo Eztec / Print) */
+        .neighborhood-info { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1.2rem; font-style: italic; display: flex; align-items: center; gap: 6px; }
+        .neighborhood-info i { color: var(--gold); }
 
-        /* Especificações (Estilo Eztec) */
-        .specs-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 1.2rem; }
-        .spec-pill { background: #F1F5F9; border: 1px solid #E2E8F0; padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; color: var(--text-dark); display: flex; align-items: center; gap: 5px; }
-        .spec-pill i { color: var(--primary-blue); }
+        /* Pílulas de especificações (Estilo Eztec) */
+        .specs-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 1.5rem; }
+        .spec-pill { background: #F8FAFC; border: 1px solid #E2E8F0; padding: 6px 12px; border-radius: 50px; font-size: 0.78rem; font-weight: 600; color: var(--text-dark); display: flex; align-items: center; gap: 6px; transition: var(--transition); }
+        .spec-pill i { color: var(--primary-blue); font-size: 0.85rem; }
+        .spec-pill:hover { background: #F1F5F9; border-color: var(--gold); }
 
-        .card-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #E2E8F0; padding-top: 1rem; margin-top: auto; }
-        .card-price { font-size: 1.3rem; font-weight: 800; color: var(--primary-dark); }
-        .btn-detalhes { background: var(--red-accent); color: white; border: none; padding: 0.6rem 1rem; border-radius: 8px; font-size: 0.8rem; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: var(--transition); }
-        .btn-detalhes:hover { background: #990000; }
+        .card-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #E2E8F0; padding-top: 1.2rem; margin-top: auto; }
+        .card-price { font-size: 1.4rem; font-weight: 800; color: var(--primary-dark); }
+        
+        .btn-detalhes { 
+            background: transparent; 
+            color: var(--red-accent); 
+            border: 2px solid var(--red-accent); 
+            padding: 0.6rem 1.2rem; 
+            border-radius: 50px; 
+            font-size: 0.8rem; 
+            font-weight: 700; 
+            cursor: pointer; 
+            text-transform: uppercase; 
+            transition: var(--transition); 
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-detalhes:hover { background: var(--red-accent); color: white; transform: translateX(4px); }
 
         .empty-state { grid-column: 1 / -1; text-align: center; padding: 60px; background: white; border-radius: 20px; color: var(--text-muted); }
     </style>
@@ -105,7 +197,7 @@
         </div>
     </section>
 
-    <!-- MENU DE FILTROS NA ORDEM EXATA PEDIDA -->
+    <!-- MENU DE FILTROS NA ORDEM EXATA -->
     <div class="filters-container">
         <div class="quick-filters-container">
             <button class="filter-btn active" data-filter="todos">Todos os Imóveis</button>
@@ -136,7 +228,7 @@
                     return;
                 }
 
-                imoveis.forEach(imob => {
+                imoveis.forEach((imob, index) => {
                     const foto = imob.foto_principal || imob.foto || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800&q=80';
                     const titulo = imob.nome_do_projeto || imob.titulo || 'Empreendimento';
                     const local = imob.localizacao || 'São Paulo';
@@ -144,10 +236,14 @@
                     const ref = imob.id ? `REF: ${String(imob.id).slice(-6)}` : 'REF: 001';
                     const estagio = (imob.estagio || 'lancamentos').toLowerCase();
 
+                    // Animação em cascata para cada card (atraso progressivo)
+                    const animationDelay = index * 0.1;
+
                     vitrine.insertAdjacentHTML('beforeend', `
-                        <div class="card" data-estagio="${estagio}">
-                            <div class="card-img" style="background-image: url('${foto}')">
-                                <span class="card-badge">Exclusivo</span>
+                        <div class="card" data-estagio="${estagio}" style="animation-delay: ${animationDelay}s;">
+                            <div class="card-img-wrapper">
+                                <div class="card-img" style="background-image: url('${foto}')"></div>
+                                <span class="card-badge">Destaque</span>
                                 <span class="card-ref">${ref}</span>
                                 <div class="card-overlay">
                                     <button class="btn-cadastre-topo" onclick="alert('Cadastre-se para receber o book completo de: ${titulo}')">
@@ -158,18 +254,21 @@
                             <div class="card-body">
                                 <div class="card-location">${local.split(',')[0]}</div>
                                 <h3 class="card-title">${titulo}</h3>
-                                <div class="neighborhood-block">
-                                    <i class="fas fa-map-marker-alt"></i> Localizado em região privilegiada com alta valorização e infraestrutura completa.
+                                
+                                <div class="neighborhood-info">
+                                    <i class="fas fa-map-marker-alt"></i> Próximo a principais vias e comércios da região.
                                 </div>
+
                                 <div class="specs-grid">
                                     <span class="spec-pill"><i class="fas fa-ruler-combined"></i> ${imob.area_util || '100m²'}</span>
-                                    <span class="spec-pill"><i class="fas fa-bed"></i> ${imob.dormitorios || '3'}</span>
-                                    <span class="spec-pill"><i class="fas fa-bath"></i> ${imob.banheiros || '2'}</span>
-                                    <span class="spec-pill"><i class="fas fa-car"></i> ${imob.vagas || '1'}</span>
+                                    <span class="spec-pill"><i class="fas fa-bed"></i> ${imob.dormitorios || '3 dorms'}</span>
+                                    <span class="spec-pill"><i class="fas fa-car"></i> ${imob.vagas || '2 vagas'}</span>
                                 </div>
                                 <div class="card-footer">
                                     <span class="card-price">${preco}</span>
-                                    <button class="btn-detalhes" onclick="alert('Detalhes do imóvel: ${titulo}\\nPreço: ${preco}')">Ver Detalhes</button>
+                                    <button class="btn-detalhes" onclick="alert('Detalhes do imóvel: ${titulo}\\nPreço: ${preco}')">
+                                        Ver Detalhes <i class="fas fa-arrow-right"></i>
+                                    </button>
                                 </div>
                             </div>
                         </div>
