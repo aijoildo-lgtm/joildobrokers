@@ -140,7 +140,7 @@ function limpar(b) {
 const novaRef = () => `REF-${Math.floor(100000 + Math.random() * 900000)}`;
 
 // APIs
-app.get('/api/versao', (req, res) => res.json({ versao: '2026-11-14-o', banco: bancoStatus }));
+app.get('/api/versao', (req, res) => res.json({ versao: '2026-11-14-p', banco: bancoStatus }));
 app.get('/api/imoveis', ah(async (req, res) => res.json((await getImoveis()).filter(i => i.ativo !== false))));
 app.get('/api/admin/imoveis', exigirLogin, ah(async (req, res) => res.json(await getImoveis())));
 app.get('/api/config', ah(async (req, res) => res.json(await getConfig())));
@@ -210,7 +210,68 @@ function extrairDoTexto(texto) {
     vagas: vagas && vagas !== '0' ? `${vagas} vaga${vagas > 1 ? 's' : ''}` : ''
   };
 }
-app.post('/api/extrair-texto', exigirLogin, (req, res) => res.json({ success: true, dados: extrairDoTexto(req.body.texto) }));
+// Seção 5 do texto colado: tipologias, lazer, informações técnicas e localização em destaque (leitura direta)
+function extrairSecao5(t) {
+  const L = String(t || '').split('\n').map(l => l.replace(/\s+/g, ' ').trim()).filter(Boolean);
+  const tipologias = [];
+  L.forEach(l => {
+    if (!/R\$\s*[\d.]+/.test(l) || !/m²/i.test(l)) return;
+    if (l.includes('|')) { const p = l.split('|').map(x => x.trim()); if (p.length >= 6 && p[0]) tipologias.push({ nome: p[0], area: p[1], dorm: p[2], suites: p[3], vagas: p[4], preco: p[5] }); return; }
+    const iM2 = l.search(/m²/i) + 2, iR = l.search(/R\$/);
+    const nome = l.slice(0, Math.max(0, l.search(/\d/))).replace(/[:\-–\s]+$/, '').trim();
+    const area = (l.slice(0, iM2).match(/(\d{1,4}(?:[.,]\d+)?)\s*m²/i) || [])[1];
+    const nums = (l.slice(iM2, iR).match(/\d+/g) || []);
+    const preco = (l.slice(iR).match(/R\$\s*[\d.]+(?:,\d{2})?/) || [''])[0];
+    if (nome && area && iR > iM2) tipologias.push({ nome, area: area + ' m²', dorm: nums[0] || '', suites: nums[1] || '', vagas: nums[2] || '', preco });
+  });
+  let lazer = [];
+  const iL = L.findIndex(l => /^(caracter[ií]sticas condominiais|[áa]reas? de (conv[ií]vio e )?lazer|lazer e comodidades)/i.test(l));
+  if (iL >= 0) {
+    for (let i = iL + 1; i < L.length && lazer.length < 60; i++) {
+      const l = L[i];
+      if (/^(caracter[ií]sticas da unidade|tipologias|endere[çc]o|localiza|sobre|informa[çc][õo]es|conhe[çc]a|como [ée] morar|alguma informa)/i.test(l)) break;
+      if (l.length < 60 && !/\d|R\$|nenhum/i.test(l)) lazer.push(l);
+    }
+  }
+  const infoTecnica = [];
+  [['Previsão de entrega', /previs[ãa]o de entrega\s*[:\-]?\s*(\d{1,2}\/\d{4}|\d{4}|[^\n]{1,30})/i], ['Número de torres', /n[úu]mero de torres\s*[:\-]?\s*(\d+)/i], ['Total de unidades', /total de unidades\s*[:\-]?\s*(\d+)/i], ['Estoque', /estoque\s*[:\-]?\s*(\d+)/i]]
+    .forEach(([k, re]) => { const m = String(t || '').match(re); if (m) infoTecnica.push({ k, v: m[1].trim() }); });
+  const prox = ((String(t || '').match(/\d+\s*min\.?\s*(?:a p[ée] |de |do |da )?[^\n.]{0,50}?(?:metr[ôo]|esta[çc][ãa]o|parque|shopping)[^\n.]{0,30}/i)) || [''])[0].trim();
+  return { tipologias, lazer, infoTecnica, proximidade: prox };
+}
+async function extrairComIA(texto) {
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) return {};
+  try {
+    const r = await axios.post('https://api.anthropic.com/v1/messages', {
+      model: IA_MODELO, max_tokens: 1800,
+      system: 'Você extrai dados de imóveis a partir de texto colado de uma página. Responda APENAS um JSON válido, sem crases e sem comentários. Não invente nada: use "" ou [] quando o texto não trouxer a informação.',
+      messages: [{ role: 'user', content: `Retorne um JSON com as chaves: titulo, preco, localizacao, area, dormitorios, vagas, diferencial, proximidade, apresentacao (2 frases), lazer (array de strings), tipologias (array de objetos com nome, area, dorm, suites, vagas, preco), infoTecnica (array de objetos com k e v). Preços no formato "R$ 284.176". Texto:\n${texto}` }]
+    }, { headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' }, timeout: 60000 });
+    const txt = (r.data.content || []).filter(b => b.type === 'text').map(b => b.text).join('').replace(/```json|```/g, '');
+    return JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1));
+  } catch (e) { console.error('Extração por IA falhou:', e.message); return {}; }
+}
+function mesclarExtracao(base, s5, ia) {
+  const v = (a, b) => (a && String(a).trim()) ? String(a) : String(b || '');
+  const arr = (a, b) => (Array.isArray(a) && a.length) ? a : (Array.isArray(b) ? b : []);
+  const tipologias = arr(s5.tipologias, ia.tipologias).map(t => ({ nome: s2(t.nome, 80), area: s2(t.area, 40), dorm: s2(t.dorm, 10), suites: s2(t.suites, 10), vagas: s2(t.vagas, 10), preco: s2(t.preco, 40) })).filter(t => t.nome).slice(0, 40);
+  return {
+    titulo: v(base.titulo, ia.titulo), preco: v(base.preco, ia.preco), localizacao: v(base.localizacao, ia.localizacao),
+    area: v(base.area, ia.area), dormitorios: v(base.dormitorios, ia.dormitorios), vagas: v(base.vagas, ia.vagas),
+    diferencial: v(ia.diferencial, ''), proximidade: v(s5.proximidade, ia.proximidade), apresentacao: v(ia.apresentacao, ''),
+    tipologias,
+    lazer: arr(s5.lazer, ia.lazer).map(x => s2(x, 80)).filter(Boolean).slice(0, 60),
+    infoTecnica: arr(s5.infoTecnica, ia.infoTecnica).map(x => ({ k: s2(x.k, 80), v: s2(x.v, 200) })).filter(x => x.k).slice(0, 40)
+  };
+}
+app.post('/api/extrair-texto', exigirLogin, ah(async (req, res) => {
+  const texto = String((req.body || {}).texto || '').slice(0, 30000);
+  const base = extrairDoTexto(texto), s5 = extrairSecao5(texto);
+  const falta = !s5.tipologias.length || !s5.lazer.length || !s5.infoTecnica.length || !base.titulo || !base.preco;
+  const ia = (falta && texto.trim().length > 80) ? await extrairComIA(texto) : {};
+  res.json({ success: true, dados: mesclarExtracao(base, s5, ia), porIA: Object.keys(ia).length > 0 });
+}));
 
 // SESSÃO DO ÓRULO (cookie guardado só no servidor, nunca enviado ao navegador)
 app.post('/api/orulo-sessao', exigirLogin, (req, res) => {

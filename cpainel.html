@@ -161,6 +161,7 @@ textarea{resize:vertical}
         <label for="url">Importar do AoCubo ou do Órulo</label>
         <div style="display:flex;gap:8px;flex-wrap:wrap"><input id="url" placeholder="Cole o link do imóvel" style="flex:1;min-width:260px"><button class="btn" id="imp">Preencher dados</button></div>
         <p class="dica" id="impMsg" style="margin-top:8px"></p>
+        <textarea id="txtCp" rows="4" style="margin-top:10px" placeholder="Ou abra a página do imóvel, aperte Ctrl+A, Ctrl+C e cole aqui: os campos são preenchidos sozinhos"></textarea>
       </div>
       <div class="passos" id="passos" role="tablist" aria-label="Etapas do cadastro">
         <button class="passo on" data-passo="1"><b>1</b>Dados do imóvel</button>
@@ -216,7 +217,7 @@ const CAMPOS=[
 ['transacao','Finalidade',['Vender Imóvel','Alugar Imóvel']],['categoria','Categoria',['Residencial','Comercial']],
 ['tipo','Tipo de imóvel','L'],['estagio','Estágio',ESTAGIOS],['destaque','Tarja no site',TARJAS],['preco','Valor a partir de *'],['precoM2','Valor por m² (ex.: R$ 11.040)'],
 ['S','Localização'],['localizacao','Bairro, cidade - UF *'],['proximidade','Proximidade (ex.: 5 min do metrô)'],['lat','Latitude (opcional, para o mapa)'],['lng','Longitude (opcional)'],
-['S','Características'],['area','Área (ex.: 142m²)'],['dormitorios','Dormitórios (ex.: 3 Suítes)'],['vagas','Vagas (ex.: 2 vagas)'],['diferencial','Diferencial'],['lazer','Características condominiais (uma por linha)','X'],['caracteristicasUnidade','Características da unidade (uma por linha)','X'],
+['S','Informações técnicas e lazer'],['infoTecnica','Informações técnicas (uma por linha: item: valor)','X'],['S','Características'],['area','Área (ex.: 142m²)'],['dormitorios','Dormitórios (ex.: 3 Suítes)'],['vagas','Vagas (ex.: 2 vagas)'],['diferencial','Diferencial'],['lazer','Características condominiais (uma por linha)','X'],['caracteristicasUnidade','Características da unidade (uma por linha)','X'],
 ['S','Fotos do condomínio e do apartamento'],['foto','Foto de capa (vazio usa a primeira da galeria)'],['fotos','Galeria: um link por linha','A'],
 ['S','Plantas'],['plantas','Plantas: uma por linha, no formato Nome | link','P'],['S','Atualização automática'],['linkOrigem','Link de origem (AoCubo ou Órulo)'],
 ['S','Descrição e vídeo'],['apresentacao','Texto de apresentação','T'],['youtube','Vídeo do YouTube'],['videoArquivo','Vídeo enviado do computador (link)'],['tour360','Tour virtual 360°']];
@@ -321,7 +322,7 @@ function ir(v){
 function abrir(it){CUR=it||null;BASE=it?{...it}:{};$('ftitulo').textContent=it?it.titulo:'Novo imóvel';$('url').value='';$('impMsg').textContent='';preencher(BASE);PASSO=1;SUB='fotos';ir('form');mostra();window.scrollTo(0,0)}
 function editar(id){abrir(IM.find(x=>x.id==id))}
 function preencher(d){
-  CAMPOS.forEach(([k,,x])=>{if(k==='S')return;const el=$('f_'+k);el.value=x==='P'?(d[k]||[]).map(p=>typeof p==='object'?`${p.nome||''} | ${p.url}`:p).join('\n'):(x==='A'||x==='X')?(d[k]||[]).join('\n'):(d[k]??DEF[k]??'');if(x==='A'||x==='P')galeria(k)});
+  CAMPOS.forEach(([k,,x])=>{if(k==='S')return;const el=$('f_'+k);el.value=x==='P'?(d[k]||[]).map(p=>typeof p==='object'?`${p.nome||''} | ${p.url}`:p).join('\n'):(x==='A'||x==='X')?(d[k]||[]).map(y=>(y&&typeof y==='object')?(y.k+': '+y.v):y).join('\n'):(d[k]??DEF[k]??'');if(x==='A'||x==='P')galeria(k)});
   $('f_emDestaque').checked=d.emDestaque===true;$('f_ativo').checked=d.ativo!==false;$('f_sincronizar').checked=d.sincronizar!==false;TIPS=(d.tipologias||[]).map(t=>({...t}));renderTips();pend();
 }
 function urlsDe(k){const v=$('f_'+k).value;return k==='plantas'?linesPlantas(v).map(p=>typeof p==='object'?p.url:p):lines(v)}
@@ -336,7 +337,7 @@ function remover(k,n){
 }
 function coleta(){
   const o={};CAMPOS.forEach(([k,,x])=>{if(k==='S')return;const v=$('f_'+k).value;o[k]=x==='A'?lines(v):x==='P'?linesPlantas(v):x==='X'?v.split('\n').map(s=>s.trim()).filter(Boolean):v.trim()});
-  o.emDestaque=$('f_emDestaque').checked;o.ativo=$('f_ativo').checked;o.sincronizar=$('f_sincronizar').checked;o.tipologias=TIPS.filter(t=>(t.nome||'').trim()).map(t=>({nome:t.nome||'',area:t.area||'',dorm:t.dorm||'',suites:t.suites||'',vagas:t.vagas||'',preco:t.preco||''}));return o;
+  o.infoTecnica=(o.infoTecnica||[]).map(l=>{const i=l.indexOf(':');return i<0?{k:l,v:''}:{k:l.slice(0,i).trim(),v:l.slice(i+1).trim()}});o.emDestaque=$('f_emDestaque').checked;o.ativo=$('f_ativo').checked;o.sincronizar=$('f_sincronizar').checked;o.tipologias=TIPS.filter(t=>(t.nome||'').trim()).map(t=>({nome:t.nome||'',area:t.area||'',dorm:t.dorm||'',suites:t.suites||'',vagas:t.vagas||'',preco:t.preco||''}));return o;
 }
 function pend(){
   const d=coleta(),f=[];
@@ -420,6 +421,16 @@ $('atualizar').onclick=load;
 $('dias').oninput=renderDash;
 $('busca').oninput=renderLista;
 $('imp').onclick=importar;
+$('txtCp').addEventListener('paste',()=>setTimeout(colarTexto,200));
+async function colarTexto(){
+  const t=$('txtCp').value.trim();if(t.length<80)return;
+  $('impMsg').textContent='Lendo o texto colado...';
+  const r=await API('/api/extrair-texto',{method:'POST',body:JSON.stringify({texto:t})});
+  if(!r.success||!r.dados){$('impMsg').textContent='Não consegui ler o texto colado.';return}
+  const limpo=Object.fromEntries(Object.entries(r.dados).filter(([,v])=>v!==''&&!(Array.isArray(v)&&!v.length)));
+  BASE={...BASE,...limpo};preencher(BASE);
+  $('impMsg').textContent='Campos preenchidos a partir do texto colado. Confira antes de salvar.';
+}
 $('salvar').onclick=salvar;
 $('sair').onclick=()=>{sessionStorage.removeItem('cp_tk');location.reload()};
 ['fotos','plantas'].forEach(k=>$('f_'+k).addEventListener('input',()=>galeria(k)));
