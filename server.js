@@ -22,7 +22,7 @@ const DEFAULT_CONFIG = {
   linkedin: 'https://www.linkedin.com/in/joildo-costa-0154a29b/',
   instagram: '', facebook: '', youtube: '',
   whatsapp: '5511951377033', telefone: '(11) 95137-7033',
-  email: 'joildo.contato@gmail.com', creci: 'CRECI 200298'
+  email: 'joildo.contato@gmail.com', creci: 'CRECI 200298', parceiros: []
 };
 
 const lerJson = (file, fallback) => {
@@ -60,26 +60,93 @@ app.get(['/admin', '/admin.html'], enviar('admin.html'));
 app.get('/style.css', enviar('style.css'));
 app.get('/taxonomia.js', enviar('taxonomia.js'));
 
-// APIs
-app.get('/api/versao', (req, res) => res.json({ versao: '2026-11-14-h', login: 'token assinado', extracao: 'texto colado v2' }));
-app.get('/api/imoveis', (req, res) => res.json(lerJson(DATA_FILE, [])));
-app.get('/api/config', (req, res) => res.json({ ...DEFAULT_CONFIG, ...lerJson(CONFIG_FILE, DEFAULT_CONFIG) }));
-app.post('/api/config', exigirLogin, (req, res) => {
-  gravarJson(CONFIG_FILE, req.body);
-  res.json({ success: true, message: 'Configurações atualizadas!' });
-});
+// BANCO DE DADOS (MongoDB se MONGODB_URI existir; senão arquivos JSON)
+let db = null, bancoStatus = 'arquivos';
+async function iniciarBanco() {
+  if (!process.env.MONGODB_URI) return;
+  try {
+    const { MongoClient } = require('mongodb');
+    const client = new MongoClient(process.env.MONGODB_URI, { serverSelectionTimeoutMS: 10000 });
+    await client.connect();
+    db = client.db('joildobrokers');
+    await db.collection('imoveis').createIndex({ id: 1 }, { unique: true });
+    if (!(await db.collection('config').findOne({ _id: 'semente' }))) {
+      const base = lerJson(DATA_FILE, []);
+      if (base.length) await db.collection('imoveis').insertMany(base.map((i, n) => ({ ...i, criadoEm: i.criadoEm || new Date(Date.now() - n * 1000).toISOString() })));
+      await db.collection('config').insertOne({ _id: 'semente', em: new Date().toISOString() });
+    }
+    bancoStatus = 'mongodb';
+    console.log('✅ MongoDB conectado');
+  } catch (e) { db = null; bancoStatus = 'arquivos (falha ao conectar no banco)'; console.error('Falha no MongoDB:', e.message); }
+}
+const ah = (fn) => (req, res) => fn(req, res).catch(e => { console.error(e); res.status(500).json({ success: false, error: 'Erro interno.' }); });
+const getImoveis = async () => db ? db.collection('imoveis').find({}, { projection: { _id: 0 } }).sort({ criadoEm: -1 }).toArray() : lerJson(DATA_FILE, []);
+async function addImovel(i) {
+  if (db) return db.collection('imoveis').insertOne({ ...i });
+  const l = lerJson(DATA_FILE, []); l.unshift(i); gravarJson(DATA_FILE, l);
+}
+async function updImovel(id, set) {
+  if (db) return (await db.collection('imoveis').updateOne({ id: Number(id) }, { $set: set })).matchedCount > 0;
+  const l = lerJson(DATA_FILE, []); const x = l.find(i => String(i.id) === String(id));
+  if (!x) return false; Object.assign(x, set); gravarJson(DATA_FILE, l); return true;
+}
+async function delImovel(id) {
+  if (db) return (await db.collection('imoveis').deleteOne({ id: Number(id) })).deletedCount > 0;
+  const l = lerJson(DATA_FILE, []); const n = l.filter(i => String(i.id) !== String(id));
+  gravarJson(DATA_FILE, n); return n.length < l.length;
+}
+const getConfig = async () => {
+  if (db) { const d = await db.collection('config').findOne({ _id: 'site' }); return { ...DEFAULT_CONFIG, ...(d ? d.dados : lerJson(CONFIG_FILE, DEFAULT_CONFIG)) }; }
+  return { ...DEFAULT_CONFIG, ...lerJson(CONFIG_FILE, DEFAULT_CONFIG) };
+};
+const saveConfig = async (c) => db ? db.collection('config').updateOne({ _id: 'site' }, { $set: { dados: c } }, { upsert: true }) : gravarJson(CONFIG_FILE, c);
 
-app.post('/api/adicionar-imovel', exigirLogin, (req, res) => {
-  const imovel = req.body;
-  const imoveis = lerJson(DATA_FILE, []);
-  ['fotos', 'plantas'].forEach(k => { imovel[k] = Array.isArray(imovel[k]) ? imovel[k].filter(u => /^https?:\/\//i.test(u)).slice(0, 100) : []; });
-  imovel.emDestaque = imovel.emDestaque === true;
-  imovel.id = imovel.id || Date.now();
-  imovel.ref = imovel.ref || `REF-${Math.floor(100000 + Math.random() * 900000)}`;
-  imoveis.unshift(imovel);
-  gravarJson(DATA_FILE, imoveis);
-  res.json({ success: true, ref: imovel.ref });
-});
+// VALIDAÇÃO DO IMÓVEL (só campos conhecidos, com limites)
+const TXT = ['ref','titulo','preco','foto','localizacao','estagio','destaque','area','dormitorios','vagas','youtube','tour360','transacao','categoria','tipo','apresentacao','diferencial','proximidade'];
+const s2 = (v, n) => String(v == null ? '' : v).slice(0, n);
+function limpar(b) {
+  const o = {};
+  TXT.forEach(k => { if (b[k] != null) o[k] = s2(b[k], k === 'apresentacao' ? 4000 : 500); });
+  ['fotos', 'plantas'].forEach(k => { o[k] = (Array.isArray(b[k]) ? b[k] : []).map(u => s2(u, 500)).filter(u => /^https?:\/\//i.test(u)).slice(0, 100); });
+  o.lazer = (Array.isArray(b.lazer) ? b.lazer : []).map(x => s2(x, 80)).filter(Boolean).slice(0, 60);
+  o.tipologias = (Array.isArray(b.tipologias) ? b.tipologias : []).slice(0, 40).map(t => ({ nome: s2(t.nome, 80), area: s2(t.area, 40), dorm: s2(t.dorm, 20), suites: s2(t.suites, 20), vagas: s2(t.vagas, 20), preco: s2(t.preco, 40) })).filter(t => t.nome);
+  o.infoTecnica = (Array.isArray(b.infoTecnica) ? b.infoTecnica : []).slice(0, 40).map(x => ({ k: s2(x.k, 80), v: s2(x.v, 200) })).filter(x => x.k);
+  o.emDestaque = b.emDestaque === true;
+  o.ativo = b.ativo !== false;
+  if (b.demo === true) o.demo = true;
+  return o;
+}
+const novaRef = () => `REF-${Math.floor(100000 + Math.random() * 900000)}`;
+
+// APIs
+app.get('/api/versao', (req, res) => res.json({ versao: '2026-11-14-j', banco: bancoStatus }));
+app.get('/api/imoveis', ah(async (req, res) => res.json((await getImoveis()).filter(i => i.ativo !== false))));
+app.get('/api/admin/imoveis', exigirLogin, ah(async (req, res) => res.json(await getImoveis())));
+app.get('/api/config', ah(async (req, res) => res.json(await getConfig())));
+app.post('/api/config', exigirLogin, ah(async (req, res) => { await saveConfig(req.body); res.json({ success: true, message: 'Configurações atualizadas!' }); }));
+
+app.post('/api/adicionar-imovel', exigirLogin, ah(async (req, res) => {
+  const i = limpar(req.body || {}), agora = new Date().toISOString();
+  i.id = Date.now(); i.ref = i.ref || novaRef(); i.criadoEm = agora; i.atualizadoEm = agora;
+  await addImovel(i);
+  res.json({ success: true, ref: i.ref });
+}));
+app.patch('/api/imoveis/:id', exigirLogin, ah(async (req, res) => {
+  const b = req.body || {}, set = { atualizadoEm: new Date().toISOString() };
+  if ('ativo' in b) set.ativo = b.ativo === true;
+  if ('emDestaque' in b) set.emDestaque = b.emDestaque === true;
+  res.json({ success: await updImovel(req.params.id, set) });
+}));
+app.delete('/api/imoveis/:id', exigirLogin, ah(async (req, res) => res.json({ success: await delImovel(req.params.id) })));
+app.post('/api/duplicar-imovel/:id', exigirLogin, ah(async (req, res) => {
+  const o = (await getImoveis()).find(i => String(i.id) === String(req.params.id));
+  if (!o) return res.status(404).json({ success: false, error: 'Imóvel não encontrado.' });
+  const agora = new Date().toISOString(), c = { ...o };
+  delete c._id; delete c.demo;
+  Object.assign(c, { id: Date.now(), ref: novaRef(), titulo: `${o.titulo} (cópia)`, ativo: false, emDestaque: false, criadoEm: agora, atualizadoEm: agora });
+  await addImovel(c);
+  res.json({ success: true, ref: c.ref });
+}));
 
 // EXTRAÇÃO POR TEXTO COLADO (funciona sempre, sem depender do login do Órulo)
 function tituloDoTexto(t) {
@@ -163,4 +230,4 @@ app.post('/api/minerar-orulo', exigirLogin, async (req, res) => {
 });
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`🚀 Portal Joildo Brokers ativo na porta ${PORT}`));
+iniciarBanco().then(() => app.listen(PORT, () => console.log(`🚀 Portal Joildo Brokers ativo na porta ${PORT} (banco: ${bancoStatus})`)));

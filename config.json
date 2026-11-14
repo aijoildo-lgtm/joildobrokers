@@ -8,5 +8,47 @@
   "whatsapp": "5511951377033",
   "telefone": "(11) 95137-7033",
   "email": "joildo.contato@gmail.com",
-  "creci": "CRECI 200298"
+  "creci": "CRECI 200298",
+  "parceiros": [
+    {
+      "nome": "Construtora Alfa",
+      "logo": "",
+      "link": ""
+    },
+    {
+      "nome": "Incorporadora Beta",
+      "logo": "",
+      "link": ""
+    },
+    {
+      "nome": "Construtora Gama",
+      "logo": "",
+      "link": ""
+    },
+    {
+      "nome": "Incorporadora Delta",
+      "logo": "",
+      "link": ""
+    },
+    {
+      "nome": "Construtora Épsilon",
+      "logo": "",
+      "link": ""
+    },
+    {
+      "nome": "Incorporadora Zeta",
+      "logo": "",
+      "link": ""
+    },
+    {
+      "nome": "Construtora Eta",
+      "logo": "",
+      "link": ""
+    },
+    {
+      "nome": "Incorporadora Theta",
+      "logo": "",
+      "link": ""
+    }
+  ]
 }

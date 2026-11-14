@@ -44,7 +44,7 @@
                     <a href="#" onclick="filtrarEstagio('prontos');return false"><i class="fas fa-key"></i> Prontos para morar</a>
                     <a href="#" onclick="filtrarEstagio('usados');return false"><i class="fas fa-handshake"></i> Usados</a>
                 </div></li>
-            <li><a href="#" onclick="filtrarEstagio('oportunidades');return false">Oportunidades</a></li>
+            <li><a href="#oportunidades">Oportunidades</a></li>
             <li><a href="#bairros">Bairros</a></li>
             <li><a href="#atendimento-humano">Concierge</a></li>
             <li class="has-sub"><a href="#blog" onclick="return abrirSub(this)" aria-haspopup="true">Conteúdos <i class="fas fa-chevron-down"></i></a>
@@ -134,55 +134,25 @@
     </div>
 </section>
 
-<!-- SEÇÃO: EXPLORE POR BAIRROS NOBRES -->
-<section class="bairros-section reveal" id="bairros">
-    <div class="section-header">
-        <h2>Localizações Privilegiadas</h2>
-        <p>Explore empreendimentos de luxo e alta liquidez nos bairros mais desejados de São Paulo</p>
+<!-- SEÇÃO: OPORTUNIDADES -->
+<section class="ins-section reveal" id="oportunidades" style="display:none">
+    <div class="ins-head"><h2>Oportunidades de venda</h2>
+        <p>Imóveis selecionados com condições especiais e ótimo custo-benefício.</p></div>
+    <div class="opp-wrap">
+        <button class="opp-seta esq" onclick="rolarOpp(-1)" aria-label="Anterior"><i class="fas fa-chevron-left"></i></button>
+        <div class="opp-track" id="opp-track"></div>
+        <button class="opp-seta dir" onclick="rolarOpp(1)" aria-label="Próximo"><i class="fas fa-chevron-right"></i></button>
     </div>
-    <div class="bairros-grid">
-        <div class="bairro-card" onclick="filtrarPorBairro('Jardins')">
-            <div class="bairro-img" style="background-image: url('https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80')"></div>
-            <div class="bairro-overlay">
-                <div class="bairro-title">Jardins</div>
-                <div class="bairro-count">Ver Empreendimentos ↗</div>
-            </div>
-        </div>
-        <div class="bairro-card" onclick="filtrarPorBairro('Itaim Bibi')">
-            <div class="bairro-img" style="background-image: url('https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80')"></div>
-            <div class="bairro-overlay">
-                <div class="bairro-title">Itaim Bibi</div>
-                <div class="bairro-count">Ver Empreendimentos ↗</div>
-            </div>
-        </div>
-        <div class="bairro-card" onclick="filtrarPorBairro('Pinheiros')">
-            <div class="bairro-img" style="background-image: url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80')"></div>
-            <div class="bairro-overlay">
-                <div class="bairro-title">Pinheiros</div>
-                <div class="bairro-count">Ver Empreendimentos ↗</div>
-            </div>
-        </div>
-        <div class="bairro-card" onclick="filtrarPorBairro('Vila Nova Conceição')">
-            <div class="bairro-img" style="background-image: url('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80')"></div>
-            <div class="bairro-overlay">
-                <div class="bairro-title">Vila Nova Conceição</div>
-                <div class="bairro-count">Ver Empreendimentos ↗</div>
-            </div>
-        </div>
-        <div class="bairro-card" onclick="filtrarPorBairro('Moema')">
-            <div class="bairro-img" style="background-image: url('https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=800&q=80')"></div>
-            <div class="bairro-overlay">
-                <div class="bairro-title">Moema</div>
-                <div class="bairro-count">Ver Empreendimentos ↗</div>
-            </div>
-        </div>
-        <div class="bairro-card" onclick="filtrarPorBairro('Alphaville')">
-            <div class="bairro-img" style="background-image: url('https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?auto=format&fit=crop&w=800&q=80')"></div>
-            <div class="bairro-overlay">
-                <div class="bairro-title">Alphaville / Tamboré</div>
-                <div class="bairro-count">Ver Empreendimentos ↗</div>
-            </div>
-        </div>
+    <button class="link-avancada opp-mais" onclick="filtrarEstagio('oportunidades')"><i class="fas fa-list"></i> Ver mais oportunidades de venda</button>
+</section>
+
+<!-- SEÇÃO: EXPLORE POR BAIRRO -->
+<section class="ins-section reveal" id="bairros" style="background: var(--white);">
+    <div class="ins-head"><h2>Explore por bairro</h2></div>
+    <div class="bx-grid" id="bairro-grid"></div>
+    <div class="bx-acoes">
+        <button class="link-avancada" id="btn-mais-bairros" onclick="toggleBairros()">Ver mais bairros</button>
+        <a href="#" class="link-avancada" onclick="buscarOutroBairro();return false">Buscar em outros bairros →</a>
     </div>
 </section>
 
@@ -195,6 +165,13 @@
 
 <!-- MAPA INTERATIVO -->
 <div id="map" class="reveal"></div>
+
+<!-- SEÇÃO: PARCEIROS -->
+<section class="ins-section ins-claro reveal" id="parceiros" style="display:none">
+    <div class="ins-head"><h2>Construtoras e incorporadoras parceiras</h2>
+        <p>Trabalho com empreendimentos das principais construtoras e incorporadoras de São Paulo.</p></div>
+    <div class="parc-wrap"><div class="parc-track" id="parc-track"></div></div>
+</section>
 
 <!-- ATENDIMENTO HUMANO & CONCIERGE -->
 <section class="concierge-section reveal" id="atendimento-humano">
@@ -563,7 +540,7 @@
         renderizarGrade(bancoImoveis.filter(i => {
             const p = precoNum(i.preco);
             return (!q || [i.ref, i.titulo, i.localizacao, i.tipo, i.categoria].some(x => norm(x).includes(q))) &&
-                (fase === 'todos' || i.estagio === fase) &&
+                (fase === 'todos' || (fase === 'oportunidades' ? ehOpp(i) : i.estagio === fase)) &&
                 (!tipo || (tipo.startsWith('cat:') ? i.categoria === tipo.slice(4) : i.tipo === tipo)) &&
                 (!bairro || norm(i.localizacao).includes(bairro)) &&
                 (!faixa || (p >= min && (!max || p <= max))) &&
@@ -574,6 +551,7 @@
     function irParaVitrine() { const v = document.getElementById('vitrine'); if (v) v.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     function filtrarBusca() { aplicarFiltros(); irParaVitrine(); }
     function filtrarEstagio(e) {
+        ['search_ref', 'search_tipo', 'search_bairro', 'search_preco', 'search_dorm', 'search_area'].forEach(id => { document.getElementById(id).value = ''; });
         document.getElementById('search_fase').value = e;
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', (b.getAttribute('onclick') || '').includes(`'${e}'`)));
         aplicarFiltros(); irParaVitrine();
@@ -625,6 +603,7 @@
         const fotos = (i.fotos && i.fotos.length ? i.fotos : [i.foto]).map(urlOk).filter(Boolean);
         const plantas = (i.plantas || []).map(urlOk).filter(Boolean);
         const yt = youtubeEmbed(i.youtube);
+        const tipologias = i.tipologias || [], lazer = i.lazer || [], infoTec = i.infoTecnica || [];
         const fichas = [['Código', i.ref], ['Fase', FASES[i.estagio]], ['Área', i.area], ['Dormitórios', i.dormitorios], ['Vagas', i.vagas], ['Localização', i.localizacao]]
             .filter(f => f[1]).map(f => `<div class="tech-item"><span>${f[0]}</span><b>${esc(f[1])}</b></div>`).join('');
         document.getElementById('modal-details-box').innerHTML = `
@@ -640,6 +619,11 @@
             <div class="modal-body">
                 <div class="modal-left">
                     <div class="info-block"><h4>Ficha do imóvel</h4><div class="tech-grid">${fichas}</div></div>
+                    ${i.apresentacao ? `<div class="info-block"><h4>Sobre o projeto</h4><p style="line-height:1.75;white-space:pre-line">${esc(i.apresentacao)}</p></div>` : ''}
+                    ${tipologias.length ? `<div class="info-block"><h4>Tipologias e valores</h4><div style="overflow-x:auto"><table class="tip-tabela"><tr><th>Tipo</th><th>Área</th><th>Dorm.</th><th>Suítes</th><th>Vagas</th><th>A partir de</th></tr>
+                        ${tipologias.map(t => `<tr><td>${esc(t.nome)}</td><td>${esc(t.area)}</td><td>${esc(t.dorm)}</td><td>${esc(t.suites)}</td><td>${esc(t.vagas)}</td><td><b>${esc(t.preco)}</b></td></tr>`).join('')}</table></div></div>` : ''}
+                    ${lazer.length ? `<div class="info-block"><h4>Lazer e comodidades</h4><div class="chips">${lazer.map(x => `<span class="chip">${esc(x)}</span>`).join('')}</div></div>` : ''}
+                    ${infoTec.length ? `<div class="info-block"><h4>Informações técnicas</h4><div class="tech-grid">${infoTec.map(x => `<div class="tech-item"><span>${esc(x.k)}</span><b>${esc(x.v)}</b></div>`).join('')}</div></div>` : ''}
                     ${fotos.length ? `<div class="info-block"><h4>Galeria de fotos</h4>
                         <div style="position:relative;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:#E2E8F0">
                             <img id="gal-img" src="${fotos[0]}" alt="Foto de ${esc(i.titulo)}" style="width:100%;height:100%;object-fit:cover;transition:opacity .6s">
@@ -688,6 +672,56 @@
     document.getElementById('propertyModal').addEventListener('click', e => { if (e.target.id === 'propertyModal') fecharModal(); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModal(); });
 
+    const ehOpp = i => i.estagio === 'oportunidades' || i.destaque === 'oportunidade';
+    function renderOportunidades() {
+        const l = bancoImoveis.filter(ehOpp), sec = document.getElementById('oportunidades');
+        sec.style.display = l.length ? '' : 'none';
+        document.getElementById('opp-track').innerHTML = l.map(i => `
+            <article class="opp-card" tabindex="0" style="background-image:url('${capa(i)}')" onclick="abrirModal('${esc(i.id)}')" onkeydown="if(event.key==='Enter')abrirModal('${esc(i.id)}')">
+                <span class="opp-tag">${esc(FASES[i.estagio] || 'Oportunidade')}</span>
+                ${i.diferencial ? `<span class="opp-dif">${esc(i.diferencial)}</span>` : ''}
+                <div class="opp-info">
+                    <h3>${esc(i.titulo)}</h3>
+                    <p class="opp-loc">${esc(bairroDe(i.localizacao))}</p>
+                    <div class="opp-chips">${i.dormitorios ? `<span>${esc(i.dormitorios)}</span>` : ''}${i.area ? `<span>${esc(i.area)}</span>` : ''}</div>
+                    ${i.proximidade ? `<p class="opp-prox"><i class="fas fa-map-marker-alt"></i>${esc(i.proximidade)}</p>` : ''}
+                    <div class="opp-preco">${esc(i.preco)}</div>
+                </div>
+            </article>`).join('');
+    }
+    function rolarOpp(d) { const t = document.getElementById('opp-track'); t.scrollBy({ left: d * t.clientWidth * 0.9, behavior: 'smooth' }); }
+
+    let bairrosTodos = false;
+    function renderBairros() {
+        const g = {};
+        bancoImoveis.forEach(i => { const b = bairroDe(i.localizacao); if (b) (g[b] = g[b] || { n: 0, foto: capa(i) }).n++; });
+        const lista = Object.entries(g).sort((a, b) => b[1].n - a[1].n);
+        document.getElementById('bairro-grid').innerHTML = (bairrosTodos ? lista : lista.slice(0, 12)).map(([b, v]) =>
+            `<button class="bx-card" data-b="${esc(b)}" onclick="filtrarPorBairro(this.dataset.b)" style="background-image:url('${v.foto}')"><span class="bx-nome">${esc(b)}</span><span class="bx-qtd">${v.n} ${v.n > 1 ? 'imóveis' : 'imóvel'}</span></button>`).join('');
+        const btn = document.getElementById('btn-mais-bairros');
+        btn.style.display = lista.length > 12 ? '' : 'none';
+        btn.textContent = bairrosTodos ? 'Ver menos bairros' : 'Ver mais bairros';
+    }
+    function toggleBairros() { bairrosTodos = !bairrosTodos; renderBairros(); }
+    function buscarOutroBairro() {
+        document.querySelector('.search-widget').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => document.getElementById('search_bairro').focus(), 500);
+    }
+
+    function renderParceiros() {
+        const l = (configGeral.parceiros || []).filter(p => p && p.nome), sec = document.getElementById('parceiros');
+        sec.style.display = l.length ? '' : 'none';
+        if (!l.length) return;
+        const item = p => {
+            const c = urlOk(p.logo) ? `<img src="${urlOk(p.logo)}" alt="${esc(p.nome)}" loading="lazy">` : `<span class="parc-nome">${esc(p.nome)}</span>`;
+            return urlOk(p.link) ? `<a class="parc-item" href="${urlOk(p.link)}" target="_blank" rel="noopener" title="${esc(p.nome)}">${c}</a>` : `<div class="parc-item" title="${esc(p.nome)}">${c}</div>`;
+        };
+        const anima = l.length > 6 && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const t = document.getElementById('parc-track');
+        t.classList.toggle('anima', anima);
+        t.innerHTML = l.map(item).join('') + (anima ? l.map(item).join('') : '');
+    }
+
     async function carregar() {
         await carregarConfig();
         try {
@@ -699,6 +733,9 @@
         popularFiltros();
         renderizarGrade(bancoImoveis);
         renderMercado();
+        renderOportunidades();
+        renderBairros();
+        renderParceiros();
         initScrollReveal();
     }
     carregar();

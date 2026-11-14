@@ -32,6 +32,9 @@
         input, select, textarea { padding: 10px; border: 1px solid #CBD5E1; border-radius: 6px; outline: none; font-size: 0.9rem; }
         
         .btn-pub { background: #198754; color: white; border: none; padding: 16px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1rem; margin-top: 25px; text-transform: uppercase; }
+            .tabela-imoveis { width: 100%; border-collapse: collapse; font-size: .85rem; }
+        .tabela-imoveis th, .tabela-imoveis td { padding: 10px 8px; border-bottom: 1px solid #E2E8F0; text-align: left; vertical-align: middle; }
+        .tabela-imoveis button { padding: 6px 10px; margin: 2px; border: 1px solid #CBD5E1; background: #fff; border-radius: 6px; cursor: pointer; font-size: .78rem; }
     </style>
 </head>
 <body>
@@ -57,6 +60,7 @@
         <div class="tab-menu">
             <button class="tab-btn active" onclick="switchTab('imoveis')"><i class="fas fa-home"></i> Gerenciar Imóveis</button>
             <button class="tab-btn" onclick="switchTab('redes')"><i class="fas fa-share-alt"></i> Configurar Redes, Slogan & Marca</button>
+            <button class="tab-btn" onclick="switchTab('lista')"><i class="fas fa-list"></i> Meus imóveis</button>
         </div>
 
         <!-- ABA 1: IMÓVEIS -->
@@ -129,11 +133,28 @@
                         <textarea id="plantas" rows="6" placeholder="Um link de imagem por linha, para cada planta do imóvel."></textarea></div>
                 </div>
 
+                <div class="section-title">5. Apresentação, tipologias, lazer e informações técnicas</div>
+                <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+                    <div class="form-group"><label>Diferencial do anúncio (aparece em Oportunidades)</label><input type="text" id="diferencial" placeholder="Ex: Varanda gourmet"></div>
+                    <div class="form-group"><label>Localização em destaque</label><input type="text" id="proximidade" placeholder="Ex: 3 min. do Metrô Tucuruvi"></div>
+                </div>
+                <div class="form-group"><label>Breve apresentação do projeto</label>
+                    <textarea id="apresentacao" rows="4" placeholder="Texto de apresentação do empreendimento."></textarea></div>
+                <div class="form-group"><label>Tipologias e valores (uma por linha: Nome | Área | Dormitórios | Suítes | Vagas | Preço)</label>
+                    <textarea id="tipologias" rows="5" placeholder="Studio | 26 m² | 1 | 0 | 0 | R$ 260.810&#10;Apartamento | 43 m² | 2 | 1 | 1 | R$ 539.000"></textarea></div>
+                <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+                    <div class="form-group"><label>Lazer e comodidades (um por linha)</label>
+                        <textarea id="lazer" rows="6" placeholder="Piscina&#10;Academia&#10;Salão de festas"></textarea></div>
+                    <div class="form-group"><label>Informações técnicas (uma por linha: Item: valor)</label>
+                        <textarea id="infoTecnica" rows="6" placeholder="Previsão de entrega: 02/2029&#10;Número de torres: 1&#10;Total de unidades: 267"></textarea></div>
+                </div>
                 <button type="submit" class="btn-pub"><i class="fas fa-check-circle"></i> Publicar Imóvel no Portal</button>
             </form>
         </div>
 
         <!-- ABA 2: CONFIGURAÇÕES -->
+        <div class="tab-content" id="tab-lista"><div id="lista-imoveis"></div></div>
+
         <div class="tab-content" id="tab-redes">
             <div class="section-title">Marca, Slogan, Redes Sociais e Contato</div>
             <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
@@ -178,7 +199,10 @@
                     <input type="text" id="cfg_creci" placeholder="CRECI 245890-F">
                 </div>
             </div>
-            <button type="button" class="btn-pub" style="background: var(--primary);" onclick="salvarConfigRedes()">
+            <div class="form-group" style="margin-top:20px;"><label>Construtoras e incorporadoras parceiras (uma por linha: Nome | URL do logo | Link do site)</label>
+                    <textarea id="cfg_parceiros" rows="6" placeholder="Construtora Exemplo | https://site.com/logo.png | https://site.com&#10;Outra Incorporadora"></textarea>
+                    <small style="color:#64748B">O logo e o link são opcionais. Sem logo, o nome aparece escrito.</small></div>
+                <button type="button" class="btn-pub" style="background: var(--primary);" onclick="salvarConfigRedes()">
                 <i class="fas fa-save"></i> Salvar Configurações no Site
             </button>
         </div>
@@ -212,18 +236,31 @@
             } else { alert('Acesso negado!'); }
         }
 
+        const esc = t => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        const linhas = id => document.getElementById(id).value.split('\n').map(x => x.trim()).filter(Boolean);
         function switchTab(tab) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            if(tab === 'imoveis') {
-                document.querySelectorAll('.tab-btn')[0].classList.add('active');
-                document.getElementById('tab-imoveis').classList.add('active');
-            } else {
-                document.querySelectorAll('.tab-btn')[1].classList.add('active');
-                document.getElementById('tab-redes').classList.add('active');
-            }
+            const nomes = ['imoveis', 'redes', 'lista'];
+            document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', nomes[i] === tab));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === 'tab-' + tab));
+            if (tab === 'lista') carregarLista();
         }
-
+        async function carregarLista() {
+            const box = document.getElementById('lista-imoveis');
+            const res = await fetch('/api/admin/imoveis', { headers: H() });
+            if (res.status === 401) { sessionStorage.removeItem('tk'); alert('Sessão expirada. Entre de novo.'); return location.reload(); }
+            const d = await res.json();
+            const fmt = s => s ? new Date(s).toLocaleDateString('pt-BR') : '-';
+            box.innerHTML = d.length ? `<table class="tabela-imoveis"><tr><th>Ref</th><th>Imóvel</th><th>Publicado</th><th>Atualizado</th><th>Status</th><th>Ações</th></tr>${d.map(i => `
+                <tr><td>${esc(i.ref)}</td><td>${esc(i.titulo)}${i.demo ? ' <em>(exemplo)</em>' : ''}</td><td>${fmt(i.criadoEm)}</td><td>${fmt(i.atualizadoEm || i.criadoEm)}</td>
+                <td>${i.ativo === false ? 'Inativo' : 'Ativo'}${i.emDestaque ? ' | Destaque' : ''}</td>
+                <td><button onclick="acaoImovel('${i.id}', {ativo: ${i.ativo === false}})">${i.ativo === false ? 'Ativar' : 'Desativar'}</button>
+                <button onclick="acaoImovel('${i.id}', {emDestaque: ${!i.emDestaque}})">${i.emDestaque ? 'Tirar destaque' : 'Destacar'}</button>
+                <button onclick="duplicar('${i.id}')">Duplicar</button>
+                <button onclick="excluir('${i.id}')">Excluir</button></td></tr>`).join('')}</table>` : '<p>Nenhum imóvel cadastrado.</p>';
+        }
+        async function acaoImovel(id, corpo) { await fetch('/api/imoveis/' + id, { method: 'PATCH', headers: H(), body: JSON.stringify(corpo) }); carregarLista(); }
+        async function duplicar(id) { const r = await (await fetch('/api/duplicar-imovel/' + id, { method: 'POST', headers: H() })).json(); alert(r.success ? 'Cópia criada como inativa (' + r.ref + '). Ative quando estiver pronta.' : 'Não foi possível duplicar.'); carregarLista(); }
+        async function excluir(id) { if (!confirm('Excluir este imóvel? Esta ação não pode ser desfeita.')) return; await fetch('/api/imoveis/' + id, { method: 'DELETE', headers: H() }); carregarLista(); }
         async function carregarConfigAdmin() {
             try {
                 const res = await fetch('/api/config');
@@ -238,6 +275,7 @@
                 document.getElementById('cfg_telefone').value = config.telefone || '';
                 document.getElementById('cfg_email').value = config.email || '';
                 document.getElementById('cfg_creci').value = config.creci || '';
+                document.getElementById('cfg_parceiros').value = (config.parceiros || []).map(p => [p.nome, p.logo || '', p.link || ''].join(' | ')).join('\n');
             } catch(e) {}
         }
 
@@ -252,7 +290,8 @@
                 whatsapp: document.getElementById('cfg_whatsapp').value,
                 telefone: document.getElementById('cfg_telefone').value,
                 email: document.getElementById('cfg_email').value,
-                creci: document.getElementById('cfg_creci').value
+                creci: document.getElementById('cfg_creci').value,
+                parceiros: linhas('cfg_parceiros').map(l => { const p = l.split('|').map(x => x.trim()); return { nome: p[0] || '', logo: p[1] || '', link: p[2] || '' }; }).filter(p => p.nome)
             };
 
             const res = await fetch('/api/config', {
@@ -316,6 +355,12 @@
                 categoria: document.getElementById('categoria').value,
                 tipo: document.getElementById('tipo').value,
                 emDestaque: document.getElementById('emDestaque').value === 'sim',
+                apresentacao: document.getElementById('apresentacao').value.trim(),
+                diferencial: document.getElementById('diferencial').value.trim(),
+                proximidade: document.getElementById('proximidade').value.trim(),
+                tipologias: linhas('tipologias').map(l => { const p = l.split('|').map(x => x.trim()); return { nome: p[0] || '', area: p[1] || '', dorm: p[2] || '', suites: p[3] || '', vagas: p[4] || '', preco: p[5] || '' }; }),
+                lazer: linhas('lazer'),
+                infoTecnica: linhas('infoTecnica').map(l => { const k = l.indexOf(':'); return k < 0 ? { k: l, v: '' } : { k: l.slice(0, k).trim(), v: l.slice(k + 1).trim() }; }),
                 titulo: document.getElementById('titulo').value,
                 preco: document.getElementById('preco').value,
                 localizacao: document.getElementById('cidade').value || 'São Paulo - SP',
@@ -337,7 +382,7 @@
             const r = await res.json();
             if(r.success) {
                 alert('🎉 Imóvel Publicado no Portal! REF: ' + r.ref);
-                window.location.href = '/';
+                e.target.reset(); montarTipos(); window.scrollTo(0, 0); switchTab('lista');
             }
         }
     </script>

@@ -43,7 +43,48 @@
     "transacao": "Vender Imóvel",
     "categoria": "Residencial",
     "tipo": "Cobertura",
-    "emDestaque": true
+    "emDestaque": true,
+    "apresentacao": "Residência de alto padrão nos Jardins, com plantas amplas, varanda gourmet e acabamento de primeira linha. Projeto de exemplo para demonstrar a página.",
+    "tipologias": [
+      {
+        "nome": "Apartamento",
+        "area": "142 m²",
+        "dorm": "3",
+        "suites": "3",
+        "vagas": "2",
+        "preco": "R$ 3.190.000"
+      },
+      {
+        "nome": "Cobertura",
+        "area": "186 m²",
+        "dorm": "4",
+        "suites": "4",
+        "vagas": "3",
+        "preco": "R$ 3.890.000"
+      }
+    ],
+    "lazer": [
+      "Piscina",
+      "Academia",
+      "Salão de festas",
+      "Espaço gourmet",
+      "Brinquedoteca",
+      "Coworking"
+    ],
+    "infoTecnica": [
+      {
+        "k": "Previsão de entrega",
+        "v": "Exemplo: 12/2029"
+      },
+      {
+        "k": "Número de torres",
+        "v": "1"
+      },
+      {
+        "k": "Total de unidades",
+        "v": "80"
+      }
+    ]
   },
   {
     "id": 1700000001001,
@@ -151,7 +192,9 @@
     "transacao": "Vender Imóvel",
     "categoria": "Residencial",
     "tipo": "Cobertura Duplex",
-    "emDestaque": true
+    "emDestaque": true,
+    "diferencial": "Cobertura duplex",
+    "proximidade": "5 min. do metrô (exemplo)"
   },
   {
     "id": 1700000001005,
@@ -168,7 +211,7 @@
     "plantas": [],
     "localizacao": "Paraíso, São Paulo - SP",
     "estagio": "lancamentos",
-    "destaque": "none",
+    "destaque": "oportunidade",
     "area": "26m²",
     "dormitorios": "Studio",
     "vagas": "Sem vaga",
@@ -178,7 +221,9 @@
     "transacao": "Vender Imóvel",
     "categoria": "Residencial",
     "tipo": "Studio",
-    "emDestaque": false
+    "emDestaque": false,
+    "diferencial": "Studio com varanda",
+    "proximidade": "3 min. do metrô (exemplo)"
   },
   {
     "id": 1700000001006,
@@ -222,7 +267,7 @@
     "plantas": [],
     "localizacao": "Vila Mariana, São Paulo - SP",
     "estagio": "usados",
-    "destaque": "none",
+    "destaque": "oportunidade",
     "area": "98m²",
     "dormitorios": "3 Dormitórios",
     "vagas": "2 vagas",
@@ -232,7 +277,9 @@
     "categoria": "Residencial",
     "tipo": "Apartamento",
     "emDestaque": false,
-    "demo": true
+    "demo": true,
+    "diferencial": "Reformado",
+    "proximidade": "4 min. do metrô (exemplo)"
   },
   {
     "id": 1700000002001,
