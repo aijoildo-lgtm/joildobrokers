@@ -9,6 +9,7 @@ const { extrairAoCubo } = require('./aocubo');
 const orulo = require('./orulo');
 
 const app = express();
+app.set('trust proxy', 1);
 app.use(cors());
 app.use(express.json({ limit: '30mb' }));
 
@@ -139,7 +140,7 @@ function limpar(b) {
 const novaRef = () => `REF-${Math.floor(100000 + Math.random() * 900000)}`;
 
 // APIs
-app.get('/api/versao', (req, res) => res.json({ versao: '2026-11-14-m', banco: bancoStatus }));
+app.get('/api/versao', (req, res) => res.json({ versao: '2026-11-14-n', banco: bancoStatus }));
 app.get('/api/imoveis', ah(async (req, res) => res.json((await getImoveis()).filter(i => i.ativo !== false))));
 app.get('/api/admin/imoveis', exigirLogin, ah(async (req, res) => res.json(await getImoveis())));
 app.get('/api/config', ah(async (req, res) => res.json(await getConfig())));
@@ -170,7 +171,7 @@ app.post('/api/duplicar-imovel/:id', exigirLogin, ah(async (req, res) => {
   const o = (await getImoveis()).find(i => String(i.id) === String(req.params.id));
   if (!o) return res.status(404).json({ success: false, error: 'Imóvel não encontrado.' });
   const agora = new Date().toISOString(), c = { ...o };
-  delete c._id; delete c.demo;
+  delete c._id; delete c.demo; delete c.acessos; delete c.sincronizadoEm;
   Object.assign(c, { id: Date.now(), ref: novaRef(), titulo: `${o.titulo} (cópia)`, ativo: false, emDestaque: false, criadoEm: agora, atualizadoEm: agora });
   await addImovel(c);
   res.json({ success: true, ref: c.ref });
@@ -403,7 +404,8 @@ async function sincronizarImoveis() {
       const novo = await buscarOrigem(i), set = {};
       CAMPOS_SYNC.forEach(k => { if (novo[k] && novo[k] !== i[k]) set[k] = novo[k]; });
       if (Object.keys(set).length) rel.atualizados++; else rel.semMudanca++;
-      await updImovel(i.id, { ...set, sincronizadoEm: agora, atualizadoEm: agora });
+      // atualizadoEm só muda quando a origem trouxe dado novo; conferir sem mudança grava só a data da conferência
+      await updImovel(i.id, Object.keys(set).length ? { ...set, sincronizadoEm: agora, atualizadoEm: agora } : { sincronizadoEm: agora });
     } catch (e) {
       const st = e.response && e.response.status;
       // Só pausa quando a origem respondeu 404 (anúncio retirado). Erro de rede não pausa nada.
@@ -425,6 +427,29 @@ const rodarSincronizacao = async (req, res) => {
 };
 app.get('/api/sincronizar', podeSincronizar, rodarSincronizacao);
 app.post('/api/sincronizar', podeSincronizar, rodarSincronizacao);
+
+// ===== ACESSOS POR IMÓVEL (alimenta o dashboard do Cpainel) =====
+// Conta 1 visita por visitante a cada hora; grava em lote a cada minuto para não sobrecarregar o banco.
+const visitasPend = new Map(), visitasVistas = new Map();
+app.post('/api/imoveis/:id/visita', (req, res) => {
+  const id = String(req.params.id);
+  if (!/^\d{1,16}$/.test(id)) return res.json({ success: false });
+  const quem = `${req.ip}|${id}`, agora = Date.now();
+  if (!(visitasVistas.get(quem) > agora - 3600e3)) { visitasVistas.set(quem, agora); visitasPend.set(id, (visitasPend.get(id) || 0) + 1); }
+  res.json({ success: true });
+});
+async function gravarVisitas() {
+  const agora = Date.now();
+  for (const [k, t] of visitasVistas) if (t < agora - 3600e3) visitasVistas.delete(k);
+  if (!visitasPend.size) return;
+  const lote = [...visitasPend]; visitasPend.clear();
+  try {
+    if (db) await db.collection('imoveis').bulkWrite(lote.map(([id, n]) => ({ updateOne: { filter: { id: Number(id) }, update: { $inc: { acessos: n } } } })));
+    else { const l = lerJson(DATA_FILE, []); lote.forEach(([id, n]) => { const x = l.find(i => String(i.id) === id); if (x) x.acessos = (x.acessos || 0) + n; }); gravarJson(DATA_FILE, l); }
+  } catch (e) { console.error('Erro gravando acessos:', e.message); lote.forEach(([id, n]) => visitasPend.set(id, (visitasPend.get(id) || 0) + n)); }
+}
+setInterval(gravarVisitas, 60e3).unref();
+process.on('SIGTERM', () => gravarVisitas().finally(() => process.exit(0)));
 
 const PORT = process.env.PORT || 10000;
 iniciarBanco().then(() => app.listen(PORT, () => console.log(`🚀 Portal Joildo Brokers ativo na porta ${PORT} (banco: ${bancoStatus})`)));

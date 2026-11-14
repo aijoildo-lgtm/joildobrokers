@@ -29,6 +29,10 @@
 .planta-item{display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid #E2E8F0;text-decoration:none;color:var(--text-dark);font-size:.92rem}
 .planta-item img{width:76px;height:56px;object-fit:cover;border-radius:8px;border:1px solid #E2E8F0;background:#F1F5F9}
 .planta-item:hover span{color:var(--primary)}
+.gal-abas{display:flex;gap:6px;flex-wrap:wrap;max-width:1300px;margin:0 auto;padding:14px 24px 12px}
+.gal-aba{background:transparent;color:#C9D2E1;border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:8px 18px;font-weight:600;font-size:.82rem;font-family:inherit;cursor:pointer;transition:all .2s}
+.gal-aba:hover{border-color:var(--gold);color:#fff}
+.gal-aba.on{background:var(--gold);border-color:var(--gold);color:#0A1128}
 </style>
 </head>
 <body>
@@ -775,7 +779,7 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
         return `<div class="info-block"><h4>Plantas</h4><div class="planta-lista">${lista.map(p => `<a class="planta-item" href="${esc(p.url)}" target="_blank" rel="noopener"><img src="${esc(p.url)}" alt="${esc(p.nome)}" loading="lazy"><span>${esc(p.nome)}</span></a>`).join('')}</div></div>`;
     }
     // ── MODAL IMÓVEL — estrutura inspirada em imoveispro.com.br ─────────────────
-    let galAtual = 0, galFotos = [], galTimerModal = null;
+    let galAtual = 0, galFotos = [], galTimerModal = null, galModo = 'fotos', galFotosBase = [], galPlantas = [];
 
     function abrirModal(id) {
         const i = bancoImoveis.find(x => String(x.id) === String(id));
@@ -789,10 +793,13 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
             ? [fotoPrincipal, ...galeria.filter(u => u !== fotoPrincipal)]
             : (galeria.length ? galeria : [FOTO_PADRAO]);
         galAtual = 0;
+        galModo = 'fotos';
+        galFotosBase = galFotos;
 
         const plantas = (i.plantas || []).map((p, n) =>
             typeof p === 'string' ? { nome: 'Planta ' + (n + 1), url: p } : { nome: p.nome || 'Planta ' + (n + 1), url: p.url }
-        ).filter(p => urlOk(p.url));
+        ).map(p => ({ nome: p.nome, url: urlOk(p.url) })).filter(p => p.url);
+        galPlantas = plantas;
 
         const yt = youtubeEmbed(i.youtube);
         const tipologias = i.tipologias || [];
@@ -804,24 +811,19 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
         // Similares: até 3 imóveis do mesmo bairro ou estágio, excluindo o atual
         const similares = bancoImoveis.filter(x => String(x.id) !== String(id) && (bairroDe(x.localizacao) === bairro || x.estagio === i.estagio)).slice(0, 3);
 
-        // Thumbnails laterais da galeria (até 4 adicionais)
-        const thumbsHtml = galFotos.slice(1, 5).map((u, idx) => {
-            const extra = idx === 3 && galFotos.length > 5 ? `<div style="position:absolute;inset:0;background:rgba(10,17,40,.62);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.1rem;font-weight:700;border-radius:8px">+${galFotos.length - 4}</div>` : '';
-            return `<div onclick="galIr(${idx + 1})" style="cursor:pointer;position:relative;border-radius:8px;overflow:hidden;aspect-ratio:4/3;background:#E2E8F0">
-                <img src="${u}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;transition:transform .3s" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
-                ${extra}
-            </div>`;
-        }).join('');
-
         document.getElementById('modal-details-box').innerHTML = `
 <button class="close-modal" onclick="fecharModal()" aria-label="Fechar" style="position:fixed;top:18px;right:22px;z-index:10;background:rgba(10,17,40,.7);color:#fff;border:none;border-radius:50%;width:40px;height:40px;font-size:1.3rem;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)">&times;</button>
 
-<!-- GALERIA PRINCIPAL -->
+<!-- GALERIA PRINCIPAL: duas opções (Fotos do condomínio e apartamento | Plantas) -->
 <div style="background:#0a1128">
+  ${plantas.length ? `<div class="gal-abas" role="tablist" aria-label="Tipo de imagem">
+    <button class="gal-aba on" data-m="fotos" role="tab" aria-selected="true" onclick="galModoIr('fotos')">Fotos do condomínio e apartamento (${galFotosBase.length})</button>
+    <button class="gal-aba" data-m="plantas" role="tab" aria-selected="false" onclick="galModoIr('plantas')">Plantas (${plantas.length})</button>
+  </div>` : ''}
   <div style="max-width:1300px;margin:0 auto;padding:0 0 0 0">
     <div style="display:grid;grid-template-columns:2fr 1fr;gap:4px;height:460px">
       <!-- Foto principal -->
-      <div style="position:relative;overflow:hidden;cursor:pointer" onclick="galProx()">
+      <div id="gal-palco" style="position:relative;overflow:hidden;cursor:pointer" onclick="galProx()">
         <img id="gal-img-modal" src="${galFotos[0]}" alt="${esc(i.titulo)}" style="width:100%;height:100%;object-fit:cover;transition:opacity .4s">
         <div style="position:absolute;bottom:14px;left:14px;background:rgba(10,17,40,.75);color:#fff;padding:5px 12px;border-radius:20px;font-size:.78rem;backdrop-filter:blur(4px)" id="gal-contador">1 / ${galFotos.length}</div>
         <div style="position:absolute;top:14px;left:14px;background:var(--gold);color:#fff;padding:3px 10px;border-radius:4px;font-size:.72rem;font-weight:700">${esc(FASES[i.estagio] || 'Imóvel')}</div>
@@ -830,9 +832,7 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
         <button onclick="event.stopPropagation();galProx()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.85);border:none;border-radius:50%;width:36px;height:36px;cursor:pointer;font-size:.9rem">›</button>
       </div>
       <!-- Thumbs laterais -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:4px">
-        ${thumbsHtml || `<div style="background:#1a2f46;border-radius:8px;grid-column:1/-1;grid-row:1/-1;display:flex;align-items:center;justify-content:center;color:#64748b;font-size:.85rem">Mais fotos em breve</div>`}
-      </div>
+      <div id="gal-thumbs" style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:4px"></div>
     </div>
   </div>
 </div>
@@ -880,9 +880,6 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
       ${i.proximidade ? `<div style="display:flex;align-items:center;gap:8px;padding:12px 16px;background:#F8FAFC;border-radius:8px;border-left:3px solid var(--gold);margin-bottom:12px"><span style="font-size:1.2rem">📍</span><span style="font-size:.88rem;color:var(--text-dark)">${esc(i.proximidade)}</span></div>` : ''}
       <div style="background:#F1F5F9;border-radius:12px;height:200px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:.85rem;flex-direction:column;gap:6px"><span style="font-size:1.6rem">🗺</span>Localização em ${esc(i.localizacao)}</div>
     </div>
-
-    <!-- Plantas -->
-    ${plantas.length ? blocoPlantas(plantas) : ''}
 
     <!-- Vídeo -->
     ${yt ? `<div style="margin-bottom:28px"><h4 style="font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--primary);margin-bottom:12px">Vídeo do <em style="color:var(--gold)">imóvel</em></h4><iframe src="${yt}" style="width:100%;aspect-ratio:16/9;border:0;border-radius:14px" allowfullscreen loading="lazy" title="Vídeo"></iframe></div>` : ''}
@@ -934,10 +931,42 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
         const m = document.getElementById('propertyModal');
         m.style.display = 'flex';
         document.body.style.overflow = 'hidden';
+        galThumbs();
         // Auto-avanço da galeria
         if (galFotos.length > 1) {
             galTimerModal = setInterval(() => galProx(true), 4000);
         }
+        // Conta o acesso (dashboard do Cpainel); falha em silêncio
+        try { fetch('/api/imoveis/' + encodeURIComponent(i.id) + '/visita', { method: 'POST', keepalive: true }).catch(() => {}); } catch (e) {}
+    }
+
+    // Miniaturas laterais da aba ativa (até 4 adicionais)
+    function galThumbs() {
+        const box = document.getElementById('gal-thumbs');
+        if (!box) return;
+        const pl = galModo === 'plantas';
+        const html = galFotos.slice(1, 5).map((u, idx) => {
+            const extra = idx === 3 && galFotos.length > 5 ? `<div style="position:absolute;inset:0;background:rgba(10,17,40,.62);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.1rem;font-weight:700;border-radius:8px">+${galFotos.length - 4}</div>` : '';
+            return `<div onclick="galIr(${idx + 1})" style="cursor:pointer;position:relative;border-radius:8px;overflow:hidden;aspect-ratio:4/3;background:${pl ? '#fff' : '#E2E8F0'}">
+                <img src="${u}" alt="" style="width:100%;height:100%;object-fit:${pl ? 'contain' : 'cover'};border-radius:8px;transition:transform .3s" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
+                ${extra}
+            </div>`;
+        }).join('');
+        box.innerHTML = html || `<div style="background:#1a2f46;border-radius:8px;grid-column:1/-1;grid-row:1/-1;display:flex;align-items:center;justify-content:center;color:#64748b;font-size:.85rem">${pl ? 'Toque na planta para ampliar' : 'Mais fotos em breve'}</div>`;
+    }
+    // Alterna entre as duas opções: fotos do condomínio e apartamento | plantas
+    function galModoIr(m) {
+        if (m === 'plantas' && !galPlantas.length) return;
+        galModo = m;
+        clearInterval(galTimerModal);
+        galFotos = m === 'plantas' ? galPlantas.map(p => p.url) : galFotosBase;
+        document.querySelectorAll('.gal-aba').forEach(b => { const on = b.dataset.m === m; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
+        const palco = document.getElementById('gal-palco'), img = document.getElementById('gal-img-modal');
+        if (palco) palco.style.background = m === 'plantas' ? '#fff' : '';
+        if (img) img.style.objectFit = m === 'plantas' ? 'contain' : 'cover';
+        galThumbs();
+        galIr(0);
+        if (m === 'fotos' && galFotos.length > 1) galTimerModal = setInterval(() => galProx(true), 4000);
     }
 
     function galIr(idx) {
@@ -946,7 +975,7 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
         const img = document.getElementById('gal-img-modal');
         const cnt = document.getElementById('gal-contador');
         if (img) { img.style.opacity = 0; setTimeout(() => { img.src = galFotos[galAtual]; img.style.opacity = 1; }, 200); }
-        if (cnt) cnt.textContent = (galAtual + 1) + ' / ' + galFotos.length;
+        if (cnt) cnt.textContent = (galModo === 'plantas' && galPlantas[galAtual] && galPlantas[galAtual].nome ? galPlantas[galAtual].nome + ' · ' : '') + (galAtual + 1) + ' / ' + galFotos.length;
     }
     function galProx(auto) { galIr(galAtual + 1); if (!auto) clearInterval(galTimerModal); }
     function galAnter() { galIr(galAtual - 1); clearInterval(galTimerModal); }
