@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const axios = require('axios');
 const cheerio = require('cheerio');
 const cors = require('cors');
+const { extrairAoCubo } = require('./aocubo');
 
 const app = express();
 app.use(cors());
@@ -119,7 +120,7 @@ function limpar(b) {
 const novaRef = () => `REF-${Math.floor(100000 + Math.random() * 900000)}`;
 
 // APIs
-app.get('/api/versao', (req, res) => res.json({ versao: '2026-11-14-k', banco: bancoStatus }));
+app.get('/api/versao', (req, res) => res.json({ versao: '2026-11-14-l', banco: bancoStatus }));
 app.get('/api/imoveis', ah(async (req, res) => res.json((await getImoveis()).filter(i => i.ativo !== false))));
 app.get('/api/admin/imoveis', exigirLogin, ah(async (req, res) => res.json(await getImoveis())));
 app.get('/api/config', ah(async (req, res) => res.json(await getConfig())));
@@ -202,9 +203,26 @@ app.get('/api/orulo-sessao', exigirLogin, (req, res) => {
 });
 
 // MINERAÇÃO DO ÓRULO (dados reais ou nenhum, nunca valores inventados)
-app.post('/api/minerar-orulo', exigirLogin, async (req, res) => {
+// IMPORTAÇÃO POR LINK: AoCubo (leitura aberta) e Órulo (exige login)
+async function importarAoCubo(url, res) {
+  try {
+    const r = await axios.get(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122 Safari/537.36', 'Accept-Language': 'pt-BR,pt;q=0.9', Accept: 'text/html' },
+      timeout: 15000, maxRedirects: 3
+    });
+    const dados = extrairAoCubo(String(r.data), url);
+    if (!dados.titulo && !dados.preco) return res.json({ success: false, precisaTexto: true, error: 'Abri a página, mas não encontrei os dados do imóvel. Use a aba Assistente IA: cole o texto da página e a IA preenche o cadastro.' });
+    const faltando = ['titulo', 'preco', 'area', 'dormitorios', 'foto'].filter(k => !dados[k]);
+    res.json({ success: true, dados, faltando, precisaTexto: faltando.length > 1, fonte: 'AoCubo' });
+  } catch (e) {
+    res.json({ success: false, precisaTexto: true, error: `Não consegui abrir o link do AoCubo (${e.response ? 'HTTP ' + e.response.status : e.code || e.message}). Use a aba Assistente IA e cole o texto da página.` });
+  }
+}
+app.post(['/api/minerar-orulo', '/api/importar-link'], exigirLogin, async (req, res) => {
   const { url } = req.body || {};
-  if (!url || !/orulo\.com\.br/i.test(url)) return res.status(400).json({ success: false, error: 'URL inválida do Órulo.' });
+  let host = ''; try { host = new URL(url).hostname; } catch (e) {}
+  if (/(^|\.)aocubo\.com$/i.test(host)) return importarAoCubo(url, res);
+  if (!url || !/orulo\.com\.br/i.test(url)) return res.status(400).json({ success: false, error: 'Use um link do AoCubo ou do Órulo.' });
   const cookie = lerJson(SESSION_FILE, {}).cookie || '';
   try {
     const r = await axios.get(url, {

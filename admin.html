@@ -68,10 +68,10 @@
         <!-- ABA 1: IMÓVEIS -->
         <div class="tab-content active" id="tab-imoveis">
             <div class="form-group" style="margin-bottom: 20px;">
-                <label>Link de Importação do Órulo</label>
+                <label>Link do imóvel (AoCubo: preenche tudo, com fotos e plantas · Órulo: use o texto colado)</label>
                 <div style="display:flex; gap:10px;">
-                    <input type="text" id="urlOrulo" style="flex:1" placeholder="https://www.orulo.com.br/buildings/82950">
-                    <button onclick="minerar()" style="padding:10px 20px; background:var(--primary); color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Puxar Dados do Órulo</button>
+                    <input type="text" id="urlOrulo" style="flex:1" placeholder="https://aocubo.com/imovel/... ou https://www.orulo.com.br/buildings/...">
+                    <button onclick="minerar()" style="padding:10px 20px; background:var(--primary); color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Puxar dados do link</button>
                 </div>
             </div>
 
@@ -348,6 +348,17 @@
             const set = (id, v) => { if (v) document.getElementById(id).value = v; };
             set('titulo', d.titulo); set('preco', d.preco); set('cidade', d.localizacao);
             set('area', d.area); set('dormitorios', d.dormitorios); set('vagas', d.vagas); set('foto', d.foto);
+            set('apresentacao', d.apresentacao); set('estagio', d.estagio);
+            if (d.categoria) { document.getElementById('categoria').value = d.categoria; montarTipos(); }
+            if (d.tipo) {
+                const sel = document.getElementById('tipo');
+                if (![...sel.options].some(o => o.value === d.tipo)) sel.insertAdjacentHTML('beforeend', `<option>${esc(d.tipo)}</option>`);
+                sel.value = d.tipo;
+            }
+            if (d.fotos && d.fotos.length) set('fotos', d.fotos.join('\n'));
+            if (d.plantas && d.plantas.length) set('plantas', d.plantas.join('\n'));
+            if (d.lazer && d.lazer.length) set('lazer', d.lazer.join('\n'));
+            if (d.infoTecnica && d.infoTecnica.length) set('infoTecnica', d.infoTecnica.map(x => x.k + ': ' + x.v).join('\n'));
         }
         function caixaTexto() {
             if (document.getElementById('textoOrulo')) return;
@@ -373,10 +384,11 @@
         async function minerar() {
             const url = document.getElementById('urlOrulo').value;
             if(!url) return alert('Cole a URL do Órulo!');
-            const res = await fetch('/api/minerar-orulo', {method:'POST', headers:H(), body: JSON.stringify({url})});
+            const res = await fetch('/api/importar-link', {method:'POST', headers:H(), body: JSON.stringify({url})});
             if(res.status === 401) { alert('Sessão expirada. A página vai recarregar, entre de novo.'); sessionStorage.removeItem('tk'); return location.reload(); }
             const r = await res.json();
             if(r.success) {
+                if (typeof EDIT_ID !== 'undefined' && EDIT_ID) cancelarEdicao();
                 preencher(r.dados);
                 if(r.precisaTexto) { caixaTexto(); alert('Peguei só parte dos dados. Faltaram: ' + r.faltando.join(', ') + '. Cole o texto da página para completar.'); }
                 else alert('Dados extraídos. Confira antes de publicar.');
