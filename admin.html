@@ -282,7 +282,7 @@
                 preencher(r.dados);
                 if(r.precisaTexto) { caixaTexto(); alert('Peguei só parte dos dados. Faltaram: ' + r.faltando.join(', ') + '. Cole o texto da página para completar.'); }
                 else alert('Dados extraídos. Confira antes de publicar.');
-            } else { caixaTexto(); alert(r.error); }
+            } else { caixaTexto(); alert(r.error + (r.diag ? '\n\nDIAGNOSTICO (envie para o Claude):\n' + r.diag : '')); }
         }
 
         async function salvar(e) {

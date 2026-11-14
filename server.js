@@ -116,7 +116,11 @@ app.post('/api/minerar-orulo', exigirLogin, async (req, res) => {
     const $ = cheerio.load(r.data);
     const og = (p) => $(`meta[property="${p}"]`).attr('content') || '';
     let titulo = (og('og:title') || $('h1').first().text()).replace(/\|?\s*-?\s*Órulo/i, '').trim();
-    const pareceLogin = /login|entrar|acesse sua conta/i.test(titulo + $('title').text()) || $('input[type=password]').length > 0;
+    const urlFinal = (r.request && r.request.res && r.request.res.responseUrl) || url;
+    const temSenha = $('input[type=password]').length > 0;
+    const pareceLogin = temSenha || /login|sign_in|entrar|session/i.test(urlFinal) || /^\s*(login|entrar)/i.test($('title').text());
+    const diag = `HTTP ${r.status} | url final: ${urlFinal} | titulo: ${$('title').text().trim().slice(0, 80)} | campo senha: ${temSenha ? 'sim' : 'nao'} | cookie enviado: ${cookie ? cookie.length + ' caracteres' : 'nao'} | inicio da pagina: ${$('body').text().replace(/\s+/g, ' ').trim().slice(0, 200)}`;
+    console.log('ORULO DIAG:', diag);
     const fotos = [og('og:image')].filter(Boolean);
     $('img').each((i, el) => {
       const s = $(el).attr('src') || $(el).attr('data-src');
@@ -125,7 +129,8 @@ app.post('/api/minerar-orulo', exigirLogin, async (req, res) => {
     const dados = pareceLogin ? {} : { ...extrairDoTexto($('body').text()), titulo, foto: fotos[0] || '' };
     if (pareceLogin) {
       return res.json({ success: false, precisaTexto: true,
-        error: cookie ? 'A sessão salva do Órulo expirou. Copie o cookie de novo e salve a sessão, ou cole o texto da página.' : 'O Órulo exige login. Salve a sessão do Órulo abaixo (uma vez só) ou cole o texto da página.' });
+        diag,
+        error: cookie ? 'O Órulo não aceitou a sessão salva. Copie o cookie de novo e salve, ou cole o texto da página.' : 'O Órulo exige login. Salve a sessão do Órulo abaixo (uma vez só) ou cole o texto da página.' });
     }
     const faltando = ['titulo', 'preco', 'area', 'dormitorios', 'foto'].filter(k => !dados[k]);
     res.json({ success: true, dados, faltando, precisaTexto: faltando.length > 1 });
