@@ -25,6 +25,10 @@
 .tip-acao button:hover{background:var(--primary-light)}
 .tip-dica{font-size:.78rem;color:var(--text-muted);margin:0}
 @media(max-width:600px){.tip-bloco .tip-cab,.tip-bloco .tip-linha{font-size:.8rem;gap:4px}}
+.planta-lista{display:flex;flex-direction:column;border-top:1px solid #E2E8F0}
+.planta-item{display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid #E2E8F0;text-decoration:none;color:var(--text-dark);font-size:.92rem}
+.planta-item img{width:76px;height:56px;object-fit:cover;border-radius:8px;border:1px solid #E2E8F0;background:#F1F5F9}
+.planta-item:hover span{color:var(--primary)}
 </style>
 </head>
 <body>
@@ -736,13 +740,16 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
         window.open(linkZap(`Olá, quero enviar uma proposta para ${i.titulo || 'o imóvel'} (cód. ${i.ref || ''}).${extra}`), '_blank');
     }
 
+    function blocoPlantas(lista) {
+        return `<div class="info-block"><h4>Plantas</h4><div class="planta-lista">${lista.map(p => `<a class="planta-item" href="${esc(p.url)}" target="_blank" rel="noopener"><img src="${esc(p.url)}" alt="${esc(p.nome)}" loading="lazy"><span>${esc(p.nome)}</span></a>`).join('')}</div></div>`;
+    }
     function abrirModal(id) {
         const i = bancoImoveis.find(x => String(x.id) === String(id));
         if (!i) return;
         const fotos = (i.fotos && i.fotos.length ? i.fotos : [i.foto]).map(urlOk).filter(Boolean);
-        const plantas = (i.plantas || []).map(urlOk).filter(Boolean);
+        const plantas = (i.plantas || []).map((p, n) => typeof p === 'string' ? { nome: 'Planta ' + (n + 1), url: p } : { nome: p.nome || 'Planta ' + (n + 1), url: p.url }).filter(p => urlOk(p.url));
         const yt = youtubeEmbed(i.youtube);
-        const tipologias = i.tipologias || [], lazer = i.lazer || [], infoTec = i.infoTecnica || [];
+        const tipologias = i.tipologias || [], lazer = i.lazer || [], infoTec = i.infoTecnica || [], caracUnid = i.caracteristicasUnidade || [];
         const fichas = [['Código', i.ref], ['Fase', FASES[i.estagio]], ['Área', i.area], ['Dormitórios', i.dormitorios], ['Vagas', i.vagas], ['Localização', i.localizacao]]
             .filter(f => f[1]).map(f => `<div class="tech-item"><span>${f[0]}</span><b>${esc(f[1])}</b></div>`).join('');
         document.getElementById('modal-details-box').innerHTML = `
@@ -760,14 +767,15 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
                     <div class="info-block"><h4>Ficha do imóvel</h4><div class="tech-grid">${fichas}</div></div>
                     ${i.apresentacao ? `<div class="info-block"><h4>Sobre o projeto</h4><p style="line-height:1.75;white-space:pre-line">${esc(i.apresentacao)}</p></div>` : ''}
                     ${tipologias.length ? blocoTipologias(tipologias, i) : ''}
-                    ${lazer.length ? `<div class="info-block"><h4>Lazer e comodidades</h4><div class="chips">${lazer.map(x => `<span class="chip">${esc(x)}</span>`).join('')}</div></div>` : ''}
-                    ${infoTec.length ? `<div class="info-block"><h4>Informações técnicas</h4><div class="tech-grid">${infoTec.map(x => `<div class="tech-item"><span>${esc(x.k)}</span><b>${esc(x.v)}</b></div>`).join('')}</div></div>` : ''}
+                    ${lazer.length ? `<div class="info-block"><h4>Características condominiais</h4><div class="chips">${lazer.map(x => `<span class="chip">${esc(x)}</span>`).join('')}</div></div>` : ''}
+                    ${caracUnid.length ? `<div class="info-block"><h4>Características da unidade</h4><div class="chips">${caracUnid.map(x => `<span class="chip">${esc(x)}</span>`).join('')}</div></div>` : ''}
+                    ${i.construtora ? `<div class="info-block"><h4>Informações comerciais</h4><p style="margin:0"><b>${esc(i.construtora)}</b></p></div>` : ''}
+                    ${infoTec.length ? `<div class="info-block"><h4>Outras informações</h4><div class="tech-grid">${infoTec.map(x => `<div class="tech-item"><span>${esc(x.k)}</span><b>${esc(x.v)}</b></div>`).join('')}</div></div>` : ''}
                     ${fotos.length ? `<div class="info-block"><h4>Galeria de fotos</h4>
                         <div style="position:relative;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:#E2E8F0">
                             <img id="gal-img" src="${fotos[0]}" alt="Foto de ${esc(i.titulo)}" style="width:100%;height:100%;object-fit:cover;transition:opacity .6s">
                         </div></div>` : ''}
-                    ${plantas.length ? `<div class="info-block"><h4>Plantas</h4><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px">
-                        ${plantas.map(p => `<a href="${p}" target="_blank" rel="noopener"><img src="${p}" alt="Planta" style="width:100%;border-radius:10px;border:1px solid #E2E8F0"></a>`).join('')}</div></div>` : ''}
+                    ${plantas.length ? blocoPlantas(plantas) : ''}
                     ${yt ? `<div class="info-block"><h4>Vídeo</h4><iframe src="${yt}" style="width:100%;aspect-ratio:16/9;border:0;border-radius:14px" allowfullscreen loading="lazy" title="Vídeo do imóvel"></iframe></div>` : ''}
                     ${urlOk(i.tour360) ? `<div class="info-block"><h4>Tour virtual 360°</h4><a class="btn-header-cta" href="${urlOk(i.tour360)}" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none">Abrir tour virtual</a></div>` : ''}
                 </div>

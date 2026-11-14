@@ -49,7 +49,7 @@ function mapear(b, imgs, plantas) {
   const dt = entregaRaw.match(/^(\d{4})-(\d{2})/);
   const entrega = dt ? `${dt[2]}/${dt[1]}` : entregaRaw;
   const fotos = lista(imgs, 'images', 'items').map(urlDe).filter(Boolean).slice(0, 30);
-  const pl = lista(plantas, 'floor_plans', 'items').map(urlDe).filter(Boolean).slice(0, 20);
+  const pl = lista(plantas, 'floor_plans', 'items').map(p => ({ nome: texto(pega(p, 'name', 'title', 'description', 'label')), url: urlDe(p) })).filter(p => p.url).slice(0, 20);
   const capa = urlDe(b.default_image) || fotos[0] || '';
   if (capa && !fotos.includes(capa)) fotos.unshift(capa);
   const bairro = texto(pega(end, 'area', 'neighborhood')), cidade = texto(end.city), uf = texto(end.state);
@@ -59,6 +59,7 @@ function mapear(b, imgs, plantas) {
   const unid = pega(b, 'total_units', 'number_of_units'), torres = pega(b, 'number_of_towers', 'towers');
   if (torres) info.push({ k: 'Número de torres', v: String(torres) });
   if (unid) info.push({ k: 'Total de unidades', v: String(unid) });
+  const est = pega(b, 'stock', 'available_units', 'units_available'); if (est) info.push({ k: 'Estoque', v: String(est) });
   const dmin = dorms.length ? Math.min(...dorms) : 0, dmax = dorms.length ? Math.max(...dorms) : 0;
   const dados = {
     titulo: texto(b.name),
@@ -68,7 +69,7 @@ function mapear(b, imgs, plantas) {
     vagas: vagasN.length ? faixa(vagasN, String, '').replace(/^(\S+)$/, (m) => `${m} vaga${m === '1' ? '' : 's'}`) : '',
     localizacao: [bairro, [cidade, uf].filter(Boolean).join(' - ')].filter(Boolean).join(', '),
     estagio, tipo, categoria: /comercial/i.test(texto(b.finality)) ? 'Comercial' : 'Residencial',
-    foto: capa, fotos, plantas: pl,
+    foto: capa, fotos, plantas: pl, construtora: texto(pega(b, 'developer', 'company', 'builder', 'developer_name', 'company_name')),
     lazer: lista(b.features).map(texto).filter(Boolean).slice(0, 60),
     infoTecnica: info,
     apresentacao: texto(pega(b, 'description', 'presentation')).slice(0, 3000),

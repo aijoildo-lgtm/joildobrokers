@@ -141,13 +141,13 @@ const TARJAS=[['none','Nenhuma'],['exclusivo','Exclusividade'],['desconto','Desc
 const DEF={transacao:'Vender Imóvel',categoria:'Residencial',destaque:'none'};
 const NOMES={titulo:'título',preco:'preço',area:'área',dormitorios:'dormitórios',foto:'foto'};
 const CAMPOS=[
-['S','Dados do imóvel'],['titulo','Título *'],['ref','Código de referência'],
+['S','Dados do imóvel'],['titulo','Título *'],['ref','Código de referência'],['construtora','Construtora / incorporadora'],
 ['transacao','Finalidade',['Vender Imóvel','Alugar Imóvel']],['categoria','Categoria',['Residencial','Comercial']],
 ['tipo','Tipo de imóvel','L'],['estagio','Estágio',ESTAGIOS],['destaque','Tarja no site',TARJAS],['preco','Preço *'],
 ['S','Localização'],['localizacao','Bairro, cidade - UF *'],['proximidade','Proximidade (ex.: 5 min do metrô)'],['lat','Latitude (opcional, para o mapa)'],['lng','Longitude (opcional)'],
-['S','Características'],['area','Área (ex.: 142m²)'],['dormitorios','Dormitórios (ex.: 3 Suítes)'],['vagas','Vagas (ex.: 2 vagas)'],['diferencial','Diferencial'],
+['S','Características'],['area','Área (ex.: 142m²)'],['dormitorios','Dormitórios (ex.: 3 Suítes)'],['vagas','Vagas (ex.: 2 vagas)'],['diferencial','Diferencial'],['lazer','Características condominiais (uma por linha)','X'],['caracteristicasUnidade','Características da unidade (uma por linha)','X'],
 ['S','Fotos do condomínio e do apartamento'],['foto','Foto de capa (vazio usa a primeira da galeria)'],['fotos','Galeria: um link por linha','A'],
-['S','Plantas'],['plantas','Plantas: um link por linha','A'],['S','Atualização automática'],['linkOrigem','Link de origem (AoCubo ou Órulo)'],
+['S','Plantas'],['plantas','Plantas: uma por linha, no formato Nome | link','P'],['S','Atualização automática'],['linkOrigem','Link de origem (AoCubo ou Órulo)'],
 ['S','Descrição e vídeo'],['apresentacao','Texto de apresentação','T'],['youtube','Vídeo do YouTube'],['videoArquivo','Vídeo enviado do computador (link)'],['tour360','Tour virtual 360°']];
 
 const UPLOAD={fotos:[['Escolher fotos do computador','multiple'],['Enviar uma pasta inteira','webkitdirectory multiple']],plantas:[['Escolher plantas','multiple'],['Enviar uma pasta de plantas','webkitdirectory multiple']],videoArquivo:[['Escolher vídeo do computador','']]};
@@ -155,14 +155,15 @@ const upl=k=>UPLOAD[k]?`<div style="margin-top:8px;display:flex;gap:8px;flex-wra
 $('fImovel').innerHTML=CAMPOS.map(([k,l,x])=>{
   if(k==='S')return `<div class="sec">${l}</div>`;
   const ctl=Array.isArray(x)?`<select id="f_${k}">${x.map(o=>{const[v,t]=Array.isArray(o)?o:[o,o];return `<option value="${v}">${t}</option>`}).join('')}</select>`
-    :x==='A'?`<textarea id="f_${k}" rows="4" placeholder="https://..."></textarea>`
+    :x==='P'?`<textarea id="f_${k}" rows="4" placeholder="Planta 01 - 3 dorm 84m² | https://..."></textarea>`:x==='X'?`<textarea id="f_${k}" rows="4"></textarea>`:x==='A'?`<textarea id="f_${k}" rows="4" placeholder="https://..."></textarea>`
     :x==='T'?`<textarea id="f_${k}" rows="5"></textarea>`
     :`<input id="f_${k}"${x==='L'?' list="tipos"':''}>`;
-  return `<div class="f${x==='A'||x==='T'?' full':''}"><label for="f_${k}">${l}</label>${ctl}${upl(k)}${x==='A'?`<div class="gal" id="g_${k}"></div>`:''}</div>`;
+  return `<div class="f${['A','T','P','X'].includes(x)?' full':''}"><label for="f_${k}">${l}</label>${ctl}${upl(k)}${(x==='A'||x==='P')?`<div class="gal" id="g_${k}"></div>`:''}</div>`;
 }).join('')+`<div class="sec">Tipologias e valores</div><div class="full" id="tipos-box"></div><div class="sec">Publicação</div><div class="f full" style="display:flex;gap:28px;flex-wrap:wrap"><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_emDestaque" style="width:auto">Destacar na página inicial</label><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_ativo" style="width:auto" checked>Publicado no site</label><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_sincronizar" style="width:auto" checked>Atualizar preço e estágio pelo link</label></div>`;
 
 let IM=[],CUR=null,BASE={},timer=null;
 const lines=s=>s.split('\n').map(x=>x.trim()).filter(x=>/^https?:\/\//i.test(x));
+const linesPlantas=s=>s.split('\n').map(x=>x.trim()).filter(Boolean).map(x=>{const pt=x.includes('|')?x.split('|').map(y=>y.trim()):['',x];const nome=pt[0],url=pt[pt.length-1];return /^https?:\/\//i.test(url)?(nome?{nome,url}:url):null}).filter(Boolean);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=d=>new Date(d).toLocaleDateString('pt-BR');
 const dataRef=i=>i.atualizadoEm||i.criadoEm||'';
@@ -227,12 +228,12 @@ function ir(v){
 function abrir(it){CUR=it||null;BASE=it?{...it}:{};$('ftitulo').textContent=it?it.titulo:'Novo imóvel';$('url').value='';$('impMsg').textContent='';preencher(BASE);ir('form');window.scrollTo(0,0)}
 function editar(id){abrir(IM.find(x=>x.id==id))}
 function preencher(d){
-  CAMPOS.forEach(([k,,x])=>{if(k==='S')return;const el=$('f_'+k);el.value=x==='A'?(d[k]||[]).join('\n'):(d[k]??DEF[k]??'');if(x==='A')galeria(k)});
+  CAMPOS.forEach(([k,,x])=>{if(k==='S')return;const el=$('f_'+k);el.value=x==='P'?(d[k]||[]).map(p=>typeof p==='object'?`${p.nome||''} | ${p.url}`:p).join('\n'):(x==='A'||x==='X')?(d[k]||[]).join('\n'):(d[k]??DEF[k]??'');if(x==='A'||x==='P')galeria(k)});
   $('f_emDestaque').checked=d.emDestaque===true;$('f_ativo').checked=d.ativo!==false;$('f_sincronizar').checked=d.sincronizar!==false;TIPS=(d.tipologias||[]).map(t=>({...t}));renderTips();pend();
 }
-function galeria(k){$('g_'+k).innerHTML=lines($('f_'+k).value).slice(0,30).map(u=>`<img src="${esc(u)}" alt="" loading="lazy" onerror="this.style.opacity=.2">`).join('')}
+function galeria(k){const v=$('f_'+k).value;const us=k==='plantas'?linesPlantas(v).map(p=>typeof p==='object'?p.url:p):lines(v);$('g_'+k).innerHTML=us.slice(0,30).map(u=>`<img src="${esc(u)}" alt="" loading="lazy" onerror="this.style.opacity=.2">`).join('')}
 function coleta(){
-  const o={};CAMPOS.forEach(([k,,x])=>{if(k==='S')return;const v=$('f_'+k).value;o[k]=x==='A'?lines(v):v.trim()});
+  const o={};CAMPOS.forEach(([k,,x])=>{if(k==='S')return;const v=$('f_'+k).value;o[k]=x==='A'?lines(v):x==='P'?linesPlantas(v):x==='X'?v.split('\n').map(s=>s.trim()).filter(Boolean):v.trim()});
   o.emDestaque=$('f_emDestaque').checked;o.ativo=$('f_ativo').checked;o.sincronizar=$('f_sincronizar').checked;o.tipologias=TIPS.filter(t=>(t.nome||'').trim()).map(t=>({nome:t.nome||'',area:t.area||'',dorm:t.dorm||'',suites:t.suites||'',vagas:t.vagas||'',preco:t.preco||''}));return o;
 }
 function pend(){

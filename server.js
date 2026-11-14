@@ -105,13 +105,17 @@ const getConfig = async () => {
 const saveConfig = async (c) => db ? db.collection('config').updateOne({ _id: 'site' }, { $set: { dados: c } }, { upsert: true }) : gravarJson(CONFIG_FILE, c);
 
 // VALIDAÇÃO DO IMÓVEL (só campos conhecidos, com limites)
-const TXT = ['ref','titulo','preco','foto','localizacao','estagio','destaque','area','dormitorios','vagas','youtube','tour360','transacao','categoria','tipo','apresentacao','diferencial','proximidade','origem','linkOrigem','videoArquivo','sincronizadoEm'];
+const TXT = ['ref','titulo','preco','foto','localizacao','estagio','destaque','area','dormitorios','vagas','youtube','tour360','transacao','categoria','tipo','apresentacao','diferencial','proximidade','origem','linkOrigem','videoArquivo','sincronizadoEm','construtora'];
 const s2 = (v, n) => String(v == null ? '' : v).slice(0, n);
 function limpar(b) {
   const o = {};
   TXT.forEach(k => { if (b[k] != null) o[k] = s2(b[k], k === 'apresentacao' ? 4000 : 500); });
-  ['fotos', 'plantas'].forEach(k => { o[k] = (Array.isArray(b[k]) ? b[k] : []).map(u => s2(u, 500)).filter(u => /^https?:\/\//i.test(u)).slice(0, 100); });
+  o.fotos = (Array.isArray(b.fotos) ? b.fotos : []).map(u => s2(u, 500)).filter(u => /^https?:\/\//i.test(u)).slice(0, 100);
+  // plantas: texto (link) ou objeto { nome, url }
+  o.plantas = (Array.isArray(b.plantas) ? b.plantas : []).map(p => (p && typeof p === 'object') ? { nome: s2(p.nome, 120), url: s2(p.url, 500) } : s2(p, 500))
+    .filter(p => /^https?:\/\//i.test(typeof p === 'string' ? p : p.url)).slice(0, 100);
   o.lazer = (Array.isArray(b.lazer) ? b.lazer : []).map(x => s2(x, 80)).filter(Boolean).slice(0, 60);
+  o.caracteristicasUnidade = (Array.isArray(b.caracteristicasUnidade) ? b.caracteristicasUnidade : []).map(x => s2(x, 80)).filter(Boolean).slice(0, 60);
   o.tipologias = (Array.isArray(b.tipologias) ? b.tipologias : []).slice(0, 40).map(t => ({ nome: s2(t.nome, 80), area: s2(t.area, 40), dorm: s2(t.dorm, 20), suites: s2(t.suites, 20), vagas: s2(t.vagas, 20), preco: s2(t.preco, 40) })).filter(t => t.nome);
   o.infoTecnica = (Array.isArray(b.infoTecnica) ? b.infoTecnica : []).slice(0, 40).map(x => ({ k: s2(x.k, 80), v: s2(x.v, 200) })).filter(x => x.k);
   o.emDestaque = b.emDestaque === true;
