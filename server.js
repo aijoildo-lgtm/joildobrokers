@@ -119,7 +119,7 @@ function limpar(b) {
 const novaRef = () => `REF-${Math.floor(100000 + Math.random() * 900000)}`;
 
 // APIs
-app.get('/api/versao', (req, res) => res.json({ versao: '2026-11-14-j', banco: bancoStatus }));
+app.get('/api/versao', (req, res) => res.json({ versao: '2026-11-14-k', banco: bancoStatus }));
 app.get('/api/imoveis', ah(async (req, res) => res.json((await getImoveis()).filter(i => i.ativo !== false))));
 app.get('/api/admin/imoveis', exigirLogin, ah(async (req, res) => res.json(await getImoveis())));
 app.get('/api/config', ah(async (req, res) => res.json(await getConfig())));
@@ -136,6 +136,14 @@ app.patch('/api/imoveis/:id', exigirLogin, ah(async (req, res) => {
   if ('ativo' in b) set.ativo = b.ativo === true;
   if ('emDestaque' in b) set.emDestaque = b.emDestaque === true;
   res.json({ success: await updImovel(req.params.id, set) });
+}));
+app.put('/api/imoveis/:id', exigirLogin, ah(async (req, res) => {
+  const b = req.body || {}, set = limpar(b);
+  set.demo = b.demo === true;
+  set.atualizadoEm = new Date().toISOString();
+  if (!set.ref) delete set.ref;
+  const ok = await updImovel(req.params.id, set);
+  res.status(ok ? 200 : 404).json(ok ? { success: true } : { success: false, error: 'Imóvel não encontrado.' });
 }));
 app.delete('/api/imoveis/:id', exigirLogin, ah(async (req, res) => res.json({ success: await delImovel(req.params.id) })));
 app.post('/api/duplicar-imovel/:id', exigirLogin, ah(async (req, res) => {
@@ -226,6 +234,103 @@ app.post('/api/minerar-orulo', exigirLogin, async (req, res) => {
     res.json({ success: true, dados, faltando, precisaTexto: faltando.length > 1 });
   } catch (e) {
     res.json({ success: false, precisaTexto: true, error: `Não consegui abrir o link (${e.response ? 'HTTP ' + e.response.status : e.code || e.message}). Cole o texto da página no campo abaixo.` });
+  }
+});
+
+
+// ===== CONTEÚDOS (blog, notícias e depoimentos editáveis pelo painel) =====
+const CONTEUDOS_FILE = path.join(__dirname, 'conteudos.json');
+const U = (id) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=700&q=80`;
+const CONTEUDOS_PADRAO = [
+  { id: 1800000000001, tipo: 'blog', titulo: 'Como escolher o apartamento ideal na planta', categoria: 'Investimento', data: '2026-11-12', imagem: U('photo-1484154218962-a197022b5858') },
+  { id: 1800000000002, tipo: 'blog', titulo: 'Varanda gourmet: como aproveitar cada metro do espaço', categoria: 'Decoração', data: '2026-10-28', imagem: U('photo-1493809842364-78817add7ffb') },
+  { id: 1800000000003, tipo: 'blog', titulo: 'Morar perto do metrô: o que muda na rotina da família', categoria: 'Lifestyle', data: '2026-10-15', imagem: U('photo-1502672260266-1c1ef2d93688') },
+  { id: 1800000000004, tipo: 'noticia', titulo: 'Financiamento imobiliário: entenda as etapas até a assinatura', categoria: 'Joildo Informa', data: '2026-11-10', imagem: U('photo-1560518883-ce09059eeffa') },
+  { id: 1800000000005, tipo: 'noticia', titulo: 'Documentos que você precisa reunir para comprar um imóvel', categoria: 'Joildo Informa', data: '2026-11-03', imagem: U('photo-1522708323590-d24dbb6b0267') },
+  { id: 1800000000006, tipo: 'noticia', titulo: 'Jardins e Itaim Bibi: o que observar antes de investir', categoria: 'Bairros', data: '2026-10-24', imagem: U('photo-1545324418-cc1a3fa10c00') },
+  { id: 1800000000007, tipo: 'noticia', titulo: 'Tour virtual 360°: conhecer o imóvel sem sair de casa', categoria: 'Tecnologia', data: '2026-10-09', imagem: U('photo-1600585154340-be6161a56a0c') },
+  { id: 1800000000008, tipo: 'depoimento', titulo: '', texto: 'O Joildo possui uma leitura de mercado espetacular. Apresentou opções fora do circuito tradicional com retorno rápido para meu portfólio.', autor: 'Carlos M., Investidor Institucional', estrelas: 5, data: '2026-01-02' },
+  { id: 1800000000009, tipo: 'depoimento', titulo: '', texto: 'Atendimento ético, ágil e altamente técnico. Encontramos o apartamento ideal nos Jardins exatamente dentro dos parâmetros que solicitamos.', autor: 'Fernanda & Roberto, Compradores', estrelas: 5, data: '2026-01-01' }
+].map(c => ({ ativo: true, ...c }));
+
+async function getConteudos() {
+  if (db) {
+    const col = db.collection('conteudos');
+    if (!(await db.collection('config').findOne({ _id: 'semente_conteudos' }))) {
+      if (await col.countDocuments() === 0) await col.insertMany(CONTEUDOS_PADRAO.map(c => ({ ...c })));
+      await db.collection('config').insertOne({ _id: 'semente_conteudos', em: new Date().toISOString() });
+    }
+    return col.find({}, { projection: { _id: 0 } }).sort({ data: -1 }).toArray();
+  }
+  return lerJson(CONTEUDOS_FILE, CONTEUDOS_PADRAO).sort((a, b) => String(b.data).localeCompare(String(a.data)));
+}
+const salvarConteudos = async (lista) => gravarJson(CONTEUDOS_FILE, lista);
+async function cAdd(c) { if (db) return db.collection('conteudos').insertOne({ ...c }); const l = await getConteudos(); l.unshift(c); return salvarConteudos(l); }
+async function cUpd(id, set) {
+  if (db) return (await db.collection('conteudos').updateOne({ id: Number(id) }, { $set: set })).matchedCount > 0;
+  const l = await getConteudos(); const x = l.find(c => String(c.id) === String(id));
+  if (!x) return false; Object.assign(x, set); await salvarConteudos(l); return true;
+}
+async function cDel(id) {
+  if (db) return (await db.collection('conteudos').deleteOne({ id: Number(id) })).deletedCount > 0;
+  const l = await getConteudos(); const n = l.filter(c => String(c.id) !== String(id));
+  await salvarConteudos(n); return n.length < l.length;
+}
+function limparConteudo(b) {
+  const o = {};
+  o.tipo = ['blog', 'noticia', 'depoimento'].includes(b.tipo) ? b.tipo : 'blog';
+  o.titulo = s2(b.titulo, 200); o.categoria = s2(b.categoria, 60);
+  o.data = /^\d{4}-\d{2}-\d{2}$/.test(b.data || '') ? b.data : new Date().toISOString().slice(0, 10);
+  o.imagem = /^https?:\/\//i.test(b.imagem || '') ? s2(b.imagem, 500) : '';
+  o.link = /^https?:\/\//i.test(b.link || '') ? s2(b.link, 500) : '';
+  o.texto = s2(b.texto, 8000); o.autor = s2(b.autor, 120);
+  o.estrelas = Math.min(5, Math.max(1, parseInt(b.estrelas, 10) || 5));
+  o.ativo = b.ativo !== false;
+  return o;
+}
+app.get('/api/conteudos', ah(async (req, res) => res.json((await getConteudos()).filter(c => c.ativo !== false))));
+app.get('/api/admin/conteudos', exigirLogin, ah(async (req, res) => res.json(await getConteudos())));
+app.post('/api/conteudos', exigirLogin, ah(async (req, res) => {
+  const c = limparConteudo(req.body || {}); c.id = Date.now(); c.criadoEm = new Date().toISOString();
+  if (c.tipo === 'depoimento' ? !c.texto : !c.titulo) return res.status(400).json({ success: false, error: 'Preencha o título (ou o texto do depoimento).' });
+  await cAdd(c); res.json({ success: true });
+}));
+app.put('/api/conteudos/:id', exigirLogin, ah(async (req, res) => {
+  const set = limparConteudo(req.body || {}); set.atualizadoEm = new Date().toISOString();
+  const ok = await cUpd(req.params.id, set);
+  res.status(ok ? 200 : 404).json({ success: ok });
+}));
+app.patch('/api/conteudos/:id', exigirLogin, ah(async (req, res) => res.json({ success: await cUpd(req.params.id, { ativo: (req.body || {}).ativo === true }) })));
+app.delete('/api/conteudos/:id', exigirLogin, ah(async (req, res) => res.json({ success: await cDel(req.params.id) })));
+
+// ===== ASSISTENTE DE IA (precisa da variável ANTHROPIC_API_KEY no Render) =====
+const IA_MODELO = process.env.ANTHROPIC_MODEL || 'claude-sonnet-5-5';
+const IA_SISTEMA = 'Você é o assistente de conteúdo da Joildo Brokers, consultoria imobiliária de alto padrão em São Paulo (CRECI 200298). Escreva em português do Brasil, tom elegante, claro e confiável, sem exageros. REGRA ABSOLUTA: nunca invente preço, metragem, prazo de entrega, nome de construtora, endereço ou qualquer dado que não esteja no que foi informado. Se faltar informação, escreva sem ela. Responda só com o texto pedido, sem comentários antes ou depois.';
+app.post('/api/ia', exigirLogin, async (req, res) => {
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) return res.status(503).json({ success: false, error: 'IA não configurada. No Render, adicione a variável ANTHROPIC_API_KEY.' });
+  const { tarefa, dados, instrucao } = req.body || {};
+  const ctx = String(JSON.stringify(dados || {})).slice(0, 8000);
+  const ins = String(instrucao || '').slice(0, 4000);
+  const pedidos = {
+    apresentacao: `Escreva uma apresentação de 2 a 3 parágrafos curtos para o anúncio deste imóvel, usando SOMENTE estes dados:\n${ctx}\n${ins}`,
+    post: `Escreva um texto (300 a 500 palavras, com subtítulos simples) sobre o tema abaixo, útil para quem quer comprar imóvel em São Paulo. Não cite números de mercado que você não possa garantir.\nPedido: ${ins}\nDados de apoio: ${ctx}`,
+    revisar: `Revise e melhore o texto abaixo (correção, clareza e tom profissional), mantendo todos os fatos.\n${ins}`,
+    titulos: `Sugira 5 títulos curtos e atraentes para este conteúdo, um por linha, sem numeração.\n${ins}\n${ctx}`,
+    extrair: `Extraia do texto abaixo os dados do imóvel e responda APENAS um JSON válido, sem crases, com as chaves: titulo, preco, localizacao, area, dormitorios, vagas, diferencial, proximidade, apresentacao (resumo de 2 frases), lazer (array de strings). Use "" (ou []) para o que não estiver no texto. Não invente nada.\nTEXTO:\n${ins}`,
+    livre: ins
+  };
+  const prompt = pedidos[tarefa];
+  if (!prompt || !String(prompt).trim()) return res.status(400).json({ success: false, error: 'Pedido inválido.' });
+  try {
+    const r = await axios.post('https://api.anthropic.com/v1/messages',
+      { model: IA_MODELO, max_tokens: 1800, system: IA_SISTEMA, messages: [{ role: 'user', content: prompt }] },
+      { headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' }, timeout: 60000 });
+    const texto = (r.data.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
+    res.json({ success: true, texto });
+  } catch (e) {
+    console.error('Erro IA:', e.response ? JSON.stringify(e.response.data) : e.message);
+    res.status(502).json({ success: false, error: 'A IA não respondeu (' + (e.response ? 'HTTP ' + e.response.status : e.code || e.message) + '). Confira a chave e o modelo.' });
   }
 });
 

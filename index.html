@@ -198,7 +198,7 @@
 <!-- SEÇÃO: BLOG & CONTEÚDOS -->
 <section class="ins-section reveal" id="blog">
     <div class="ins-head"><h2>Conteúdos para você se inspirar</h2></div>
-    <div class="ins-grid">
+    <div class="ins-grid" id="grid-blog">
             <article class="ins-card" tabindex="0">
                 <div class="ins-img"><img src="https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=700&q=80" alt="Como escolher o apartamento ideal na planta" loading="lazy" onerror="this.style.display='none'"></div>
                 <span class="ins-pill">Investimento</span>
@@ -223,7 +223,7 @@
 <section class="ins-section ins-claro reveal" id="noticias">
     <div class="ins-head"><h2>Acompanhe nossas notícias</h2>
         <p>Informações para ajudar você a encontrar o lar ideal e tirar dúvidas sobre a compra de imóveis.</p></div>
-    <div class="ins-grid quatro">
+    <div class="ins-grid quatro" id="grid-noticias">
             <article class="ins-card" tabindex="0">
                 <div class="ins-img"><img src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=700&q=80" alt="Financiamento imobiliário: entenda as etapas até a assinatura" loading="lazy" onerror="this.style.display='none'"></div>
                 <span class="ins-pill">Joildo Informa</span>
@@ -263,7 +263,7 @@
         <h2>Depoimentos de Clientes & Investidores</h2>
         <p>A opinião de quem já realizou negócios com nossa consultoria</p>
     </div>
-    <div class="blog-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+    <div class="blog-grid" id="grid-depoimentos" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
         <div class="info-block" style="border-top: 4px solid var(--gold);">
             <div style="color: var(--gold); margin-bottom: 10px;">
                 <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
@@ -739,6 +739,29 @@
         initScrollReveal();
     }
     carregar();
+</script>
+<script>
+(async function () {
+    const esc = t => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const dataBR = d => { try { return new Date(d + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }); } catch (e) { return d; } };
+    const card = (c, prefixo) => {
+        const img = c.imagem ? `<div class="ins-img"><img src="${esc(c.imagem)}" alt="${esc(c.titulo)}" loading="lazy" onerror="this.style.display='none'"></div>` : '';
+        const corpo = `${img}${c.categoria ? `<span class="ins-pill">${esc(c.categoria)}</span>` : ''}<h3>${esc(c.titulo)}</h3><time>${prefixo}${dataBR(c.data)}</time>`;
+        return c.link ? `<a class="ins-card" href="${esc(c.link)}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit">${corpo}</a>` : `<article class="ins-card" tabindex="0">${corpo}</article>`;
+    };
+    const dep = c => `<div class="info-block" style="border-top: 4px solid var(--gold);"><div style="color: var(--gold); margin-bottom: 10px;">${'<i class="fas fa-star"></i>'.repeat(c.estrelas || 5)}</div><p style="font-style: italic; font-size: 0.9rem; color: var(--text-dark); margin-bottom: 15px;">"${esc(c.texto)}"</p><strong style="color: var(--primary); font-size: 0.85rem;">— ${esc(c.autor)}</strong></div>`;
+    try {
+        const res = await fetch('/api/conteudos'); if (!res.ok) return;
+        const lista = await res.json(); if (!Array.isArray(lista)) return;
+        const parte = (tipo, gridId, secId, fn) => {
+            const itens = lista.filter(c => c.tipo === tipo), g = document.getElementById(gridId), s = document.getElementById(secId);
+            if (!g) return; g.innerHTML = itens.map(fn).join(''); if (s) s.style.display = itens.length ? '' : 'none';
+        };
+        parte('blog', 'grid-blog', 'blog', c => card(c, ''));
+        parte('noticia', 'grid-noticias', 'noticias', c => card(c, 'Postado em '));
+        parte('depoimento', 'grid-depoimentos', 'depoimentos', dep);
+    } catch (e) { /* mantém o conteúdo que já está na página */ }
+})();
 </script>
 </body>
 </html>
