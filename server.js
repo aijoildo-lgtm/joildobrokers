@@ -12,6 +12,7 @@ app.use(express.json({ limit: '2mb' }));
 
 const DATA_FILE = path.join(__dirname, 'imoveis.json');
 const CONFIG_FILE = path.join(__dirname, 'config.json');
+const SESSION_FILE = path.join(__dirname, 'orulo-session.json');
 const ADMIN_USER = process.env.ADMIN_USER || 'adm';
 const ADMIN_PASS = process.env.ADMIN_PASS || '1234';
 if (!process.env.ADMIN_PASS) console.warn('⚠️  Defina ADMIN_USER e ADMIN_PASS nas variáveis de ambiente.');
@@ -92,13 +93,24 @@ function extrairDoTexto(texto) {
 }
 app.post('/api/extrair-texto', exigirLogin, (req, res) => res.json({ success: true, dados: extrairDoTexto(req.body.texto) }));
 
+// SESSÃO DO ÓRULO (cookie guardado só no servidor, nunca enviado ao navegador)
+app.post('/api/orulo-sessao', exigirLogin, (req, res) => {
+  gravarJson(SESSION_FILE, { cookie: String((req.body || {}).cookie || '').trim(), salvoEm: new Date().toISOString() });
+  res.json({ success: true });
+});
+app.get('/api/orulo-sessao', exigirLogin, (req, res) => {
+  const s = lerJson(SESSION_FILE, {});
+  res.json({ salva: !!s.cookie, salvoEm: s.salvoEm || null });
+});
+
 // MINERAÇÃO DO ÓRULO (dados reais ou nenhum, nunca valores inventados)
 app.post('/api/minerar-orulo', exigirLogin, async (req, res) => {
   const { url } = req.body || {};
   if (!url || !/orulo\.com\.br/i.test(url)) return res.status(400).json({ success: false, error: 'URL inválida do Órulo.' });
+  const cookie = lerJson(SESSION_FILE, {}).cookie || '';
   try {
     const r = await axios.get(url, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122 Safari/537.36', 'Accept-Language': 'pt-BR,pt;q=0.9' },
+      headers: { ...(cookie ? { Cookie: cookie } : {}), 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122 Safari/537.36', 'Accept-Language': 'pt-BR,pt;q=0.9' },
       timeout: 10000, maxRedirects: 5
     });
     const $ = cheerio.load(r.data);
@@ -113,7 +125,7 @@ app.post('/api/minerar-orulo', exigirLogin, async (req, res) => {
     const dados = pareceLogin ? {} : { ...extrairDoTexto($('body').text()), titulo, foto: fotos[0] || '' };
     if (pareceLogin) {
       return res.json({ success: false, precisaTexto: true,
-        error: 'O Órulo exige login para mostrar este imóvel. Abra o link logado, copie o texto da página e cole no campo abaixo.' });
+        error: cookie ? 'A sessão salva do Órulo expirou. Copie o cookie de novo e salve a sessão, ou cole o texto da página.' : 'O Órulo exige login. Salve a sessão do Órulo abaixo (uma vez só) ou cole o texto da página.' });
     }
     const faltando = ['titulo', 'preco', 'area', 'dormitorios', 'foto'].filter(k => !dados[k]);
     res.json({ success: true, dados, faltando, precisaTexto: faltando.length > 1 });
