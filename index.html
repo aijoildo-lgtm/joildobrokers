@@ -121,29 +121,29 @@
     <button class="filter-btn" onclick="filtrarEstagio('oportunidades')">Oportunidades</button>
 </div>
 
-<!-- SEÇÃO: QUEM SOMOS -->
+<!-- SEÇÃO: QUEM SOMOS — conteúdo carregado via /api/config (editável pelo painel) -->
 <section class="blog-section reveal" id="quem-somos" style="background: var(--white);">
     <div class="section-header" style="margin-top:0;">
-        <h2>Quem Somos | Joildo Brokers</h2>
-        <p>Expertise em consultoria estratégica de ativos imobiliários de alto padrão e alta liquidez</p>
+        <h2 id="qs-titulo">Quem Somos | Joildo Brokers</h2>
+        <p id="qs-subtitulo">Expertise em consultoria estratégica de ativos imobiliários de alto padrão e alta liquidez</p>
     </div>
     <div style="max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1.5fr; gap: 50px; align-items: center;">
         <div style="position: relative;">
-            <div style="width: 100%; height: 420px; border-radius: 20px; background-size: cover; background-position: center; background-image: url('https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=800&q=80'); box-shadow: var(--shadow-premium); border: 2px solid var(--gold);"></div>
+            <div id="qs-foto-bg" style="width: 100%; height: 420px; border-radius: 20px; background-size: cover; background-position: center; background-image: url('https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=800&q=80'); box-shadow: var(--shadow-premium); border: 2px solid var(--gold);"></div>
             <div style="position: absolute; bottom: -20px; right: -20px; background: var(--primary); color: white; padding: 20px 30px; border-radius: 16px; border: 1px solid var(--gold);">
-                <span style="color: var(--gold); font-size: 1.8rem; font-weight: 800; font-family: 'Playfair Display', serif;">Joildo Costa</span><br>
-                <span style="font-size: 0.85rem; color: #CBD5E1; text-transform: uppercase; letter-spacing: 1px;">Founder & Senior Real Estate Advisor</span>
+                <span id="qs-nome" style="color: var(--gold); font-size: 1.8rem; font-weight: 800; font-family: 'Playfair Display', serif;">Joildo Costa</span><br>
+                <span id="qs-cargo" style="font-size: 0.85rem; color: #CBD5E1; text-transform: uppercase; letter-spacing: 1px;">Founder & Senior Real Estate Advisor</span>
             </div>
         </div>
         <div style="font-size: 1rem; color: var(--text-dark); line-height: 1.8;">
-            <p style="margin-bottom: 18px;">
+            <p id="qs-p1" style="margin-bottom: 18px;">
                 A <strong>Joildo Brokers</strong> é uma consultoria imobiliária boutique estruturada sob a liderança executiva de <strong>Joildo Costa</strong>, profissional especialista com ampla atuação no mercado imobiliário de São Paulo e expansão nacional.
             </p>
-            <p style="margin-bottom: 18px;">
+            <p id="qs-p2" style="margin-bottom: 18px;">
                 Nosso trabalho combina <strong>inteligência de mercado, análise de valorização do metro quadrado e negociação estratégica</strong> para conectar compradores, investidores e incorporadoras aos projetos mais exclusivos dos eixos de maior liquidez (Jardins, Itaim Bibi, Pinheiros, Vila Nova Conceição e Alphaville).
             </p>
             <div style="display: flex; gap: 20px; margin-top: 30px; flex-wrap: wrap;">
-                <a href="https://www.linkedin.com/in/joildo-costa-0154a29b/" target="_blank" class="social-link linkedin dyn-linkedin" style="padding: 12px 24px;">
+                <a id="qs-linkedin" href="https://www.linkedin.com/in/joildo-costa-0154a29b/" target="_blank" class="social-link linkedin dyn-linkedin" style="padding: 12px 24px;">
                     <i class="fab fa-linkedin-in"></i> Perfil Profissional no LinkedIn ↗
                 </a>
                 <a href="#atendimento-humano" class="btn-header-cta" style="padding: 12px 24px; text-decoration: none;">
@@ -521,6 +521,26 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
                 document.getElementById('dyn-slogan').innerText = configGeral.slogan;
             }
 
+            // ── QUEM SOMOS DINÂMICO ──────────────────────────────────────────
+            const qs = configGeral.quemSomos || {};
+            const setT = (id, v) => { const el = document.getElementById(id); if (el && v) el.textContent = v; };
+            const setH = (id, v) => { const el = document.getElementById(id); if (el && v) el.innerHTML = v; };
+            if (qs.titulo)    setT('qs-titulo',    qs.titulo);
+            if (qs.subtitulo) setT('qs-subtitulo', qs.subtitulo);
+            if (qs.nome)      setT('qs-nome',      qs.nome);
+            if (qs.cargo)     setT('qs-cargo',     qs.cargo);
+            if (qs.p1)        setH('qs-p1',        qs.p1);
+            if (qs.p2)        setH('qs-p2',        qs.p2);
+            if (qs.foto) {
+                const bg = document.getElementById('qs-foto-bg');
+                if (bg) bg.style.backgroundImage = "url('" + qs.foto.replace(/'/g,"%27") + "')";
+            }
+            if (qs.linkedin) {
+                const lnk = document.getElementById('qs-linkedin');
+                if (lnk) lnk.href = qs.linkedin;
+            }
+            // ── FIM QUEM SOMOS ───────────────────────────────────────────────
+
             // Atualizar Links de Redes
             document.querySelectorAll('.dyn-linkedin').forEach(el => el.href = configGeral.linkedin || 'https://www.linkedin.com/in/joildo-costa-0154a29b/');
             document.querySelectorAll('.dyn-instagram').forEach(el => el.href = configGeral.instagram || '#');
@@ -552,7 +572,14 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
     const norm = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
     const urlOk = u => /^https?:\/\//i.test(u || '') ? String(u).replace(/'/g, '%27').replace(/"/g, '%22') : '';
     const FOTO_PADRAO = 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80';
-    const capa = i => urlOk(i.foto) || urlOk((i.fotos || [])[0]) || FOTO_PADRAO;
+    // capa(): sempre usa i.foto como foto principal; se vazio usa a primeira de i.fotos.
+    // Isso garante que a foto marcada no painel como "foto de capa" apareça corretamente.
+    const capa = i => {
+        const f = urlOk(i.foto);
+        if (f) return f;
+        const galeria = Array.isArray(i.fotos) ? i.fotos : [];
+        return urlOk(galeria[0]) || FOTO_PADRAO;
+    };
 
     function renderHero(lista) {
         const wrap = document.getElementById('hero-slider-wrapper');
@@ -583,11 +610,15 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
     function cartao(i) {
         const t = TARJAS[i.destaque];
         const specs = [i.area, i.dormitorios, i.vagas].filter(Boolean).map(esc).join(' &nbsp;|&nbsp; ');
+        // Detecta se a foto principal veio do campo "foto" (stand/principal) ou da galeria
+        const temFotoPrincipal = !!urlOk(i.foto);
+        const srcCapa = capa(i);
         return `
             <div class="card" onclick="abrirModal('${esc(i.id)}')">
                 <div class="card-img-wrap">
                     ${t ? `<span class="badge ${t[0]}">${t[1]}</span>` : ''}
-                    <div class="card-img" style="background-image:url('${capa(i)}')"></div>
+                    ${temFotoPrincipal ? '' : '<span class="badge" style="background:#64748B;top:auto;bottom:10px;font-size:.65rem">Sem foto principal definida</span>'}
+                    <div class="card-img" style="background-image:url('${srcCapa}')"></div>
                 </div>
                 <div class="card-body">
                     <h3>${esc(i.titulo)}</h3>
@@ -743,65 +774,186 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
     function blocoPlantas(lista) {
         return `<div class="info-block"><h4>Plantas</h4><div class="planta-lista">${lista.map(p => `<a class="planta-item" href="${esc(p.url)}" target="_blank" rel="noopener"><img src="${esc(p.url)}" alt="${esc(p.nome)}" loading="lazy"><span>${esc(p.nome)}</span></a>`).join('')}</div></div>`;
     }
+    // ── MODAL IMÓVEL — estrutura inspirada em imoveispro.com.br ─────────────────
+    let galAtual = 0, galFotos = [], galTimerModal = null;
+
     function abrirModal(id) {
         const i = bancoImoveis.find(x => String(x.id) === String(id));
         if (!i) return;
-        const fotos = (i.fotos && i.fotos.length ? i.fotos : [i.foto]).map(urlOk).filter(Boolean);
-        const plantas = (i.plantas || []).map((p, n) => typeof p === 'string' ? { nome: 'Planta ' + (n + 1), url: p } : { nome: p.nome || 'Planta ' + (n + 1), url: p.url }).filter(p => urlOk(p.url));
+        clearInterval(galTimerModal);
+
+        // Montar array de fotos: foto principal primeiro, depois galeria sem duplicar
+        const fotoPrincipal = urlOk(i.foto);
+        const galeria = (i.fotos || []).map(urlOk).filter(Boolean);
+        galFotos = fotoPrincipal
+            ? [fotoPrincipal, ...galeria.filter(u => u !== fotoPrincipal)]
+            : (galeria.length ? galeria : [FOTO_PADRAO]);
+        galAtual = 0;
+
+        const plantas = (i.plantas || []).map((p, n) =>
+            typeof p === 'string' ? { nome: 'Planta ' + (n + 1), url: p } : { nome: p.nome || 'Planta ' + (n + 1), url: p.url }
+        ).filter(p => urlOk(p.url));
+
         const yt = youtubeEmbed(i.youtube);
-        const tipologias = i.tipologias || [], lazer = i.lazer || [], infoTec = i.infoTecnica || [], caracUnid = i.caracteristicasUnidade || [];
-        const fichas = [['Código', i.ref], ['Fase', FASES[i.estagio]], ['Área', i.area], ['Dormitórios', i.dormitorios], ['Vagas', i.vagas], ['Localização', i.localizacao]]
-            .filter(f => f[1]).map(f => `<div class="tech-item"><span>${f[0]}</span><b>${esc(f[1])}</b></div>`).join('');
-        document.getElementById('modal-details-box').innerHTML = `
-            <button class="close-modal" onclick="fecharModal()" aria-label="Fechar">&times;</button>
-            <div class="modal-hero" style="background-image:url('${capa(i)}')">
-                <div class="modal-hero-text">
-                    <span class="hero-badge">${esc(FASES[i.estagio] || 'Imóvel')}</span>
-                    <h2 style="font-family:'Playfair Display',serif;font-size:2.4rem;margin-bottom:8px">${esc(i.titulo)}</h2>
-                    <p>${esc(i.localizacao)}</p>
-                    <div class="hero-price" style="margin:10px 0 0">${esc(i.preco)}</div>
-                </div>
-            </div>
-            <div class="modal-body">
-                <div class="modal-left">
-                    <div class="info-block"><h4>Ficha do imóvel</h4><div class="tech-grid">${fichas}</div></div>
-                    ${i.apresentacao ? `<div class="info-block"><h4>Sobre o projeto</h4><p style="line-height:1.75;white-space:pre-line">${esc(i.apresentacao)}</p></div>` : ''}
-                    ${tipologias.length ? blocoTipologias(tipologias, i) : ''}
-                    ${lazer.length ? `<div class="info-block"><h4>Características condominiais</h4><div class="chips">${lazer.map(x => `<span class="chip">${esc(x)}</span>`).join('')}</div></div>` : ''}
-                    ${caracUnid.length ? `<div class="info-block"><h4>Características da unidade</h4><div class="chips">${caracUnid.map(x => `<span class="chip">${esc(x)}</span>`).join('')}</div></div>` : ''}
-                    ${i.construtora ? `<div class="info-block"><h4>Informações comerciais</h4><p style="margin:0"><b>${esc(i.construtora)}</b></p></div>` : ''}
-                    ${infoTec.length ? `<div class="info-block"><h4>Outras informações</h4><div class="tech-grid">${infoTec.map(x => `<div class="tech-item"><span>${esc(x.k)}</span><b>${esc(x.v)}</b></div>`).join('')}</div></div>` : ''}
-                    ${fotos.length ? `<div class="info-block"><h4>Galeria de fotos</h4>
-                        <div style="position:relative;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:#E2E8F0">
-                            <img id="gal-img" src="${fotos[0]}" alt="Foto de ${esc(i.titulo)}" style="width:100%;height:100%;object-fit:cover;transition:opacity .6s">
-                        </div></div>` : ''}
-                    ${plantas.length ? blocoPlantas(plantas) : ''}
-                    ${yt ? `<div class="info-block"><h4>Vídeo</h4><iframe src="${yt}" style="width:100%;aspect-ratio:16/9;border:0;border-radius:14px" allowfullscreen loading="lazy" title="Vídeo do imóvel"></iframe></div>` : ''}
-                    ${urlOk(i.tour360) ? `<div class="info-block"><h4>Tour virtual 360°</h4><a class="btn-header-cta" href="${urlOk(i.tour360)}" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none">Abrir tour virtual</a></div>` : ''}
-                </div>
-                <div class="floating-lead">
-                    <h4>Fale com um especialista</h4>
-                    <input id="ml_nome" type="text" placeholder="Seu nome">
-                    <input id="ml_tel" type="tel" placeholder="Seu WhatsApp">
-                    <button class="btn-lead" onclick="enviarLeadModal('${esc(i.id)}')">Quero receber informações</button>
-                </div>
+        const tipologias = i.tipologias || [];
+        const lazer = i.lazer || [];
+        const infoTec = i.infoTecnica || [];
+        const caracUnid = i.caracteristicasUnidade || [];
+        const bairro = bairroDe(i.localizacao);
+
+        // Similares: até 3 imóveis do mesmo bairro ou estágio, excluindo o atual
+        const similares = bancoImoveis.filter(x => String(x.id) !== String(id) && (bairroDe(x.localizacao) === bairro || x.estagio === i.estagio)).slice(0, 3);
+
+        // Thumbnails laterais da galeria (até 4 adicionais)
+        const thumbsHtml = galFotos.slice(1, 5).map((u, idx) => {
+            const extra = idx === 3 && galFotos.length > 5 ? `<div style="position:absolute;inset:0;background:rgba(10,17,40,.62);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.1rem;font-weight:700;border-radius:8px">+${galFotos.length - 4}</div>` : '';
+            return `<div onclick="galIr(${idx + 1})" style="cursor:pointer;position:relative;border-radius:8px;overflow:hidden;aspect-ratio:4/3;background:#E2E8F0">
+                <img src="${u}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;transition:transform .3s" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
+                ${extra}
             </div>`;
+        }).join('');
+
+        document.getElementById('modal-details-box').innerHTML = `
+<button class="close-modal" onclick="fecharModal()" aria-label="Fechar" style="position:fixed;top:18px;right:22px;z-index:10;background:rgba(10,17,40,.7);color:#fff;border:none;border-radius:50%;width:40px;height:40px;font-size:1.3rem;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)">&times;</button>
+
+<!-- GALERIA PRINCIPAL -->
+<div style="background:#0a1128">
+  <div style="max-width:1300px;margin:0 auto;padding:0 0 0 0">
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:4px;height:460px">
+      <!-- Foto principal -->
+      <div style="position:relative;overflow:hidden;cursor:pointer" onclick="galProx()">
+        <img id="gal-img-modal" src="${galFotos[0]}" alt="${esc(i.titulo)}" style="width:100%;height:100%;object-fit:cover;transition:opacity .4s">
+        <div style="position:absolute;bottom:14px;left:14px;background:rgba(10,17,40,.75);color:#fff;padding:5px 12px;border-radius:20px;font-size:.78rem;backdrop-filter:blur(4px)" id="gal-contador">1 / ${galFotos.length}</div>
+        <div style="position:absolute;top:14px;left:14px;background:var(--gold);color:#fff;padding:3px 10px;border-radius:4px;font-size:.72rem;font-weight:700">${esc(FASES[i.estagio] || 'Imóvel')}</div>
+        <!-- Setas -->
+        <button onclick="event.stopPropagation();galAnter()" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.85);border:none;border-radius:50%;width:36px;height:36px;cursor:pointer;font-size:.9rem">‹</button>
+        <button onclick="event.stopPropagation();galProx()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.85);border:none;border-radius:50%;width:36px;height:36px;cursor:pointer;font-size:.9rem">›</button>
+      </div>
+      <!-- Thumbs laterais -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:4px">
+        ${thumbsHtml || `<div style="background:#1a2f46;border-radius:8px;grid-column:1/-1;grid-row:1/-1;display:flex;align-items:center;justify-content:center;color:#64748b;font-size:.85rem">Mais fotos em breve</div>`}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CORPO DO MODAL -->
+<div style="max-width:1300px;margin:0 auto;padding:28px 24px;display:grid;grid-template-columns:1fr 340px;gap:40px;align-items:start">
+  <!-- COLUNA ESQUERDA -->
+  <div>
+    <!-- Breadcrumb -->
+    <div style="font-size:.78rem;color:var(--text-muted);margin-bottom:12px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+      <span>Imóveis</span> <span>›</span> <span>${esc(FASES[i.estagio] || i.categoria || 'Imóvel')}</span> <span>›</span> <span>${esc(bairro || i.localizacao)}</span> <span>›</span> <strong style="color:var(--primary)">${esc(i.ref)}</strong>
+    </div>
+
+    <!-- Título -->
+    <div style="font-size:.7rem;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:4px">Venda · ${esc(i.tipo || 'Apartamento')} · Cód. ${esc(i.ref)}</div>
+    <h2 style="font-family:'Playfair Display',serif;font-size:2rem;color:var(--primary);line-height:1.2;margin-bottom:8px">${esc(i.titulo)}</h2>
+    <div style="font-size:.88rem;color:var(--text-muted);margin-bottom:22px;display:flex;align-items:center;gap:5px"><i class="fas fa-map-marker-alt" style="color:var(--gold)"></i> ${esc(i.localizacao)}</div>
+
+    <!-- Atributos rápidos -->
+    <div style="display:flex;flex-wrap:wrap;gap:20px;padding:18px 0;border-top:1px solid #E2E8F0;border-bottom:1px solid #E2E8F0;margin-bottom:28px">
+      ${i.area ? `<div style="display:flex;align-items:center;gap:8px"><span style="font-size:1.3rem">📐</span><div><strong style="font-size:.95rem">${esc(i.area)}</strong><br><span style="font-size:.7rem;color:var(--text-muted)">Área útil</span></div></div>` : ''}
+      ${i.dormitorios ? `<div style="display:flex;align-items:center;gap:8px"><span style="font-size:1.3rem">🛏</span><div><strong style="font-size:.95rem">${esc(i.dormitorios)}</strong><br><span style="font-size:.7rem;color:var(--text-muted)">Dormitórios</span></div></div>` : ''}
+      ${i.vagas ? `<div style="display:flex;align-items:center;gap:8px"><span style="font-size:1.3rem">🚗</span><div><strong style="font-size:.95rem">${esc(i.vagas)}</strong><br><span style="font-size:.7rem;color:var(--text-muted)">Vagas</span></div></div>` : ''}
+      ${i.construtora ? `<div style="display:flex;align-items:center;gap:8px"><span style="font-size:1.3rem">🏗</span><div><strong style="font-size:.95rem">${esc(i.construtora)}</strong><br><span style="font-size:.7rem;color:var(--text-muted)">Construtora</span></div></div>` : ''}
+    </div>
+
+    <!-- Sobre o imóvel -->
+    ${i.apresentacao ? `<div style="margin-bottom:28px"><h4 style="font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--primary);margin-bottom:12px">Sobre o <em style="color:var(--gold)">imóvel</em></h4><p style="line-height:1.8;color:var(--text-dark);white-space:pre-line">${esc(i.apresentacao)}</p></div>` : ''}
+
+    <!-- Tipologias -->
+    ${tipologias.length ? `<div style="margin-bottom:28px"><h4 style="font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--primary);margin-bottom:12px">Tipologias <em style="color:var(--gold)">disponíveis</em></h4>${blocoTipologias(tipologias, i)}</div>` : ''}
+
+    <!-- Lazer Condomínio -->
+    ${lazer.length ? `<div style="margin-bottom:28px"><h4 style="font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--primary);margin-bottom:12px">Características do <em style="color:var(--gold)">condomínio</em></h4><div class="chips">${lazer.map(x => `<span class="chip">${esc(x)}</span>`).join('')}</div></div>` : ''}
+
+    <!-- Características da unidade -->
+    ${caracUnid.length ? `<div style="margin-bottom:28px"><h4 style="font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--primary);margin-bottom:12px">Características da <em style="color:var(--gold)">unidade</em></h4><div class="chips">${caracUnid.map(x => `<span class="chip">${esc(x)}</span>`).join('')}</div></div>` : ''}
+
+    <!-- Infos técnicas -->
+    ${infoTec.length ? `<div style="margin-bottom:28px"><h4 style="font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--primary);margin-bottom:12px">Informações <em style="color:var(--gold)">técnicas</em></h4><div class="tech-grid">${infoTec.map(x => `<div class="tech-item"><span>${esc(x.k)}</span><b>${esc(x.v)}</b></div>`).join('')}</div></div>` : ''}
+
+    <!-- Localização -->
+    <div style="margin-bottom:28px">
+      <h4 style="font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--primary);margin-bottom:12px">Viver em <em style="color:var(--gold)">${esc(bairro || 'São Paulo')}</em></h4>
+      ${i.proximidade ? `<div style="display:flex;align-items:center;gap:8px;padding:12px 16px;background:#F8FAFC;border-radius:8px;border-left:3px solid var(--gold);margin-bottom:12px"><span style="font-size:1.2rem">📍</span><span style="font-size:.88rem;color:var(--text-dark)">${esc(i.proximidade)}</span></div>` : ''}
+      <div style="background:#F1F5F9;border-radius:12px;height:200px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:.85rem;flex-direction:column;gap:6px"><span style="font-size:1.6rem">🗺</span>Localização em ${esc(i.localizacao)}</div>
+    </div>
+
+    <!-- Plantas -->
+    ${plantas.length ? blocoPlantas(plantas) : ''}
+
+    <!-- Vídeo -->
+    ${yt ? `<div style="margin-bottom:28px"><h4 style="font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--primary);margin-bottom:12px">Vídeo do <em style="color:var(--gold)">imóvel</em></h4><iframe src="${yt}" style="width:100%;aspect-ratio:16/9;border:0;border-radius:14px" allowfullscreen loading="lazy" title="Vídeo"></iframe></div>` : ''}
+
+    <!-- Tour 360 -->
+    ${urlOk(i.tour360) ? `<div style="margin-bottom:28px"><h4 style="font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--primary);margin-bottom:12px">Tour <em style="color:var(--gold)">virtual 360°</em></h4><a class="btn-header-cta" href="${urlOk(i.tour360)}" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none">Abrir tour virtual</a></div>` : ''}
+
+    <!-- Similares -->
+    ${similares.length ? `<div style="margin-bottom:28px">
+      <h4 style="font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--primary);margin-bottom:14px">Imóveis <em style="color:var(--gold)">parecidos</em></h4>
+      <div style="display:grid;grid-template-columns:repeat(${Math.min(similares.length,3)},1fr);gap:14px">
+        ${similares.map(s => `
+          <div onclick="abrirModal('${esc(s.id)}')" style="cursor:pointer;border:1px solid #E2E8F0;border-radius:10px;overflow:hidden;transition:box-shadow .2s,transform .2s" onmouseover="this.style.boxShadow='0 8px 30px rgba(10,17,40,.12)';this.style.transform='translateY(-2px)'" onmouseout="this.style.boxShadow='none';this.style.transform='none'">
+            <img src="${capa(s)}" alt="${esc(s.titulo)}" style="width:100%;height:130px;object-fit:cover;display:block">
+            <div style="padding:12px"><div style="font-size:.78rem;color:var(--gold);font-weight:700;margin-bottom:3px">${esc(bairroDe(s.localizacao))}</div><div style="font-weight:700;font-size:.88rem;color:var(--primary);margin-bottom:4px;line-height:1.3">${esc(s.titulo)}</div><div style="font-size:1rem;font-weight:800;color:var(--primary)">${esc(s.preco)}</div><div style="font-size:.72rem;color:var(--text-muted);margin-top:3px">${[s.area,s.dormitorios,s.vagas].filter(Boolean).join(' · ')}</div></div>
+          </div>`).join('')}
+      </div>
+    </div>` : ''}
+  </div>
+
+  <!-- SIDEBAR STICKY -->
+  <div style="position:sticky;top:80px">
+    <div style="background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:26px;box-shadow:0 4px 24px rgba(10,17,40,.10)">
+      <div style="font-size:.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Venda · Cód. ${esc(i.ref)}</div>
+      <div style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:var(--primary);margin-bottom:14px">${esc(i.preco)}</div>
+
+      <button onclick="enviarLeadModal('${esc(i.id)}')" style="width:100%;padding:14px;background:#C0392B;color:#fff;border:none;border-radius:8px;font-size:.95rem;font-weight:700;cursor:pointer;margin-bottom:10px;font-family:inherit">Solicitar Consultoria Privada</button>
+      <a href="${`https://api.whatsapp.com/send?phone=${configGeral.whatsapp||'5511951377033'}&text=${encodeURIComponent('Olá! Tenho interesse no imóvel ' + (i.titulo||'') + ' (' + (i.ref||'') + '). Pode me passar mais informações?')}`}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;border:2px solid var(--primary);color:var(--primary);border-radius:8px;font-size:.88rem;font-weight:600;text-decoration:none;margin-bottom:16px;transition:all .2s" onmouseover="this.style.background='var(--primary)';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='var(--primary)'">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+        Falar no WhatsApp
+      </a>
+
+      <hr style="border:none;border-top:1px solid #E2E8F0;margin:0 0 16px">
+
+      <!-- Corretor -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <div style="width:46px;height:46px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:1.1rem;font-weight:800;flex-shrink:0">JC</div>
+        <div><div style="font-weight:700;font-size:.88rem;color:var(--primary)">${esc((configGeral.quemSomos||{}).nome||'Joildo Costa')}</div><div style="font-size:.7rem;color:var(--text-muted)">${esc((configGeral.quemSomos||{}).cargo||'Senior Real Estate Advisor')}</div><div style="font-size:.68rem;color:var(--text-muted);margin-top:2px">${esc(configGeral.creci||'CRECI 200298')}</div></div>
+      </div>
+
+      <!-- Formulário de lead -->
+      <input id="ml_nome" type="text" placeholder="Seu nome" style="width:100%;padding:10px;border:1px solid #CBD5E1;border-radius:6px;margin-bottom:8px;font-size:.88rem">
+      <input id="ml_tel" type="tel" placeholder="Seu WhatsApp" style="width:100%;padding:10px;border:1px solid #CBD5E1;border-radius:6px;margin-bottom:12px;font-size:.88rem">
+      <button class="btn-lead" onclick="enviarLeadModal('${esc(i.id)}')" style="width:100%;padding:12px;background:var(--primary);color:#fff;border:none;border-radius:6px;font-size:.88rem;font-weight:600;cursor:pointer">Quero receber informações</button>
+    </div>
+  </div>
+</div>`;
+
         const m = document.getElementById('propertyModal');
         m.style.display = 'flex';
         document.body.style.overflow = 'hidden';
-        clearInterval(galTimer);
-        if (fotos.length > 1) {
-            let n = 0; const img = document.getElementById('gal-img');
-            galTimer = setInterval(() => {
-                n = (n + 1) % fotos.length; img.style.opacity = 0;
-                setTimeout(() => { img.src = fotos[n]; img.style.opacity = 1; }, 600);
-            }, 3800);
+        // Auto-avanço da galeria
+        if (galFotos.length > 1) {
+            galTimerModal = setInterval(() => galProx(true), 4000);
         }
     }
+
+    function galIr(idx) {
+        if (!galFotos.length) return;
+        galAtual = ((idx % galFotos.length) + galFotos.length) % galFotos.length;
+        const img = document.getElementById('gal-img-modal');
+        const cnt = document.getElementById('gal-contador');
+        if (img) { img.style.opacity = 0; setTimeout(() => { img.src = galFotos[galAtual]; img.style.opacity = 1; }, 200); }
+        if (cnt) cnt.textContent = (galAtual + 1) + ' / ' + galFotos.length;
+    }
+    function galProx(auto) { galIr(galAtual + 1); if (!auto) clearInterval(galTimerModal); }
+    function galAnter() { galIr(galAtual - 1); clearInterval(galTimerModal); }
     function fecharModal() {
         document.getElementById('propertyModal').style.display = 'none';
         document.body.style.overflow = '';
-        clearInterval(galTimer);
+        clearInterval(galTimerModal);
     }
     function enviarLeadModal(id) {
         const i = bancoImoveis.find(x => String(x.id) === String(id)) || {};

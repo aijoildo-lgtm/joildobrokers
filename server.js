@@ -24,7 +24,17 @@ const DEFAULT_CONFIG = {
   linkedin: 'https://www.linkedin.com/in/joildo-costa-0154a29b/',
   instagram: '', facebook: '', youtube: '',
   whatsapp: '5511951377033', telefone: '(11) 95137-7033',
-  email: 'joildo.contato@gmail.com', creci: 'CRECI 200298', parceiros: []
+  email: 'joildo.contato@gmail.com', creci: 'CRECI 200298', parceiros: [],
+  quemSomos: {
+    titulo: 'Quem Somos | Joildo Brokers',
+    subtitulo: 'Expertise em consultoria estratégica de ativos imobiliários de alto padrão e alta liquidez',
+    foto: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=800&q=80',
+    nome: 'Joildo Costa',
+    cargo: 'Founder & Senior Real Estate Advisor',
+    p1: 'A <strong>Joildo Brokers</strong> é uma consultoria imobiliária boutique estruturada sob a liderança executiva de <strong>Joildo Costa</strong>, profissional especialista com ampla atuação no mercado imobiliário de São Paulo e expansão nacional.',
+    p2: 'Nosso trabalho combina <strong>inteligência de mercado, análise de valorização do metro quadrado e negociação estratégica</strong> para conectar compradores, investidores e incorporadoras aos projetos mais exclusivos dos eixos de maior liquidez (Jardins, Itaim Bibi, Pinheiros, Vila Nova Conceição e Alphaville).',
+    linkedin: 'https://www.linkedin.com/in/joildo-costa-0154a29b/'
+  }
 };
 
 const lerJson = (file, fallback) => {
