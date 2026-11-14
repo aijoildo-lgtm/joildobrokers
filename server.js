@@ -60,7 +60,7 @@ app.get(['/admin', '/admin.html'], enviar('admin.html'));
 app.get('/style.css', enviar('style.css'));
 
 // APIs
-app.get('/api/versao', (req, res) => res.json({ versao: '2026-11-14-d', login: 'token assinado', extracao: 'texto colado v2' }));
+app.get('/api/versao', (req, res) => res.json({ versao: '2026-11-14-e', login: 'token assinado', extracao: 'texto colado v2' }));
 app.get('/api/imoveis', (req, res) => res.json(lerJson(DATA_FILE, [])));
 app.get('/api/config', (req, res) => res.json({ ...DEFAULT_CONFIG, ...lerJson(CONFIG_FILE, DEFAULT_CONFIG) }));
 app.post('/api/config', exigirLogin, (req, res) => {
@@ -138,7 +138,7 @@ app.post('/api/minerar-orulo', exigirLogin, async (req, res) => {
     if (pareceLogin) {
       return res.json({ success: false, precisaTexto: true,
         diag,
-        error: cookie ? 'O Órulo não aceitou a sessão salva. Copie o cookie de novo e salve, ou cole o texto da página.' : 'O Órulo exige login. Salve a sessão do Órulo abaixo (uma vez só) ou cole o texto da página.' });
+        error: 'O Órulo exige login e não libera a leitura automática. Abra o imóvel no Órulo logado, aperte Ctrl+A e Ctrl+C, e cole o texto no campo abaixo.' });
     }
     const faltando = ['titulo', 'preco', 'area', 'dormitorios', 'foto'].filter(k => !dados[k]);
     res.json({ success: true, dados, faltando, precisaTexto: faltando.length > 1 });
