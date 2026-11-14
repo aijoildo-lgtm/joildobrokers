@@ -179,8 +179,14 @@
     </div>
 
     <script>
-        function fazerLogin() {
-            if(document.getElementById('user').value === 'adm' && document.getElementById('pass').value === '1234') {
+        let TOKEN = sessionStorage.getItem('tk') || '';
+        const H = () => ({'Content-Type':'application/json','x-token':TOKEN});
+        async function fazerLogin() {
+            const res = await fetch('/api/login', {method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({user: document.getElementById('user').value, pass: document.getElementById('pass').value})});
+            const r = await res.json();
+            if(r.success) {
+                TOKEN = r.token; sessionStorage.setItem('tk', TOKEN);
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('panel').style.display = 'block';
                 carregarConfigAdmin();
@@ -232,33 +238,43 @@
 
             const res = await fetch('/api/config', {
                 method: 'POST',
-                headers: {'Content-Type':'application/json'},
+                headers: H(),
                 body: JSON.stringify(config)
             });
             const r = await res.json();
             if(r.success) alert('✅ Configurações Atualizadas com Sucesso!');
         }
 
+        function preencher(d) {
+            const set = (id, v) => { if (v) document.getElementById(id).value = v; };
+            set('titulo', d.titulo); set('preco', d.preco); set('cidade', d.localizacao);
+            set('area', d.area); set('dormitorios', d.dormitorios); set('vagas', d.vagas); set('foto', d.foto);
+        }
+        function caixaTexto() {
+            if (document.getElementById('textoOrulo')) return;
+            const box = document.createElement('div');
+            box.id = 'textoOrulo';
+            box.innerHTML = '<textarea id="txtOrulo" rows="6" style="width:100%;margin-top:10px;padding:10px" placeholder="Cole aqui o texto da página do imóvel (copie com o Órulo logado)"></textarea>' +
+                '<button type="button" onclick="extrairTexto()" style="margin-top:8px;padding:10px 18px;cursor:pointer">Extrair do texto colado</button>';
+            document.getElementById('urlOrulo').insertAdjacentElement('afterend', box);
+        }
+        async function extrairTexto() {
+            const res = await fetch('/api/extrair-texto', {method:'POST', headers:H(), body: JSON.stringify({texto: document.getElementById('txtOrulo').value})});
+            const r = await res.json();
+            preencher(r.dados || {});
+            alert('Dados preenchidos. Confira e complete o que faltar (foto e localização).');
+        }
         async function minerar() {
             const url = document.getElementById('urlOrulo').value;
             if(!url) return alert('Cole a URL do Órulo!');
-            
-            const res = await fetch('/api/minerar-orulo', { 
-                method: 'POST', 
-                headers: {'Content-Type':'application/json'}, 
-                body: JSON.stringify({url}) 
-            });
-            
+            const res = await fetch('/api/minerar-orulo', {method:'POST', headers:H(), body: JSON.stringify({url})});
+            if(res.status === 401) return alert('Sessão expirada. Entre novamente.');
             const r = await res.json();
             if(r.success) {
-                document.getElementById('titulo').value = r.dados.titulo || '';
-                document.getElementById('preco').value = r.dados.preco || '';
-                document.getElementById('cidade').value = r.dados.localizacao || '';
-                document.getElementById('area').value = r.dados.area || '';
-                document.getElementById('dormitorios').value = r.dados.dormitorios || '';
-                document.getElementById('foto').value = r.dados.foto || '';
-                alert('✅ Dados extraídos com sucesso do Órulo!');
-            }
+                preencher(r.dados);
+                if(r.precisaTexto) { caixaTexto(); alert('Peguei só parte dos dados. Faltaram: ' + r.faltando.join(', ') + '. Cole o texto da página para completar.'); }
+                else alert('Dados extraídos. Confira antes de publicar.');
+            } else { caixaTexto(); alert(r.error); }
         }
 
         async function salvar(e) {
@@ -279,7 +295,7 @@
 
             const res = await fetch('/api/adicionar-imovel', {
                 method: 'POST',
-                headers: {'Content-Type':'application/json'},
+                headers: H(),
                 body: JSON.stringify(imovel)
             });
             const r = await res.json();
