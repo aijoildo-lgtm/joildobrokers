@@ -68,7 +68,7 @@
         <!-- ABA 1: IMÓVEIS -->
         <div class="tab-content active" id="tab-imoveis">
             <div class="form-group" style="margin-bottom: 20px;">
-                <label>Link do imóvel (AoCubo: preenche tudo, com fotos e plantas · Órulo: use o texto colado)</label>
+                <label>Link do imóvel (AoCubo ou Órulo): preenche os dados, fotos e plantas</label>
                 <div style="display:flex; gap:10px;">
                     <input type="text" id="urlOrulo" style="flex:1" placeholder="https://aocubo.com/imovel/... ou https://www.orulo.com.br/buildings/...">
                     <button onclick="minerar()" style="padding:10px 20px; background:var(--primary); color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Puxar dados do link</button>
@@ -357,6 +357,7 @@
             }
             if (d.fotos && d.fotos.length) set('fotos', d.fotos.join('\n'));
             if (d.plantas && d.plantas.length) set('plantas', d.plantas.join('\n'));
+            if (d.tipologias && d.tipologias.length) set('tipologias', d.tipologias.map(t => [t.nome, t.area, t.dorm, t.suites, t.vagas, t.preco].join(' | ')).join('\n'));
             if (d.lazer && d.lazer.length) set('lazer', d.lazer.join('\n'));
             if (d.infoTecnica && d.infoTecnica.length) set('infoTecnica', d.infoTecnica.map(x => x.k + ': ' + x.v).join('\n'));
         }
@@ -390,7 +391,7 @@
             if(r.success) {
                 if (typeof EDIT_ID !== 'undefined' && EDIT_ID) cancelarEdicao();
                 preencher(r.dados);
-                if(r.precisaTexto) { caixaTexto(); alert('Peguei só parte dos dados. Faltaram: ' + r.faltando.join(', ') + '. Cole o texto da página para completar.'); }
+                if(r.precisaTexto) { caixaTexto(); alert('Peguei só parte dos dados. Faltaram: ' + r.faltando.join(', ') + '. Cole o texto da página para completar.' + (r.diag ? '\n\nDados recebidos (para ajuste): ' + r.diag : '')); }
                 else alert('Dados extraídos. Confira antes de publicar.');
             } else { caixaTexto(); alert(r.error ); }
         }

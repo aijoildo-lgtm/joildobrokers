@@ -6,10 +6,11 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 const cors = require('cors');
 const { extrairAoCubo } = require('./aocubo');
+const orulo = require('./orulo');
 
 const app = express();
 app.use(cors());
-app.use(express.json({ limit: '2mb' }));
+app.use(express.json({ limit: '30mb' }));
 
 const DATA_FILE = path.join(__dirname, 'imoveis.json');
 const CONFIG_FILE = path.join(__dirname, 'config.json');
@@ -58,6 +59,7 @@ app.post('/api/login', (req, res) => {
 const enviar = (f) => (req, res) => res.sendFile(path.join(__dirname, f));
 app.get('/', enviar('index.html'));
 app.get(['/admin', '/admin.html'], enviar('admin.html'));
+app.get(['/cpainel', '/cpainel.html'], enviar('cpainel.html'));
 app.get('/style.css', enviar('style.css'));
 app.get('/taxonomia.js', enviar('taxonomia.js'));
 
@@ -103,7 +105,7 @@ const getConfig = async () => {
 const saveConfig = async (c) => db ? db.collection('config').updateOne({ _id: 'site' }, { $set: { dados: c } }, { upsert: true }) : gravarJson(CONFIG_FILE, c);
 
 // VALIDAÇÃO DO IMÓVEL (só campos conhecidos, com limites)
-const TXT = ['ref','titulo','preco','foto','localizacao','estagio','destaque','area','dormitorios','vagas','youtube','tour360','transacao','categoria','tipo','apresentacao','diferencial','proximidade'];
+const TXT = ['ref','titulo','preco','foto','localizacao','estagio','destaque','area','dormitorios','vagas','youtube','tour360','transacao','categoria','tipo','apresentacao','diferencial','proximidade','origem','linkOrigem','videoArquivo','sincronizadoEm'];
 const s2 = (v, n) => String(v == null ? '' : v).slice(0, n);
 function limpar(b) {
   const o = {};
@@ -113,6 +115,9 @@ function limpar(b) {
   o.tipologias = (Array.isArray(b.tipologias) ? b.tipologias : []).slice(0, 40).map(t => ({ nome: s2(t.nome, 80), area: s2(t.area, 40), dorm: s2(t.dorm, 20), suites: s2(t.suites, 20), vagas: s2(t.vagas, 20), preco: s2(t.preco, 40) })).filter(t => t.nome);
   o.infoTecnica = (Array.isArray(b.infoTecnica) ? b.infoTecnica : []).slice(0, 40).map(x => ({ k: s2(x.k, 80), v: s2(x.v, 200) })).filter(x => x.k);
   o.emDestaque = b.emDestaque === true;
+  o.sincronizar = b.sincronizar !== false;
+  const coord = v => { const n = parseFloat(String(v == null ? '' : v).replace(',', '.')); return Number.isFinite(n) && Math.abs(n) <= 180 ? n : null; };
+  o.lat = coord(b.lat); o.lng = coord(b.lng);
   o.ativo = b.ativo !== false;
   if (b.demo === true) o.demo = true;
   return o;
@@ -120,7 +125,7 @@ function limpar(b) {
 const novaRef = () => `REF-${Math.floor(100000 + Math.random() * 900000)}`;
 
 // APIs
-app.get('/api/versao', (req, res) => res.json({ versao: '2026-11-14-l', banco: bancoStatus }));
+app.get('/api/versao', (req, res) => res.json({ versao: '2026-11-14-m', banco: bancoStatus }));
 app.get('/api/imoveis', ah(async (req, res) => res.json((await getImoveis()).filter(i => i.ativo !== false))));
 app.get('/api/admin/imoveis', exigirLogin, ah(async (req, res) => res.json(await getImoveis())));
 app.get('/api/config', ah(async (req, res) => res.json(await getConfig())));
@@ -222,39 +227,25 @@ app.post(['/api/minerar-orulo', '/api/importar-link'], exigirLogin, async (req, 
   const { url } = req.body || {};
   let host = ''; try { host = new URL(url).hostname; } catch (e) {}
   if (/(^|\.)aocubo\.com$/i.test(host)) return importarAoCubo(url, res);
-  if (!url || !/orulo\.com\.br/i.test(url)) return res.status(400).json({ success: false, error: 'Use um link do AoCubo ou do Órulo.' });
-  const cookie = lerJson(SESSION_FILE, {}).cookie || '';
+  if (!url || !/(^|\.)orulo\.com\.br$/i.test(host)) return res.status(400).json({ success: false, error: 'Use um link do AoCubo ou do Órulo.' });
+  const m = String(url).match(/buildings\/(\d+)/i);
+  if (!m) return res.json({ success: false, precisaTexto: true, error: 'Não achei o número do empreendimento no link (modelo: orulo.com.br/buildings/83363).' });
+  if (!process.env.ORULO_CLIENT_ID || !process.env.ORULO_CLIENT_SECRET)
+    return res.json({ success: false, precisaTexto: true, error: 'Falta ligar a API da Órulo: defina ORULO_CLIENT_ID e ORULO_CLIENT_SECRET no Render. Enquanto isso, use a aba Assistente IA e cole o texto da página.' });
   try {
-    const r = await axios.get(url, {
-      headers: { ...(cookie ? { Cookie: cookie } : {}), 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122 Safari/537.36', 'Accept-Language': 'pt-BR,pt;q=0.9' },
-      timeout: 10000, maxRedirects: 5
-    });
-    const $ = cheerio.load(r.data);
-    const og = (p) => $(`meta[property="${p}"]`).attr('content') || '';
-    let titulo = (og('og:title') || $('h1').first().text()).replace(/\|?\s*-?\s*Órulo/i, '').trim();
-    const urlFinal = (r.request && r.request.res && r.request.res.responseUrl) || url;
-    const temSenha = $('input[type=password]').length > 0;
-    const pareceLogin = temSenha || /login|sign_in|entrar|session/i.test(urlFinal) || /^\s*(login|entrar)/i.test($('title').text());
-    const diag = `HTTP ${r.status} | url final: ${urlFinal} | titulo: ${$('title').text().trim().slice(0, 80)} | campo senha: ${temSenha ? 'sim' : 'nao'} | cookie enviado: ${cookie ? cookie.length + ' caracteres' : 'nao'} | inicio da pagina: ${$('body').text().replace(/\s+/g, ' ').trim().slice(0, 200)}`;
-    console.log('ORULO DIAG:', diag);
-    const fotos = [og('og:image')].filter(Boolean);
-    $('img').each((i, el) => {
-      const s = $(el).attr('src') || $(el).attr('data-src');
-      if (s && s.startsWith('http') && !/logo|icon|avatar/i.test(s) && !fotos.includes(s)) fotos.push(s);
-    });
-    const dados = pareceLogin ? {} : { ...extrairDoTexto($('body').text()), titulo, foto: fotos[0] || '' };
-    if (pareceLogin) {
-      return res.json({ success: false, precisaTexto: true,
-        diag,
-        error: 'O Órulo exige login e não libera a leitura automática. Abra o imóvel no Órulo logado, aperte Ctrl+A e Ctrl+C, e cole o texto no campo abaixo.' });
-    }
+    const { dados, diag } = await orulo.importar(m[1]);
+    console.log('ORULO API:', diag);
     const faltando = ['titulo', 'preco', 'area', 'dormitorios', 'foto'].filter(k => !dados[k]);
-    res.json({ success: true, dados, faltando, precisaTexto: faltando.length > 1 });
+    res.json({ success: true, dados, faltando, precisaTexto: faltando.length > 1, fonte: 'Órulo', diag: faltando.length > 1 ? diag : undefined });
   } catch (e) {
-    res.json({ success: false, precisaTexto: true, error: `Não consegui abrir o link (${e.response ? 'HTTP ' + e.response.status : e.code || e.message}). Cole o texto da página no campo abaixo.` });
+    const st = e.response && e.response.status;
+    console.error('Erro Órulo API:', st, e.response ? JSON.stringify(e.response.data).slice(0, 300) : e.message);
+    const msg = st === 401 || st === 400 ? 'A Órulo recusou as credenciais (confira ORULO_CLIENT_ID e ORULO_CLIENT_SECRET).'
+      : st === 403 || st === 404 ? 'Esse empreendimento não está liberado para a sua conta na Órulo.'
+      : `Não consegui falar com a API da Órulo (${st ? 'HTTP ' + st : e.code || e.message}).`;
+    res.json({ success: false, precisaTexto: true, error: msg + ' Você pode usar a aba Assistente IA com o texto da página.' });
   }
 });
-
 
 // ===== CONTEÚDOS (blog, notícias e depoimentos editáveis pelo painel) =====
 const CONTEUDOS_FILE = path.join(__dirname, 'conteudos.json');
@@ -351,6 +342,75 @@ app.post('/api/ia', exigirLogin, async (req, res) => {
     res.status(502).json({ success: false, error: 'A IA não respondeu (' + (e.response ? 'HTTP ' + e.response.status : e.code || e.message) + '). Confira a chave e o modelo.' });
   }
 });
+
+
+// ===== UPLOAD DE FOTOS E VÍDEOS (Cloudinary, assinado no servidor) =====
+// No Render: CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY e CLOUDINARY_API_SECRET
+app.post('/api/upload', exigirLogin, async (req, res) => {
+  const { tipo, arquivo } = req.body || {};
+  const { CLOUDINARY_CLOUD_NAME: cloud, CLOUDINARY_API_KEY: key, CLOUDINARY_API_SECRET: secret } = process.env;
+  if (!cloud || !key || !secret) return res.status(503).json({ success: false, error: 'Upload não configurado. No Render, defina CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY e CLOUDINARY_API_SECRET.' });
+  const m = String(arquivo || '').match(/^data:(image|video)\//);
+  if (!m) return res.status(400).json({ success: false, error: 'Envie uma foto ou um vídeo.' });
+  const recurso = m[1];
+  const pasta = 'joildobrokers/' + (tipo === 'planta' ? 'plantas' : recurso === 'video' ? 'videos' : 'fotos');
+  const timestamp = Math.floor(Date.now() / 1000);
+  const signature = crypto.createHash('sha1').update(`folder=${pasta}&timestamp=${timestamp}${secret}`).digest('hex');
+  try {
+    const r = await axios.post(`https://api.cloudinary.com/v1_1/${cloud}/${recurso}/upload`,
+      new URLSearchParams({ file: arquivo, api_key: key, timestamp: String(timestamp), folder: pasta, signature }).toString(),
+      { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, maxBodyLength: Infinity, maxContentLength: Infinity, timeout: 120000 });
+    res.json({ success: true, url: r.data.secure_url });
+  } catch (e) {
+    console.error('Erro no upload:', e.response ? JSON.stringify(e.response.data).slice(0, 300) : e.message);
+    res.status(502).json({ success: false, error: 'O serviço de imagens recusou o arquivo. Confira o tamanho e o formato.' });
+  }
+});
+
+// ===== SINCRONIZAÇÃO COM AOCUBO E ÓRULO (preço, estágio, área, dormitórios e vagas) =====
+// Agende uma chamada a cada poucas horas: GET /api/sincronizar?chave=SYNC_KEY
+let sincronizando = false;
+const CAMPOS_SYNC = ['preco', 'estagio', 'area', 'dormitorios', 'vagas'];
+async function buscarOrigem(i) {
+  if (/(^|\.)orulo\.com\.br$/i.test(new URL(i.linkOrigem).hostname)) {
+    const m = String(i.linkOrigem).match(/buildings\/(\d+)/i);
+    if (!m) throw new Error('link da Órulo sem o número do empreendimento');
+    return (await orulo.importar(m[1])).dados;
+  }
+  const r = await axios.get(i.linkOrigem, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122 Safari/537.36', 'Accept-Language': 'pt-BR,pt;q=0.9' }, timeout: 15000, maxRedirects: 3 });
+  return extrairAoCubo(String(r.data), i.linkOrigem);
+}
+async function sincronizarImoveis() {
+  const alvos = (await getImoveis()).filter(i => i.linkOrigem && i.sincronizar !== false);
+  const rel = { total: alvos.length, atualizados: 0, semMudanca: 0, pausados: 0, erros: [] };
+  for (const i of alvos) {
+    const agora = new Date().toISOString();
+    try {
+      const novo = await buscarOrigem(i), set = {};
+      CAMPOS_SYNC.forEach(k => { if (novo[k] && novo[k] !== i[k]) set[k] = novo[k]; });
+      if (Object.keys(set).length) rel.atualizados++; else rel.semMudanca++;
+      await updImovel(i.id, { ...set, sincronizadoEm: agora, atualizadoEm: agora });
+    } catch (e) {
+      const st = e.response && e.response.status;
+      // Só pausa quando a origem respondeu 404 (anúncio retirado). Erro de rede não pausa nada.
+      if (st === 404) { if (i.ativo !== false) { await updImovel(i.id, { ativo: false, sincronizadoEm: agora }); rel.pausados++; } }
+      else rel.erros.push({ ref: i.ref, erro: st ? `HTTP ${st}` : e.message });
+    }
+  }
+  return rel;
+}
+const podeSincronizar = (req, res, next) =>
+  ((process.env.SYNC_KEY && req.query.chave === process.env.SYNC_KEY) || tokenValido(req.headers['x-token'])) ? next()
+  : res.status(401).json({ success: false, error: 'Não autorizado.' });
+const rodarSincronizacao = async (req, res) => {
+  if (sincronizando) return res.json({ success: false, error: 'A sincronização já está rodando. Aguarde terminar.' });
+  sincronizando = true;
+  try { res.json({ success: true, ...(await sincronizarImoveis()) }); }
+  catch (e) { console.error('Erro na sincronização:', e.message); res.status(500).json({ success: false, error: 'Erro interno na sincronização.' }); }
+  finally { sincronizando = false; }
+};
+app.get('/api/sincronizar', podeSincronizar, rodarSincronizacao);
+app.post('/api/sincronizar', podeSincronizar, rodarSincronizacao);
 
 const PORT = process.env.PORT || 10000;
 iniciarBanco().then(() => app.listen(PORT, () => console.log(`🚀 Portal Joildo Brokers ativo na porta ${PORT} (banco: ${bancoStatus})`)));
