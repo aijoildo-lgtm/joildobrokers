@@ -10,6 +10,22 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+.tip-bloco .tip-cab,.tip-bloco .tip-linha{display:grid;grid-template-columns:1.5fr .8fr .7fr .7fr .7fr;align-items:center;gap:8px}
+.tip-cab{font-size:.78rem;color:var(--text-muted);padding:10px 0;border-bottom:1px solid #E2E8F0}
+.tip-cab svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;display:block;margin:0 auto}
+.tip-num{text-align:center}
+.tip-grupo{font-size:.9rem;color:var(--text-muted);margin:18px 0 4px}
+.tip-linha{padding:13px 8px;margin:0 -8px;border-bottom:1px solid #E2E8F0;font-size:.92rem;cursor:pointer;transition:background .2s;border-radius:6px}
+.tip-linha:hover,.tip-linha:focus-visible{background:#F8FAFC;outline:none}
+.tip-linha.sel{background:rgba(212,175,55,.16)}
+.tip-linha b{font-weight:800;color:var(--text-dark)}
+.tip-acao{margin-top:24px;display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.tip-acao button{background:var(--primary);color:#fff;border:0;border-radius:999px;padding:13px 28px;font-weight:700;cursor:pointer;font-size:.92rem}
+.tip-acao button:hover{background:var(--primary-light)}
+.tip-dica{font-size:.78rem;color:var(--text-muted);margin:0}
+@media(max-width:600px){.tip-bloco .tip-cab,.tip-bloco .tip-linha{font-size:.8rem;gap:4px}}
+</style>
 </head>
 <body>
 
@@ -688,6 +704,38 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
         return `https://api.whatsapp.com/send?phone=${configGeral.whatsapp || '5511951377033'}&text=${encodeURIComponent(msg)}`;
     }
 
+    // TIPOLOGIAS: tabela no estilo do mercado (preço a partir de, m², quartos, suítes, vagas)
+    const TIP_ICONE = {
+        quarto: '<svg viewBox="0 0 24 24"><path d="M3 18V7M3 14h18v4M21 18v-4a3 3 0 0 0-3-3h-7v7M7 11.5h.01"/></svg>',
+        banho: '<svg viewBox="0 0 24 24"><path d="M4 12h16v3a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5v-3zM6 12V6a2 2 0 0 1 4 0M7 20l-1 2M17 20l1 2"/></svg>',
+        vaga: '<svg viewBox="0 0 24 24"><path d="M3 16v-3l2.5-5h13L21 13v3M3 16h18M3 16v3M21 16v3M3 13h18"/></svg>'
+    };
+    let TIP_SEL = null;
+    function blocoTipologias(lista, i) {
+        TIP_SEL = null;
+        const grupos = [...new Set(lista.map(t => t.nome || 'Tipologia'))];
+        const cab = `<div class="tip-cab"><span>A partir de</span><span class="tip-num">m²</span><span class="tip-num" title="Dormitórios">${TIP_ICONE.quarto}</span><span class="tip-num" title="Suítes">${TIP_ICONE.banho}</span><span class="tip-num" title="Vagas">${TIP_ICONE.vaga}</span></div>`;
+        const corpo = grupos.map(g => {
+            const itens = lista.map((t, idx) => ({ t, idx })).filter(x => (x.t.nome || 'Tipologia') === g)
+                .sort((a, b) => precoNum(a.t.preco) - precoNum(b.t.preco));
+            return `<div class="tip-grupo">${esc(g)}</div>` + itens.map(({ t, idx }) =>
+                `<div class="tip-linha" tabindex="0" onclick="escolherTip(this,${idx})" onkeydown="if(event.key==='Enter')escolherTip(this,${idx})">` +
+                `<b>${esc(t.preco || 'Consulte')}</b><span class="tip-num">${esc(t.area || '—')}</span><span class="tip-num">${esc(t.dorm || '0')}</span><span class="tip-num">${esc(t.suites || '0')}</span><span class="tip-num">${esc(t.vagas || '0')}</span></div>`).join('');
+        }).join('');
+        return `<div class="info-block tip-bloco"><h4>Tipologias disponíveis</h4>${cab}${corpo}` +
+            `<div class="tip-acao"><button type="button" onclick="enviarProposta('${esc(i.id)}')">Enviar proposta</button><p class="tip-dica">Toque em uma linha para escolher a tipologia.</p></div></div>`;
+    }
+    function escolherTip(el, idx) {
+        document.querySelectorAll('.tip-linha.sel').forEach(x => x.classList.remove('sel'));
+        el.classList.add('sel'); TIP_SEL = idx;
+    }
+    function enviarProposta(id) {
+        const i = bancoImoveis.find(x => String(x.id) === String(id)) || {};
+        const t = TIP_SEL !== null ? (i.tipologias || [])[TIP_SEL] : null;
+        const extra = t ? ` Tipologia: ${t.nome || ''}${t.area ? ', ' + t.area : ''}${t.preco ? ', ' + t.preco : ''}.` : '';
+        window.open(linkZap(`Olá, quero enviar uma proposta para ${i.titulo || 'o imóvel'} (cód. ${i.ref || ''}).${extra}`), '_blank');
+    }
+
     function abrirModal(id) {
         const i = bancoImoveis.find(x => String(x.id) === String(id));
         if (!i) return;
@@ -711,8 +759,7 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
                 <div class="modal-left">
                     <div class="info-block"><h4>Ficha do imóvel</h4><div class="tech-grid">${fichas}</div></div>
                     ${i.apresentacao ? `<div class="info-block"><h4>Sobre o projeto</h4><p style="line-height:1.75;white-space:pre-line">${esc(i.apresentacao)}</p></div>` : ''}
-                    ${tipologias.length ? `<div class="info-block"><h4>Tipologias e valores</h4><div style="overflow-x:auto"><table class="tip-tabela"><tr><th>Tipo</th><th>Área</th><th>Dorm.</th><th>Suítes</th><th>Vagas</th><th>A partir de</th></tr>
-                        ${tipologias.map(t => `<tr><td>${esc(t.nome)}</td><td>${esc(t.area)}</td><td>${esc(t.dorm)}</td><td>${esc(t.suites)}</td><td>${esc(t.vagas)}</td><td><b>${esc(t.preco)}</b></td></tr>`).join('')}</table></div></div>` : ''}
+                    ${tipologias.length ? blocoTipologias(tipologias, i) : ''}
                     ${lazer.length ? `<div class="info-block"><h4>Lazer e comodidades</h4><div class="chips">${lazer.map(x => `<span class="chip">${esc(x)}</span>`).join('')}</div></div>` : ''}
                     ${infoTec.length ? `<div class="info-block"><h4>Informações técnicas</h4><div class="tech-grid">${infoTec.map(x => `<div class="tech-item"><span>${esc(x.k)}</span><b>${esc(x.v)}</b></div>`).join('')}</div></div>` : ''}
                     ${fotos.length ? `<div class="info-block"><h4>Galeria de fotos</h4>

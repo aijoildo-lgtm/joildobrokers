@@ -62,6 +62,10 @@ th{font-size:12px;color:var(--mut);font-weight:600}
 .importa{background:#fff;border:1px solid var(--line);border-radius:8px;padding:18px;margin-bottom:18px}
 .aviso{position:fixed;bottom:20px;right:20px;background:var(--navy);color:#fff;padding:12px 16px;border-radius:6px;border-left:3px solid var(--gold);z-index:99;max-width:360px;font-size:13px}
 @media(max-width:820px){#app{grid-template-columns:1fr}aside{flex-direction:row;overflow-x:auto;padding:10px}.logo{display:none}aside .sair{margin:0}aside a{display:none}main{padding:18px}}
+.tp-row{display:grid;grid-template-columns:1.6fr .9fr .7fr .7fr .7fr 1.2fr auto;gap:8px;align-items:center;margin-bottom:8px}
+.tp-cab{font-size:12px;color:var(--mut);font-weight:600}
+.tp-row input{padding:8px 10px}
+@media(max-width:820px){.tp-row{grid-template-columns:1fr 1fr}.tp-cab{display:none}}
 </style>
 </head>
 <body>
@@ -155,7 +159,7 @@ $('fImovel').innerHTML=CAMPOS.map(([k,l,x])=>{
     :x==='T'?`<textarea id="f_${k}" rows="5"></textarea>`
     :`<input id="f_${k}"${x==='L'?' list="tipos"':''}>`;
   return `<div class="f${x==='A'||x==='T'?' full':''}"><label for="f_${k}">${l}</label>${ctl}${upl(k)}${x==='A'?`<div class="gal" id="g_${k}"></div>`:''}</div>`;
-}).join('')+`<div class="sec">Publicação</div><div class="f full" style="display:flex;gap:28px;flex-wrap:wrap"><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_emDestaque" style="width:auto">Destacar na página inicial</label><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_ativo" style="width:auto" checked>Publicado no site</label><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_sincronizar" style="width:auto" checked>Atualizar preço e estágio pelo link</label></div>`;
+}).join('')+`<div class="sec">Tipologias e valores</div><div class="full" id="tipos-box"></div><div class="sec">Publicação</div><div class="f full" style="display:flex;gap:28px;flex-wrap:wrap"><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_emDestaque" style="width:auto">Destacar na página inicial</label><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_ativo" style="width:auto" checked>Publicado no site</label><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_sincronizar" style="width:auto" checked>Atualizar preço e estágio pelo link</label></div>`;
 
 let IM=[],CUR=null,BASE={},timer=null;
 const lines=s=>s.split('\n').map(x=>x.trim()).filter(x=>/^https?:\/\//i.test(x));
@@ -224,12 +228,12 @@ function abrir(it){CUR=it||null;BASE=it?{...it}:{};$('ftitulo').textContent=it?i
 function editar(id){abrir(IM.find(x=>x.id==id))}
 function preencher(d){
   CAMPOS.forEach(([k,,x])=>{if(k==='S')return;const el=$('f_'+k);el.value=x==='A'?(d[k]||[]).join('\n'):(d[k]??DEF[k]??'');if(x==='A')galeria(k)});
-  $('f_emDestaque').checked=d.emDestaque===true;$('f_ativo').checked=d.ativo!==false;$('f_sincronizar').checked=d.sincronizar!==false;pend();
+  $('f_emDestaque').checked=d.emDestaque===true;$('f_ativo').checked=d.ativo!==false;$('f_sincronizar').checked=d.sincronizar!==false;TIPS=(d.tipologias||[]).map(t=>({...t}));renderTips();pend();
 }
 function galeria(k){$('g_'+k).innerHTML=lines($('f_'+k).value).slice(0,30).map(u=>`<img src="${esc(u)}" alt="" loading="lazy" onerror="this.style.opacity=.2">`).join('')}
 function coleta(){
   const o={};CAMPOS.forEach(([k,,x])=>{if(k==='S')return;const v=$('f_'+k).value;o[k]=x==='A'?lines(v):v.trim()});
-  o.emDestaque=$('f_emDestaque').checked;o.ativo=$('f_ativo').checked;o.sincronizar=$('f_sincronizar').checked;return o;
+  o.emDestaque=$('f_emDestaque').checked;o.ativo=$('f_ativo').checked;o.sincronizar=$('f_sincronizar').checked;o.tipologias=TIPS.filter(t=>(t.nome||'').trim()).map(t=>({nome:t.nome||'',area:t.area||'',dorm:t.dorm||'',suites:t.suites||'',vagas:t.vagas||'',preco:t.preco||''}));return o;
 }
 function pend(){
   const d=coleta(),f=[];
@@ -277,6 +281,18 @@ document.addEventListener('change',async e=>{
   }
   msg.textContent=ok?`${ok} arquivo(s) enviado(s).`:'';pend();
 });
+let TIPS=[];
+const TP_CAMPOS=[['nome','ex.: Apartamento'],['area','ex.: 98 m²'],['dorm','2'],['suites','1'],['vagas','1'],['preco','R$ 890.000']];
+function renderTips(){
+  $('tipos-box').innerHTML=`<div class="tp-row tp-cab"><span>Tipo</span><span>Área</span><span>Dorm.</span><span>Suítes</span><span>Vagas</span><span>A partir de</span><span></span></div>`
+    +TIPS.map((t,k)=>`<div class="tp-row">${TP_CAMPOS.map(([col,ph])=>`<input data-k="${k}" data-c="${col}" value="${esc(t[col]||'')}" placeholder="${ph}" aria-label="${col}">`).join('')}<button type="button" class="btn danger sm" data-rm="${k}">Remover</button></div>`).join('')
+    +`<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:6px"><button type="button" class="btn ghost sm" id="tp-add">Adicionar tipologia</button><span class="dica">Imóveis da Órulo já trazem essas linhas. Para AoCubo e cadastro manual, preencha aqui.</span></div>`;
+}
+document.addEventListener('input',e=>{const k=e.target.dataset&&e.target.dataset.k;if(k===undefined)return;TIPS[+k][e.target.dataset.c]=e.target.value;pend()});
+document.addEventListener('click',e=>{
+  if(e.target.id==='tp-add'){TIPS.push({});renderTips();return}
+  const rm=e.target.dataset&&e.target.dataset.rm;if(rm!==undefined){TIPS.splice(+rm,1);renderTips()}
+});
 $('atualizar').onclick=load;
 $('dias').oninput=renderDash;
 $('busca').oninput=renderLista;
@@ -290,6 +306,7 @@ document.addEventListener('click',e=>{
   const v=b.dataset.v;
   if(v==='novo')abrir(null);else{ir(v);if(v==='lista')renderLista()}
 });
+renderTips();
 if(sessionStorage.getItem('cp_tk'))entrar();
 </script>
 </body>
