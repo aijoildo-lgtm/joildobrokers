@@ -60,7 +60,7 @@ app.get(['/admin', '/admin.html'], enviar('admin.html'));
 app.get('/style.css', enviar('style.css'));
 
 // APIs
-app.get('/api/versao', (req, res) => res.json({ versao: '2026-11-14-e', login: 'token assinado', extracao: 'texto colado v2' }));
+app.get('/api/versao', (req, res) => res.json({ versao: '2026-11-14-f', login: 'token assinado', extracao: 'texto colado v2' }));
 app.get('/api/imoveis', (req, res) => res.json(lerJson(DATA_FILE, [])));
 app.get('/api/config', (req, res) => res.json({ ...DEFAULT_CONFIG, ...lerJson(CONFIG_FILE, DEFAULT_CONFIG) }));
 app.post('/api/config', exigirLogin, (req, res) => {
@@ -79,6 +79,18 @@ app.post('/api/adicionar-imovel', exigirLogin, (req, res) => {
 });
 
 // EXTRAÇÃO POR TEXTO COLADO (funciona sempre, sem depender do login do Órulo)
+function tituloDoTexto(t) {
+  const linhas = t.split('\n').map(l => l.trim()).filter(Boolean);
+  const ignorar = /^(tabela digital|compartilhar|tour virtual|ver fotos|(?:ó|o)rulo|empreendimentos|terrenos de interesse|integrar crm|indique e ganhe|editar cadastro|sair|c[óo]digo:)/i;
+  const limpa = (l) => l.replace(/\s*tabela digital\s*$/i, '').trim();
+  const iEnd = linhas.findIndex(l => /\d+\.\s*[^-\n]+-\s*[^\n\/]+\/[A-Z]{2}/.test(l));
+  for (let i = iEnd - 1; i >= 0; i--) {
+    const l = limpa(linhas[i]);
+    if (l.length > 2 && l.length < 80 && !ignorar.test(l)) return l;
+  }
+  return limpa(linhas.find(l => l.length > 3 && l.length < 80 && !ignorar.test(l)) || '');
+}
+
 function extrairDoTexto(texto) {
   const t = String(texto || '');
   const pega = (re) => { const m = t.match(re); return m ? m[1] : ''; };
@@ -91,7 +103,7 @@ function extrairDoTexto(texto) {
   const suites = pega(/(\d+)\s*su[ií]tes?/i);
   const vagas = pega(/(\d+)\s*vagas?/i);
   return {
-    titulo: (t.split('\n').map(l => l.trim()).find(l => l.length > 3 && l.length < 80) || ''),
+    titulo: tituloDoTexto(t),
     preco: precos.length ? `R$ ${precos[0].s}` : '',
     area: area ? `${area}m²` : '',
     dormitorios: dorm ? `${dorm} Dormitório${dorm > 1 ? 's' : ''}${suites ? ` (${suites} suíte${suites > 1 ? 's' : ''})` : ''}` : '',
