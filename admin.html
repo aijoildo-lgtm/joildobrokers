@@ -106,6 +106,8 @@
                 <div class="section-title">2. Endereço do Imóvel</div>
                 <div class="form-grid">
                     <div class="form-group"><label>Cidade / Bairro / UF</label><input type="text" id="cidade" placeholder="São Paulo - SP"></div>
+                    <div class="form-group"><label>Link de origem (AoCubo ou Órulo)</label><input type="url" id="linkOrigem" placeholder="https://..."></div>
+                    <div class="form-group"><label>Publicação</label><div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:8px"><label style="font-weight:normal"><input type="checkbox" id="ativo" checked style="width:auto"> Publicado no site</label><label style="font-weight:normal"><input type="checkbox" id="sincronizar" checked style="width:auto"> Atualizar preço e estágio pelo link</label></div></div>
                 </div>
 
                 <div class="section-title">3. Dados do Anúncio & Características</div>
@@ -121,6 +123,8 @@
                             <option value="oportunidades">Oportunidades</option>
                         </select>
                     </div>
+                    <div class="form-group"><label>Construtora / incorporadora</label><input type="text" id="construtora" placeholder="Ex: Construtora Alfa"></div>
+                    <div class="form-group"><label>Valor por m² (R$)</label><input type="text" id="precoM2" placeholder="Ex: R$ 11.040"></div>
                     <div class="form-group"><label>Área Útil (m²)</label><input type="text" id="area" placeholder="Ex: 110m²"></div>
                     <div class="form-group"><label>Dormitórios</label><input type="text" id="dormitorios" placeholder="Ex: 3 dorms"></div>
                     <div class="form-group"><label>Vagas</label><input type="text" id="vagas" placeholder="Ex: 2 vagas"></div>
@@ -128,14 +132,14 @@
 
                 <div class="section-title">4. Mídias (Fotos, Vídeo e Tour 360)</div>
                 <div class="form-grid">
-                    <div class="form-group"><label>URL Foto Capa</label><input type="url" id="foto" placeholder="https://... (ou deixe vazio para usar a 1ª da galeria)"></div>
+                    <div class="form-group"><label>URL Foto Capa <label style="cursor:pointer;background:var(--primary);color:#fff;padding:4px 10px;border-radius:4px;font-size:.75rem;margin-left:8px;display:inline-block">Enviar do computador<input type="file" accept="image/*" hidden onchange="subirArquivos(this,'foto')"></label></label><input type="url" id="foto" placeholder="https://... (ou deixe vazio para usar a 1ª da galeria)"></div>
                     <div class="form-group"><label>Link Vídeo YouTube</label><input type="url" id="youtube" placeholder="https://youtube.com/..."></div>
                     <div class="form-group"><label>Link Tour Virtual 360°</label><input type="url" id="tour360" placeholder="https://..."></div>
                 </div>
                 <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
-                    <div class="form-group"><label>Galeria de fotos (um link por linha)</label>
+                    <div class="form-group"><label>Galeria de fotos (um link por linha) <label style="cursor:pointer;background:var(--primary);color:#fff;padding:4px 10px;border-radius:4px;font-size:.75rem;margin-left:8px;display:inline-block">Enviar fotos do computador<input type="file" accept="image/*" multiple hidden onchange="subirArquivos(this,'fotos')"></label></label>
                         <textarea id="fotos" rows="6" placeholder="Clique com o botão direito na foto do Órulo, escolha Copiar endereço da imagem, cole aqui e aperte Enter. Repita para cada foto."></textarea></div>
-                    <div class="form-group"><label>Plantas (um link por linha)</label>
+                    <div class="form-group"><label>Plantas (um link por linha) <label style="cursor:pointer;background:var(--primary);color:#fff;padding:4px 10px;border-radius:4px;font-size:.75rem;margin-left:8px;display:inline-block">Enviar plantas do computador<input type="file" accept="image/*" multiple hidden onchange="subirArquivos(this,'plantas')"></label></label>
                         <textarea id="plantas" rows="6" placeholder="Um link de imagem por linha, para cada planta do imóvel."></textarea></div>
                 </div>
 
@@ -154,7 +158,9 @@
                     <div class="form-group"><label>Informações técnicas (uma por linha: Item: valor)</label>
                         <textarea id="infoTecnica" rows="6" placeholder="Previsão de entrega: 02/2029&#10;Número de torres: 1&#10;Total de unidades: 267"></textarea></div>
                 </div>
+                <p id="faltasBox" style="font-size:.85rem;margin:10px 0 4px"></p>
                 <button type="submit" class="btn-pub" id="btnPublicar"><i class="fas fa-check-circle"></i> Publicar Imóvel no Portal</button>
+                <button type="button" onclick="salvarRascunho()" style="width:100%;margin-top:10px;padding:12px;background:#64748B;color:#fff;border:none;border-radius:6px;font-weight:bold;cursor:pointer">Salvar como rascunho (não aparece no site)</button>
             </form>
         </div>
 
@@ -344,6 +350,41 @@
             if(r.success) alert('✅ Configurações Atualizadas com Sucesso!');
         }
 
+        const plantaLinha = p => (p && typeof p === 'object') ? ((p.nome ? p.nome + ' | ' : '') + p.url) : String(p);
+        const CAMPOS_OBRIG = [['titulo','Título'],['preco','Preço'],['cidade','Cidade / Bairro / UF'],['area','Área'],['dormitorios','Dormitórios'],['vagas','Vagas'],['construtora','Construtora'],['foto','Foto de capa'],['apresentacao','Apresentação'],['tipologias','Tipologias e valores'],['lazer','Lazer e comodidades'],['infoTecnica','Informações técnicas']];
+        function faltasForm() {
+            const v = id => (document.getElementById(id).value || '').trim();
+            const lst = { tipologias: linhas('tipologias').length, lazer: linhas('lazer').length, infoTecnica: linhas('infoTecnica').length, foto: v('foto') || linhas('fotos').length };
+            return CAMPOS_OBRIG.filter(([id]) => !(id in lst ? lst[id] : v(id))).map(([id, nome]) => ({ id, nome }));
+        }
+        function marcarFaltas() {
+            const f = faltasForm(), ids = new Set(f.map(x => x.id));
+            CAMPOS_OBRIG.forEach(([id]) => { const el = document.getElementById(id); if (el) el.style.outline = ids.has(id) ? '2px solid #B42318' : ''; });
+            const box = document.getElementById('faltasBox');
+            if (box) { box.textContent = f.length ? 'Falta preencher: ' + f.map(x => x.nome).join(', ') + '.' : 'Cadastro completo.'; box.style.color = f.length ? '#9A5B00' : '#067647'; }
+        }
+        document.addEventListener('input', e => { if (e.target.closest && e.target.closest('#tab-imoveis form')) marcarFaltas(); });
+        async function subirArquivos(input, alvo) {
+            const arqs = [...input.files]; input.value = '';
+            if (!arqs.length) return;
+            const el = document.getElementById(alvo); let ok = 0;
+            for (const f of arqs) {
+                if (!f.type.startsWith('image/')) continue;
+                if (f.size > 20 * 1024 * 1024) { alert(f.name + ' passa de 20 MB.'); continue; }
+                const dataUrl = await new Promise((resolve, reject) => { const fr = new FileReader(); fr.onload = () => resolve(fr.result); fr.onerror = reject; fr.readAsDataURL(f); });
+                const resp = await fetch('/api/upload', { method: 'POST', headers: H(), body: JSON.stringify({ tipo: alvo === 'plantas' ? 'planta' : 'foto', arquivo: dataUrl }) });
+                if (resp.status === 401) { sessionStorage.removeItem('tk'); return location.reload(); }
+                const r = await resp.json();
+                if (!r.success) { alert(r.error || 'Não consegui enviar ' + f.name); break; }
+                const nome = f.name.replace(/\.[^.]+$/, '');
+                if (alvo === 'foto') el.value = r.url;
+                else el.value = (el.value.trim() ? el.value.trim() + '\n' : '') + (alvo === 'plantas' ? nome + ' | ' + r.url : r.url);
+                ok++;
+            }
+            marcarFaltas();
+            if (ok) alert(ok + ' arquivo(s) enviado(s).');
+        }
+        function salvarRascunho() { window.RASCUNHO = true; document.getElementById('ativo').checked = false; document.querySelector('#tab-imoveis form').requestSubmit(); }
         function preencher(d) {
             const set = (id, v) => { if (v) document.getElementById(id).value = v; };
             set('titulo', d.titulo); set('preco', d.preco); set('cidade', d.localizacao);
@@ -356,10 +397,18 @@
                 sel.value = d.tipo;
             }
             if (d.fotos && d.fotos.length) set('fotos', d.fotos.join('\n'));
-            if (d.plantas && d.plantas.length) set('plantas', d.plantas.join('\n'));
+            if (d.plantas && d.plantas.length) set('plantas', d.plantas.map(plantaLinha).join('\n'));
             if (d.tipologias && d.tipologias.length) set('tipologias', d.tipologias.map(t => [t.nome, t.area, t.dorm, t.suites, t.vagas, t.preco].join(' | ')).join('\n'));
             if (d.lazer && d.lazer.length) set('lazer', d.lazer.join('\n'));
             if (d.infoTecnica && d.infoTecnica.length) set('infoTecnica', d.infoTecnica.map(x => x.k + ': ' + x.v).join('\n'));
+            set('construtora', d.construtora); set('precoM2', d.precoM2); set('linkOrigem', d.linkOrigem);
+            if (d.transacao) document.getElementById('transacao').value = d.transacao;
+            if (d.destaque) document.getElementById('destaque').value = d.destaque;
+            if (d.emDestaque !== undefined) document.getElementById('emDestaque').value = d.emDestaque ? 'sim' : 'nao';
+            set('youtube', d.youtube); set('tour360', d.tour360);
+            if (d.linkOrigem !== undefined) document.getElementById('sincronizar').checked = d.sincronizar !== false;
+            if (d.ativo !== undefined) document.getElementById('ativo').checked = d.ativo !== false;
+            marcarFaltas();
         }
         function caixaTexto() {
             if (document.getElementById('textoOrulo')) return;
@@ -413,10 +462,13 @@
         async function salvar(e) {
             e.preventDefault();
             const lista = (id) => document.getElementById(id).value.split(/\s+/).map(x => x.trim()).filter(x => /^https?:\/\//i.test(x));
-            const fotos = lista('fotos'), plantas = lista('plantas');
+            const fotos = lista('fotos');
+            const plantas = linhas('plantas').map(l => { const p = l.split('|').map(x => x.trim()); const url = p[p.length - 1]; return /^https?:\/\//i.test(url) ? (p.length > 1 && p[0] ? { nome: p[0], url } : url) : null; }).filter(Boolean);
             const capa = document.getElementById('foto').value.trim() || fotos[0] || '';
+            const ehRascunho = !!window.RASCUNHO; window.RASCUNHO = false;
             if(!capa) return alert('Informe a foto de capa ou cole pelo menos um link na galeria de fotos.');
             if(!fotos.includes(capa)) fotos.unshift(capa);
+            if (!ehRascunho && document.getElementById('ativo').checked) { const falt = faltasForm(); if (falt.length) { marcarFaltas(); return alert('Antes de publicar, preencha: ' + falt.map(x => x.nome).join(', ') + '. Ou salve como rascunho.'); } }
             const imovel = {
                 fotos: fotos, plantas: plantas,
                 transacao: document.getElementById('transacao').value,
@@ -438,6 +490,7 @@
                 dormitorios: document.getElementById('dormitorios').value,
                 vagas: document.getElementById('vagas').value,
                 foto: capa,
+                construtora: document.getElementById('construtora').value.trim(), precoM2: document.getElementById('precoM2').value.trim(), linkOrigem: document.getElementById('linkOrigem').value.trim(), sincronizar: document.getElementById('sincronizar').checked, ativo: document.getElementById('ativo').checked,
                 youtube: document.getElementById('youtube').value,
                 tour360: document.getElementById('tour360').value
             };
@@ -477,7 +530,10 @@
             val('cidade', i.localizacao); val('titulo', i.titulo); val('preco', i.preco); val('estagio', i.estagio || 'lancamentos');
             val('area', i.area); val('dormitorios', i.dormitorios); val('vagas', i.vagas);
             val('foto', i.foto); val('youtube', i.youtube); val('tour360', i.tour360);
-            val('fotos', (i.fotos || []).join('\n')); val('plantas', (i.plantas || []).join('\n'));
+            val('fotos', (i.fotos || []).join('\n')); val('plantas', (i.plantas || []).map(plantaLinha).join('\n'));
+            val('construtora', i.construtora); val('precoM2', i.precoM2); val('linkOrigem', i.linkOrigem);
+            document.getElementById('sincronizar').checked = i.sincronizar !== false; document.getElementById('ativo').checked = i.ativo !== false;
+            marcarFaltas();
             val('diferencial', i.diferencial); val('proximidade', i.proximidade); val('apresentacao', i.apresentacao);
             val('tipologias', (i.tipologias || []).map(t => [t.nome, t.area, t.dorm, t.suites, t.vagas, t.preco].join(' | ')).join('\n'));
             val('lazer', (i.lazer || []).join('\n'));

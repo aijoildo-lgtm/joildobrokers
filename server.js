@@ -140,7 +140,7 @@ function limpar(b) {
 const novaRef = () => `REF-${Math.floor(100000 + Math.random() * 900000)}`;
 
 // APIs
-app.get('/api/versao', (req, res) => res.json({ versao: '2026-11-14-p', banco: bancoStatus }));
+app.get('/api/versao', (req, res) => res.json({ versao: '2026-11-14-q', banco: bancoStatus }));
 app.get('/api/imoveis', ah(async (req, res) => res.json((await getImoveis()).filter(i => i.ativo !== false))));
 app.get('/api/admin/imoveis', exigirLogin, ah(async (req, res) => res.json(await getImoveis())));
 app.get('/api/config', ah(async (req, res) => res.json(await getConfig())));
@@ -285,6 +285,8 @@ app.get('/api/orulo-sessao', exigirLogin, (req, res) => {
 
 // MINERAÇÃO DO ÓRULO (dados reais ou nenhum, nunca valores inventados)
 // IMPORTAÇÃO POR LINK: AoCubo (leitura aberta) e Órulo (exige login)
+const CAMPOS_IMPORT = [['titulo','título'],['preco','preço'],['localizacao','localização'],['area','área'],['dormitorios','dormitórios'],['vagas','vagas'],['tipo','tipo'],['estagio','estágio'],['construtora','construtora'],['foto','foto de capa'],['apresentacao','apresentação'],['tipologias','tipologias e valores'],['lazer','lazer'],['infoTecnica','informações técnicas']];
+const camposFaltando = d => CAMPOS_IMPORT.filter(([k]) => !(Array.isArray(d[k]) ? d[k].length : d[k])).map(([, n]) => n);
 async function importarAoCubo(url, res) {
   try {
     const r = await axios.get(url, {
@@ -293,8 +295,8 @@ async function importarAoCubo(url, res) {
     });
     const dados = extrairAoCubo(String(r.data), url);
     if (!dados.titulo && !dados.preco) return res.json({ success: false, precisaTexto: true, error: 'Abri a página, mas não encontrei os dados do imóvel. Use a aba Assistente IA: cole o texto da página e a IA preenche o cadastro.' });
-    const faltando = ['titulo', 'preco', 'area', 'dormitorios', 'foto'].filter(k => !dados[k]);
-    res.json({ success: true, dados, faltando, precisaTexto: faltando.length > 1, fonte: 'AoCubo' });
+    const faltando = camposFaltando(dados);
+    res.json({ success: true, dados, faltando, precisaTexto: faltando.length > 0, fonte: 'AoCubo' });
   } catch (e) {
     res.json({ success: false, precisaTexto: true, error: `Não consegui abrir o link do AoCubo (${e.response ? 'HTTP ' + e.response.status : e.code || e.message}). Use a aba Assistente IA e cole o texto da página.` });
   }
@@ -311,8 +313,8 @@ app.post(['/api/minerar-orulo', '/api/importar-link'], exigirLogin, async (req, 
   try {
     const { dados, diag } = await orulo.importar(m[1]);
     console.log('ORULO API:', diag);
-    const faltando = ['titulo', 'preco', 'area', 'dormitorios', 'foto'].filter(k => !dados[k]);
-    res.json({ success: true, dados, faltando, precisaTexto: faltando.length > 1, fonte: 'Órulo', diag: faltando.length > 1 ? diag : undefined });
+    const faltando = camposFaltando(dados);
+    res.json({ success: true, dados, faltando, precisaTexto: faltando.length > 0, fonte: 'Órulo', diag: faltando.length > 1 ? diag : undefined });
   } catch (e) {
     const st = e.response && e.response.status;
     console.error('Erro Órulo API:', st, e.response ? JSON.stringify(e.response.data).slice(0, 300) : e.message);
