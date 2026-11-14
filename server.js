@@ -116,7 +116,7 @@ const getConfig = async () => {
 const saveConfig = async (c) => db ? db.collection('config').updateOne({ _id: 'site' }, { $set: { dados: c } }, { upsert: true }) : gravarJson(CONFIG_FILE, c);
 
 // VALIDAÇÃO DO IMÓVEL (só campos conhecidos, com limites)
-const TXT = ['ref','titulo','preco','foto','localizacao','estagio','destaque','area','dormitorios','vagas','youtube','tour360','transacao','categoria','tipo','apresentacao','diferencial','proximidade','origem','linkOrigem','videoArquivo','sincronizadoEm','construtora'];
+const TXT = ['ref','titulo','preco','foto','localizacao','estagio','destaque','area','dormitorios','vagas','youtube','tour360','transacao','categoria','tipo','apresentacao','diferencial','proximidade','origem','linkOrigem','videoArquivo','sincronizadoEm','construtora','precoM2'];
 const s2 = (v, n) => String(v == null ? '' : v).slice(0, n);
 function limpar(b) {
   const o = {};
@@ -140,7 +140,7 @@ function limpar(b) {
 const novaRef = () => `REF-${Math.floor(100000 + Math.random() * 900000)}`;
 
 // APIs
-app.get('/api/versao', (req, res) => res.json({ versao: '2026-11-14-n', banco: bancoStatus }));
+app.get('/api/versao', (req, res) => res.json({ versao: '2026-11-14-o', banco: bancoStatus }));
 app.get('/api/imoveis', ah(async (req, res) => res.json((await getImoveis()).filter(i => i.ativo !== false))));
 app.get('/api/admin/imoveis', exigirLogin, ah(async (req, res) => res.json(await getImoveis())));
 app.get('/api/config', ah(async (req, res) => res.json(await getConfig())));

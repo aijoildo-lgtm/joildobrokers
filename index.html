@@ -753,7 +753,7 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
     function blocoTipologias(lista, i) {
         TIP_SEL = null;
         const grupos = [...new Set(lista.map(t => t.nome || 'Tipologia'))];
-        const cab = `<div class="tip-cab"><span>A partir de</span><span class="tip-num">m²</span><span class="tip-num" title="Dormitórios">${TIP_ICONE.quarto}</span><span class="tip-num" title="Suítes">${TIP_ICONE.banho}</span><span class="tip-num" title="Vagas">${TIP_ICONE.vaga}</span></div>`;
+        const cab = `<div class="tip-cab"><span>A partir de</span><span class="tip-num">m²</span><span class="tip-num" title="Dormitórios">Dorm.</span><span class="tip-num" title="Suítes">Suítes</span><span class="tip-num" title="Vagas">Vagas</span></div>`;
         const corpo = grupos.map(g => {
             const itens = lista.map((t, idx) => ({ t, idx })).filter(x => (x.t.nome || 'Tipologia') === g)
                 .sort((a, b) => precoNum(a.t.preco) - precoNum(b.t.preco));
@@ -849,14 +849,14 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
     <!-- Título -->
     <div style="font-size:.7rem;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:4px">Venda · ${esc(i.tipo || 'Apartamento')} · Cód. ${esc(i.ref)}</div>
     <h2 style="font-family:'Playfair Display',serif;font-size:2rem;color:var(--primary);line-height:1.2;margin-bottom:8px">${esc(i.titulo)}</h2>
-    <div style="font-size:.88rem;color:var(--text-muted);margin-bottom:22px;display:flex;align-items:center;gap:5px"><i class="fas fa-map-marker-alt" style="color:var(--gold)"></i> ${esc(i.localizacao)}</div>
+    <div style="font-size:.88rem;color:var(--text-muted);margin-bottom:22px;display:flex;align-items:center;gap:5px">${esc(i.localizacao)}</div>
 
     <!-- Atributos rápidos -->
     <div style="display:flex;flex-wrap:wrap;gap:20px;padding:18px 0;border-top:1px solid #E2E8F0;border-bottom:1px solid #E2E8F0;margin-bottom:28px">
-      ${i.area ? `<div style="display:flex;align-items:center;gap:8px"><span style="font-size:1.3rem">📐</span><div><strong style="font-size:.95rem">${esc(i.area)}</strong><br><span style="font-size:.7rem;color:var(--text-muted)">Área útil</span></div></div>` : ''}
-      ${i.dormitorios ? `<div style="display:flex;align-items:center;gap:8px"><span style="font-size:1.3rem">🛏</span><div><strong style="font-size:.95rem">${esc(i.dormitorios)}</strong><br><span style="font-size:.7rem;color:var(--text-muted)">Dormitórios</span></div></div>` : ''}
-      ${i.vagas ? `<div style="display:flex;align-items:center;gap:8px"><span style="font-size:1.3rem">🚗</span><div><strong style="font-size:.95rem">${esc(i.vagas)}</strong><br><span style="font-size:.7rem;color:var(--text-muted)">Vagas</span></div></div>` : ''}
-      ${i.construtora ? `<div style="display:flex;align-items:center;gap:8px"><span style="font-size:1.3rem">🏗</span><div><strong style="font-size:.95rem">${esc(i.construtora)}</strong><br><span style="font-size:.7rem;color:var(--text-muted)">Construtora</span></div></div>` : ''}
+      ${i.area ? `<div><strong style="font-size:.95rem">${esc(i.area)}</strong><br><span style="font-size:.7rem;color:var(--text-muted)">Área útil</span></div></div>` : ''}
+      ${i.dormitorios ? `<div><strong style="font-size:.95rem">${esc(i.dormitorios)}</strong><br><span style="font-size:.7rem;color:var(--text-muted)">Dormitórios</span></div></div>` : ''}
+      ${i.vagas ? `<div><strong style="font-size:.95rem">${esc(i.vagas)}</strong><br><span style="font-size:.7rem;color:var(--text-muted)">Vagas</span></div></div>` : ''}
+      ${i.construtora ? `<div><strong style="font-size:.95rem">${esc(i.construtora)}</strong><br><span style="font-size:.7rem;color:var(--text-muted)">Construtora</span></div></div>` : ''}
     </div>
 
     <!-- Sobre o imóvel -->
@@ -877,8 +877,8 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
     <!-- Localização -->
     <div style="margin-bottom:28px">
       <h4 style="font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--primary);margin-bottom:12px">Viver em <em style="color:var(--gold)">${esc(bairro || 'São Paulo')}</em></h4>
-      ${i.proximidade ? `<div style="display:flex;align-items:center;gap:8px;padding:12px 16px;background:#F8FAFC;border-radius:8px;border-left:3px solid var(--gold);margin-bottom:12px"><span style="font-size:1.2rem">📍</span><span style="font-size:.88rem;color:var(--text-dark)">${esc(i.proximidade)}</span></div>` : ''}
-      <div style="background:#F1F5F9;border-radius:12px;height:200px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:.85rem;flex-direction:column;gap:6px"><span style="font-size:1.6rem">🗺</span>Localização em ${esc(i.localizacao)}</div>
+      ${i.proximidade ? `<div style="display:flex;align-items:center;gap:8px;padding:12px 16px;background:#F8FAFC;border-radius:8px;border-left:3px solid var(--gold);margin-bottom:12px"><span style="font-size:.88rem;color:var(--text-dark)">${esc(i.proximidade)}</span></div>` : ''}
+      <div style="background:#F1F5F9;border-radius:12px;height:200px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:.85rem;flex-direction:column;gap:6px">Localização em ${esc(i.localizacao)}</div>
     </div>
 
     <!-- Vídeo -->
@@ -904,7 +904,7 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
   <div style="position:sticky;top:80px">
     <div style="background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:26px;box-shadow:0 4px 24px rgba(10,17,40,.10)">
       <div style="font-size:.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Venda · Cód. ${esc(i.ref)}</div>
-      <div style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:var(--primary);margin-bottom:14px">${esc(i.preco)}</div>
+      ${i.preco ? `<div style="font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px">A partir de</div>` : ''}<div style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:var(--primary);line-height:1.1">${esc(i.preco)}</div>${i.precoM2 ? `<div style="font-size:.85rem;color:var(--text-muted);margin:4px 0 14px">${esc(i.precoM2)}/m²</div>` : '<div style="margin-bottom:14px"></div>'}
 
       <button onclick="enviarLeadModal('${esc(i.id)}')" style="width:100%;padding:14px;background:#C0392B;color:#fff;border:none;border-radius:8px;font-size:.95rem;font-weight:700;cursor:pointer;margin-bottom:10px;font-family:inherit">Solicitar Consultoria Privada</button>
       <a href="${`https://api.whatsapp.com/send?phone=${configGeral.whatsapp||'5511951377033'}&text=${encodeURIComponent('Olá! Tenho interesse no imóvel ' + (i.titulo||'') + ' (' + (i.ref||'') + '). Pode me passar mais informações?')}`}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;border:2px solid var(--primary);color:var(--primary);border-radius:8px;font-size:.88rem;font-weight:600;text-decoration:none;margin-bottom:16px;transition:all .2s" onmouseover="this.style.background='var(--primary)';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='var(--primary)'">

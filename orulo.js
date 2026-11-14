@@ -61,9 +61,13 @@ function mapear(b, imgs, plantas) {
   if (unid) info.push({ k: 'Total de unidades', v: String(unid) });
   const est = pega(b, 'stock', 'available_units', 'units_available'); if (est) info.push({ k: 'Estoque', v: String(est) });
   const dmin = dorms.length ? Math.min(...dorms) : 0, dmax = dorms.length ? Math.max(...dorms) : 0;
+  // valor por m²: usa o campo do Órulo se existir; senão calcula pelo tipo de menor preço (preço ÷ área)
+  let pm2 = num(pega(b, 'min_price_per_square_meter', 'price_per_square_meter', 'price_per_m2', 'square_meter_price'));
+  if (!pm2) { const c = tip.map(t => ({ p: num(pega(t, 'min_price', 'price')), a: num(pega(t, 'private_area', 'area', 'min_area')) })).filter(x => x.p > 0 && x.a > 0).sort((x, y) => x.p - y.p)[0]; if (c) pm2 = c.p / c.a; }
   const dados = {
     titulo: texto(b.name),
     preco: precos.length ? brl(Math.min(...precos)) : '',
+    precoM2: pm2 ? brl(pm2) : '',
     area: faixa(areas, fmtN, 'm²'),
     dormitorios: dorms.length ? (dmin === dmax ? `${dmin} Dormitório${dmin > 1 ? 's' : ''}` : `${dmin} a ${dmax} Dormitórios`) : '',
     vagas: vagasN.length ? faixa(vagasN, String, '').replace(/^(\S+)$/, (m) => `${m} vaga${m === '1' ? '' : 's'}`) : '',
