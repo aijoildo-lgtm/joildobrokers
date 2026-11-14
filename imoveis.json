@@ -12,7 +12,11 @@
     "dormitorios": "3 Suítes",
     "vagas": "2 vagas",
     "youtube": "",
-    "tour360": ""
+    "tour360": "",
+    "transacao": "Vender Imóvel",
+    "categoria": "Residencial",
+    "tipo": "Apartamento",
+    "emDestaque": true
   },
   {
     "id": 1700000001000,
@@ -35,7 +39,11 @@
     "vagas": "3 vagas",
     "youtube": "",
     "tour360": "",
-    "demo": true
+    "demo": true,
+    "transacao": "Vender Imóvel",
+    "categoria": "Residencial",
+    "tipo": "Cobertura",
+    "emDestaque": true
   },
   {
     "id": 1700000001001,
@@ -58,7 +66,11 @@
     "vagas": "2 vagas",
     "youtube": "",
     "tour360": "",
-    "demo": true
+    "demo": true,
+    "transacao": "Vender Imóvel",
+    "categoria": "Residencial",
+    "tipo": "Apartamento",
+    "emDestaque": true
   },
   {
     "id": 1700000001002,
@@ -81,7 +93,11 @@
     "vagas": "1 vaga",
     "youtube": "",
     "tour360": "",
-    "demo": true
+    "demo": true,
+    "transacao": "Vender Imóvel",
+    "categoria": "Residencial",
+    "tipo": "Apartamento",
+    "emDestaque": true
   },
   {
     "id": 1700000001003,
@@ -104,7 +120,11 @@
     "vagas": "2 vagas",
     "youtube": "",
     "tour360": "",
-    "demo": true
+    "demo": true,
+    "transacao": "Vender Imóvel",
+    "categoria": "Residencial",
+    "tipo": "Apartamento",
+    "emDestaque": true
   },
   {
     "id": 1700000001004,
@@ -127,7 +147,11 @@
     "vagas": "3 vagas",
     "youtube": "",
     "tour360": "",
-    "demo": true
+    "demo": true,
+    "transacao": "Vender Imóvel",
+    "categoria": "Residencial",
+    "tipo": "Cobertura Duplex",
+    "emDestaque": true
   },
   {
     "id": 1700000001005,
@@ -150,7 +174,11 @@
     "vagas": "Sem vaga",
     "youtube": "",
     "tour360": "",
-    "demo": true
+    "demo": true,
+    "transacao": "Vender Imóvel",
+    "categoria": "Residencial",
+    "tipo": "Studio",
+    "emDestaque": false
   },
   {
     "id": 1700000001006,
@@ -173,6 +201,64 @@
     "vagas": "4 vagas",
     "youtube": "",
     "tour360": "",
+    "demo": true,
+    "transacao": "Vender Imóvel",
+    "categoria": "Residencial",
+    "tipo": "Casa de Condomínio",
+    "emDestaque": false
+  },
+  {
+    "id": 1700000002000,
+    "ref": "REF-910001",
+    "titulo": "Apartamento Vila Mariana",
+    "preco": "R$ 1.180.000",
+    "foto": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80",
+    "fotos": [
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "plantas": [],
+    "localizacao": "Vila Mariana, São Paulo - SP",
+    "estagio": "usados",
+    "destaque": "none",
+    "area": "98m²",
+    "dormitorios": "3 Dormitórios",
+    "vagas": "2 vagas",
+    "youtube": "",
+    "tour360": "",
+    "transacao": "Vender Imóvel",
+    "categoria": "Residencial",
+    "tipo": "Apartamento",
+    "emDestaque": false,
+    "demo": true
+  },
+  {
+    "id": 1700000002001,
+    "ref": "REF-910002",
+    "titulo": "Sala Comercial Faria Lima",
+    "preco": "R$ 980.000",
+    "foto": "https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=1200&q=80",
+    "fotos": [
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "plantas": [],
+    "localizacao": "Itaim Bibi, São Paulo - SP",
+    "estagio": "prontos",
+    "destaque": "none",
+    "area": "54m²",
+    "dormitorios": "Sem dormitórios",
+    "vagas": "1 vaga",
+    "youtube": "",
+    "tour360": "",
+    "transacao": "Vender Imóvel",
+    "categoria": "Comercial",
+    "tipo": "Sala Comercial",
+    "emDestaque": false,
     "demo": true
   }
 ]

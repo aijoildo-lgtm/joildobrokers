@@ -58,9 +58,10 @@ const enviar = (f) => (req, res) => res.sendFile(path.join(__dirname, f));
 app.get('/', enviar('index.html'));
 app.get(['/admin', '/admin.html'], enviar('admin.html'));
 app.get('/style.css', enviar('style.css'));
+app.get('/taxonomia.js', enviar('taxonomia.js'));
 
 // APIs
-app.get('/api/versao', (req, res) => res.json({ versao: '2026-11-14-g', login: 'token assinado', extracao: 'texto colado v2' }));
+app.get('/api/versao', (req, res) => res.json({ versao: '2026-11-14-h', login: 'token assinado', extracao: 'texto colado v2' }));
 app.get('/api/imoveis', (req, res) => res.json(lerJson(DATA_FILE, [])));
 app.get('/api/config', (req, res) => res.json({ ...DEFAULT_CONFIG, ...lerJson(CONFIG_FILE, DEFAULT_CONFIG) }));
 app.post('/api/config', exigirLogin, (req, res) => {
@@ -72,6 +73,7 @@ app.post('/api/adicionar-imovel', exigirLogin, (req, res) => {
   const imovel = req.body;
   const imoveis = lerJson(DATA_FILE, []);
   ['fotos', 'plantas'].forEach(k => { imovel[k] = Array.isArray(imovel[k]) ? imovel[k].filter(u => /^https?:\/\//i.test(u)).slice(0, 100) : []; });
+  imovel.emDestaque = imovel.emDestaque === true;
   imovel.id = imovel.id || Date.now();
   imovel.ref = imovel.ref || `REF-${Math.floor(100000 + Math.random() * 900000)}`;
   imoveis.unshift(imovel);

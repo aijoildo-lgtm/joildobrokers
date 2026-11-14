@@ -73,12 +73,10 @@
                 <div class="section-title">1. Transação e Categoria</div>
                 <div class="form-grid">
                     <div class="form-group"><label>Transação</label><select id="transacao"><option>Vender Imóvel</option><option>Alugar Imóvel</option></select></div>
-                    <div class="form-group"><label>Categoria</label><select id="categoria"><option>Residencial</option><option>Comercial</option><option>Rural</option></select></div>
+                    <div class="form-group"><label>Categoria</label><select id="categoria"></select></div>
                     <div class="form-group">
                         <label>Tipo de Imóvel</label>
-                        <select id="tipo">
-                            <option>Apartamento</option><option>Casa</option><option>Casa de Condomínio</option><option>Cobertura</option><option>Flat</option><option>Studio</option><option>Terreno / Lote</option>
-                        </select>
+                        <select id="tipo"></select>
                     </div>
                     <div class="form-group">
                         <label>Tarja de Destaque</label>
@@ -91,6 +89,8 @@
                             <option value="pronto">Pronto para Morar</option>
                         </select>
                     </div>
+                    <div class="form-group"><label>Destaque na Home (carrossel do topo)</label>
+                        <select id="emDestaque"><option value="nao">Não destacar</option><option value="sim">Sim, destacar na Home</option></select></div>
                 </div>
 
                 <div class="section-title">2. Endereço do Imóvel</div>
@@ -105,8 +105,9 @@
                     <div class="form-group"><label>Estágio / Categoria</label>
                         <select id="estagio">
                             <option value="lancamentos">Lançamentos</option>
-                            <option value="construcao">Construção</option>
-                            <option value="prontos">Prontos</option>
+                            <option value="construcao">Em construção</option>
+                            <option value="prontos">Prontos para morar</option>
+                            <option value="usados">Usados</option>
                             <option value="oportunidades">Oportunidades</option>
                         </select>
                     </div>
@@ -184,7 +185,18 @@
 
     </div>
 
+    <script src="/taxonomia.js"></script>
     <script>
+        function montarTipos() {
+            const g = TAXONOMIA[document.getElementById('categoria').value] || {};
+            document.getElementById('tipo').innerHTML = Object.keys(g).map(k => `<optgroup label="${k}">${g[k].map(t => `<option>${t}</option>`).join('')}</optgroup>`).join('');
+        }
+        (function () {
+            const c = document.getElementById('categoria');
+            c.innerHTML = Object.keys(TAXONOMIA).map(k => `<option>${k}</option>`).join('');
+            c.onchange = montarTipos; montarTipos();
+        })();
+
         let TOKEN = sessionStorage.getItem('tk') || '';
         const H = () => ({'Content-Type':'application/json','x-token':TOKEN});
         async function fazerLogin() {
@@ -300,6 +312,10 @@
             if(!fotos.includes(capa)) fotos.unshift(capa);
             const imovel = {
                 fotos: fotos, plantas: plantas,
+                transacao: document.getElementById('transacao').value,
+                categoria: document.getElementById('categoria').value,
+                tipo: document.getElementById('tipo').value,
+                emDestaque: document.getElementById('emDestaque').value === 'sim',
                 titulo: document.getElementById('titulo').value,
                 preco: document.getElementById('preco').value,
                 localizacao: document.getElementById('cidade').value || 'São Paulo - SP',
