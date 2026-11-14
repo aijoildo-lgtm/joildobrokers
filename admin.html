@@ -276,7 +276,7 @@
             const url = document.getElementById('urlOrulo').value;
             if(!url) return alert('Cole a URL do Órulo!');
             const res = await fetch('/api/minerar-orulo', {method:'POST', headers:H(), body: JSON.stringify({url})});
-            if(res.status === 401) return alert('Sessão expirada. Entre novamente.');
+            if(res.status === 401) { alert('Sessão expirada. A página vai recarregar, entre de novo.'); sessionStorage.removeItem('tk'); return location.reload(); }
             const r = await res.json();
             if(r.success) {
                 preencher(r.dados);

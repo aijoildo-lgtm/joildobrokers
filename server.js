@@ -33,17 +33,22 @@ const lerJson = (file, fallback) => {
 };
 const gravarJson = (file, data) => fs.writeFileSync(file, JSON.stringify(data, null, 2));
 
-// AUTENTICAÇÃO (token em memória)
-const tokens = new Set();
+// AUTENTICAÇÃO (token assinado, continua válido por 7 dias mesmo se o servidor reiniciar)
+const assinar = (exp) => crypto.createHmac('sha256', `${ADMIN_USER}|${ADMIN_PASS}`).update(String(exp)).digest('hex');
+const tokenValido = (t) => {
+  const [exp, sig] = String(t || '').split('.');
+  if (!exp || !sig || Number(exp) < Date.now()) return false;
+  const esperado = Buffer.from(assinar(exp)), recebido = Buffer.from(sig);
+  return esperado.length === recebido.length && crypto.timingSafeEqual(esperado, recebido);
+};
 const exigirLogin = (req, res, next) =>
-  tokens.has(req.headers['x-token']) ? next() : res.status(401).json({ success: false, error: 'Não autorizado.' });
+  tokenValido(req.headers['x-token']) ? next() : res.status(401).json({ success: false, error: 'Não autorizado.' });
 
 app.post('/api/login', (req, res) => {
   const { user, pass } = req.body || {};
   if (user === ADMIN_USER && pass === ADMIN_PASS) {
-    const t = crypto.randomBytes(24).toString('hex');
-    tokens.add(t);
-    return res.json({ success: true, token: t });
+    const exp = Date.now() + 7 * 24 * 3600 * 1000;
+    return res.json({ success: true, token: `${exp}.${assinar(exp)}` });
   }
   res.status(401).json({ success: false, error: 'Acesso negado.' });
 });
@@ -79,7 +84,8 @@ function extrairDoTexto(texto) {
   const precos = [...t.matchAll(/R\$\s*([\d.]+(?:,\d{2})?)/g)]
     .map(m => ({ s: m[1], n: parseFloat(m[1].replace(/\./g, '').replace(',', '.')) }))
     .filter(p => p.n >= 50000).sort((a, b) => a.n - b.n);
-  const area = pega(/(\d{2,4}(?:[.,]\d+)?)\s*m²/i);
+  const area = pega(/(\d{2,4}(?:[.,]\d+)?(?:\s*a\s*\d{2,4}(?:[.,]\d+)?)?)\s*m²/i);
+  const loc = t.match(/\d+\.\s*([^-\n]+?)\s*-\s*([^\n\/]+)\/([A-Z]{2})/);
   const dorm = pega(/(\d+)\s*(?:dormit[óo]rios?|quartos?|dorms?)/i);
   const suites = pega(/(\d+)\s*su[ií]tes?/i);
   const vagas = pega(/(\d+)\s*vagas?/i);
@@ -88,7 +94,8 @@ function extrairDoTexto(texto) {
     preco: precos.length ? `R$ ${precos[0].s}` : '',
     area: area ? `${area}m²` : '',
     dormitorios: dorm ? `${dorm} Dormitório${dorm > 1 ? 's' : ''}${suites ? ` (${suites} suíte${suites > 1 ? 's' : ''})` : ''}` : '',
-    vagas: vagas ? `${vagas} vaga${vagas > 1 ? 's' : ''}` : ''
+    localizacao: loc ? `${loc[1].trim()}, ${loc[2].trim()} - ${loc[3]}` : '',
+    vagas: vagas && vagas !== '0' ? `${vagas} vaga${vagas > 1 ? 's' : ''}` : ''
   };
 }
 app.post('/api/extrair-texto', exigirLogin, (req, res) => res.json({ success: true, dados: extrairDoTexto(req.body.texto) }));
