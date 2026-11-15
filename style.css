@@ -278,7 +278,7 @@ nav a i { font-size: .7em; margin-left: 4px; }
 nav ul li:focus-within .dropdown, nav li.aberto .dropdown { display: block; }
 /* BUSCA */
 .search-field.grande { flex: 2; }
-.busca-avancada { max-width: 1250px; margin: -30px auto 30px; padding: 0 20px; text-align: right; position: relative; z-index: 100; }
+.busca-avancada { max-width: 1250px; margin: 10px auto 30px; padding: 0 20px; text-align: right; position: relative; z-index: 90; }
 .link-avancada { background: none; border: none; color: var(--primary); font-weight: 600; cursor: pointer; text-decoration: underline; text-decoration-color: var(--gold); text-underline-offset: 4px; }
 .avancada-box { display: none; margin-top: 12px; background: var(--white); border-radius: 18px; padding: 18px 24px; box-shadow: var(--shadow-premium); gap: 18px; align-items: end; flex-wrap: wrap; text-align: left; }
 .avancada-box.aberta { display: flex; }

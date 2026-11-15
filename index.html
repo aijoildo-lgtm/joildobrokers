@@ -108,17 +108,26 @@
             <select id="search_tipo"><option value="">Todos os tipos</option></select></div>
         <div class="search-field"><label for="search_bairro"><i class="fas fa-map-marker-alt"></i> Bairro</label>
             <select id="search_bairro"><option value="">Todos os bairros</option></select></div>
-        <div class="search-field"><label for="search_preco"><i class="fas fa-dollar-sign"></i> Faixa de preço</label>
-            <select id="search_preco"><option value="">Qualquer valor</option><option value="0-500000">Até R$ 500 mil</option><option value="500000-1000000">R$ 500 mil a R$ 1 milhão</option><option value="1000000-2000000">R$ 1 a 2 milhões</option><option value="2000000-4000000">R$ 2 a 4 milhões</option><option value="4000000-0">Acima de R$ 4 milhões</option></select></div>
+        <div class="search-field"><label for="search_preco_min"><i class="fas fa-dollar-sign"></i> Faixa de preço</label>
+            <div style="display:flex;gap:6px;align-items:center">
+                <input type="number" id="search_preco_min" min="0" step="1000" placeholder="Mínimo" style="width:100%;border:none;font-size:.9rem;font-weight:600;color:var(--primary);outline:none;background:transparent">
+                <span style="color:var(--gold)">–</span>
+                <input type="number" id="search_preco_max" min="0" step="1000" placeholder="Máximo" style="width:100%;border:none;font-size:.9rem;font-weight:600;color:var(--primary);outline:none;background:transparent">
+            </div>
+        </div>
         <button class="btn-widget-search" onclick="filtrarBusca()" aria-label="Buscar imóveis"><i class="fas fa-search"></i></button>
     </div>
     <div class="busca-avancada">
         <button type="button" class="link-avancada" onclick="document.getElementById('avancada').classList.toggle('aberta')">Busca avançada</button>
         <div id="avancada" class="avancada-box">
             <label>Estágio da obra <select id="search_fase"><option value="todos">Todos</option><option value="lancamentos">Lançamentos</option><option value="construcao">Em construção</option><option value="prontos">Prontos para morar</option><option value="usados">Usados</option><option value="oportunidades">Oportunidades</option></select></label>
+            <label>Transação <select id="search_transacao"><option value="">Qualquer</option><option value="Vender Imóvel">Comprar</option><option value="Alugar Imóvel">Alugar</option></select></label>
             <label>Dormitórios <select id="search_dorm"><option value="">Qualquer</option><option value="1">1 ou mais</option><option value="2">2 ou mais</option><option value="3">3 ou mais</option><option value="4">4 ou mais</option></select></label>
+            <label>Vagas <select id="search_vagas"><option value="">Qualquer</option><option value="1">1 ou mais</option><option value="2">2 ou mais</option><option value="3">3 ou mais</option><option value="4">4 ou mais</option></select></label>
             <label>Área mínima (m²) <input type="number" id="search_area" min="0" placeholder="Ex: 80"></label>
+            <label>Diferencial <select id="search_tarja"><option value="">Qualquer</option><option value="exclusivo">Exclusividade</option><option value="desconto">Desconto</option><option value="oportunidade">Oportunidade</option><option value="decorado">Decorado</option><option value="pronto">Pronto para morar</option></select></label>
             <button type="button" class="btn-header-cta" style="border:none;cursor:pointer" onclick="filtrarBusca()">Aplicar</button>
+            <button type="button" class="link-avancada" style="font-weight:500" onclick="limparAvancada()">Limpar filtros</button>
         </div>
     </div>
 </div>
@@ -688,24 +697,34 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
 
     function aplicarFiltros() {
         const q = norm(val('search_ref')), fase = val('search_fase') || 'todos', tipo = val('search_tipo');
-        const bairro = norm(val('search_bairro')), faixa = val('search_preco');
+        const bairro = norm(val('search_bairro'));
+        const min = Number(val('search_preco_min')) || 0, max = Number(val('search_preco_max')) || 0;
         const dorm = Number(val('search_dorm')) || 0, areaMin = Number(val('search_area')) || 0;
-        const [min, max] = faixa ? faixa.split('-').map(Number) : [0, 0];
+        const vagas = Number(val('search_vagas')) || 0, transacao = val('search_transacao'), tarja = val('search_tarja');
         renderizarGrade(bancoImoveis.filter(i => {
             const p = precoNum(i.preco);
             return (!q || [i.ref, i.titulo, i.localizacao, i.tipo, i.categoria].some(x => norm(x).includes(q))) &&
                 (fase === 'todos' || (fase === 'oportunidades' ? ehOpp(i) : i.estagio === fase)) &&
                 (!tipo || (tipo.startsWith('cat:') ? i.categoria === tipo.slice(4) : i.tipo === tipo)) &&
                 (!bairro || norm(i.localizacao).includes(bairro)) &&
-                (!faixa || (p >= min && (!max || p <= max))) &&
+                (!min || p >= min) && (!max || p <= max) &&
                 (!dorm || primeiroNum(i.dormitorios) >= dorm) &&
+                (!vagas || primeiroNum(i.vagas) >= vagas) &&
+                (!transacao || i.transacao === transacao) &&
+                (!tarja || i.destaque === tarja) &&
                 (!areaMin || primeiroNum(i.area) >= areaMin);
         }));
     }
     function irParaVitrine() { const v = document.getElementById('vitrine'); if (v) v.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     function filtrarBusca() { aplicarFiltros(); irParaVitrine(); }
+    function limparAvancada() {
+        ['search_fase', 'search_transacao', 'search_dorm', 'search_vagas', 'search_area', 'search_tarja'].forEach(id => {
+            const e = document.getElementById(id); if (e) e.value = id === 'search_fase' ? 'todos' : '';
+        });
+        aplicarFiltros();
+    }
     function filtrarEstagio(e) {
-        ['search_ref', 'search_tipo', 'search_bairro', 'search_preco', 'search_dorm', 'search_area'].forEach(id => { document.getElementById(id).value = ''; });
+        ['search_ref', 'search_tipo', 'search_bairro', 'search_preco_min', 'search_preco_max', 'search_dorm', 'search_area', 'search_vagas', 'search_transacao', 'search_tarja'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
         document.getElementById('search_fase').value = e;
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', (b.getAttribute('onclick') || '').includes(`'${e}'`)));
         aplicarFiltros(); irParaVitrine();
