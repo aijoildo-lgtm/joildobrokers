@@ -148,16 +148,19 @@ const novaRef = () => `REF-${Math.floor(100000 + Math.random() * 900000)}`;
 const escA = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const slug = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 80);
 app.get('/imovel/:ref/:slug?', ah(async (req, res) => {
-  const i = (await getImoveis()).find(x => x.ativo !== false && String(x.ref).toLowerCase() === String(req.params.ref).toLowerCase());
+  // imóveis pausados (ainda não publicados) também podem ser abertos por este link direto, para
+  // quem está editando revisar como vai ficar; eles não entram no sitemap nem são indexados (noindex).
+  const i = (await getImoveis()).find(x => String(x.ref).toLowerCase() === String(req.params.ref).toLowerCase());
   let html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
   if (i) {
     const base = `${req.protocol}://${req.get('host')}`, url = `${base}/imovel/${i.ref}/${slug(i.titulo)}`;
     const titulo = i.seoTitulo || `${i.titulo} | ${i.tipo || 'Imóvel'} à venda em ${i.localizacao}`;
     const desc = i.seoDescricao || [i.titulo, i.localizacao, i.area, i.dormitorios, i.vagas, i.preco && `a partir de ${i.preco}`].filter(Boolean).join(' · ');
     const img = i.foto || (i.fotos || [])[0] || '';
+    const semIndexar = i.ativo === false ? '<meta name="robots" content="noindex,nofollow">' : '';
     html = html.replace(/<title>[\s\S]*?<\/title>/, `<title>${escA(titulo)}</title>`)
       .replace(/<meta name="description"[^>]*>/, `<meta name="description" content="${escA(desc)}">`)
-      .replace(/<meta property="og:title"[^>]*>/, `<meta property="og:title" content="${escA(titulo)}"><meta property="og:description" content="${escA(desc)}"><meta property="og:url" content="${escA(url)}">${img ? `<meta property="og:image" content="${escA(img)}">` : ''}<link rel="canonical" href="${escA(url)}">${i.seoPalavras ? `<meta name="keywords" content="${escA(i.seoPalavras)}">` : ''}`);
+      .replace(/<meta property="og:title"[^>]*>/, `<meta property="og:title" content="${escA(titulo)}"><meta property="og:description" content="${escA(desc)}"><meta property="og:url" content="${escA(url)}">${img ? `<meta property="og:image" content="${escA(img)}">` : ''}<link rel="canonical" href="${escA(url)}">${i.seoPalavras ? `<meta name="keywords" content="${escA(i.seoPalavras)}">` : ''}${semIndexar}`);
   }
   res.type('html').send(html);
 }));
@@ -167,7 +170,7 @@ app.get('/sitemap.xml', ah(async (req, res) => {
   res.type('xml').send(`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${base}/</loc></url>${urls.join('')}</urlset>`);
 }));
 // APIs
-app.get('/api/versao', (req, res) => res.json({ versao: '2026-11-14-q', banco: bancoStatus }));
+app.get('/api/versao', (req, res) => res.json({ versao: '2026-11-14-ia', banco: bancoStatus }));
 const publico = (i) => { const { privado, linkOrigem, origem, sincronizar, espelharMidia, historico, sincronizadoEm, ...r } = i; return r; };
 app.get('/api/imoveis', ah(async (req, res) => res.json((await getImoveis()).filter(i => i.ativo !== false).map(publico))));
 app.get('/api/admin/imoveis', exigirLogin, ah(async (req, res) => res.json(await getImoveis())));
