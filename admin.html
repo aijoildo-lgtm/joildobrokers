@@ -183,7 +183,7 @@ textarea{resize:vertical}
       </div>
       <div class="importa hidden" id="m-aocubo">
         <label for="url">Link do imóvel no AoCubo</label>
-        <div style="display:flex;gap:8px;flex-wrap:wrap"><input id="url" placeholder="https://aocubo.com/..." style="flex:1;min-width:260px"><button class="btn" id="imp">Importar e espelhar</button></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><input id="url" placeholder="https://aocubo.com/..." style="flex:1;min-width:260px"><button class="btn" id="imp">Extrair informações do AoCubo</button></div>
         <p class="dica" style="margin-top:8px">O site passa a espelhar o AoCubo: preço, condições, tipologias, fotos e plantas são conferidos sozinhos a cada 6 horas e o que mudou aparece no Painel.</p>
       </div>
       <div class="importa hidden" id="m-orulo">
@@ -198,12 +198,12 @@ textarea{resize:vertical}
         </div>
         <div class="orcards" id="orRes"></div>
         <label for="url2" style="margin-top:14px">Ou cole o link do empreendimento</label>
-        <div style="display:flex;gap:8px;flex-wrap:wrap"><input id="url2" placeholder="https://www.orulo.com.br/buildings/83363" style="flex:1;min-width:260px"><button class="btn" id="imp2">Importar</button></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><input id="url2" placeholder="https://www.orulo.com.br/buildings/83363" style="flex:1;min-width:260px"><button class="btn" id="imp2">Extrair informações da Órulo</button></div>
         <p class="dica" style="margin-top:8px">As fotos da Órulo chegam como link. Na etapa 2 você pode manter os links, enviar fotos do computador ou colar outros links.</p>
       </div>
-      <p class="dica" id="impMsg" style="margin:0 0 10px"></p>
-      <details class="importa"><summary style="cursor:pointer;font-weight:600">Preencher a partir de texto copiado da página (opcional, vale para as 3 formas)</summary>
-        <textarea id="txtCp" rows="4" style="margin-top:10px" placeholder="Abra a página do imóvel, Ctrl+A, Ctrl+C e cole aqui: os campos são preenchidos sozinhos"></textarea>
+      <p class="pend" id="impMsg" style="margin:0 0 12px;line-height:1.7"></p>
+      <details class="importa" open><summary style="cursor:pointer;font-weight:600">Extrair informações de texto copiado (AoCubo ou Órulo): abra a página do imóvel, Ctrl+A, Ctrl+C e cole aqui</summary>
+        <textarea id="txtCp" rows="4" style="margin-top:10px" placeholder="Cole aqui o texto da página. Título, preço, área, dormitórios, vagas, tipologias, lazer e informações técnicas são extraídos sozinhos"></textarea><button class="btn ghost sm" id="extrairTxt" type="button" style="margin-top:8px">Extrair informações do texto</button>
       </details>
       <div class="passos" id="passos" role="tablist" aria-label="Etapas do cadastro">
         <button class="passo on" data-passo="1"><b>1</b>Dados do imóvel</button>
@@ -419,7 +419,7 @@ async function importar(id='url'){
   const r=await API('/api/importar-link',{method:'POST',body:JSON.stringify({url})});
   if(!r.success){$('impMsg').textContent=r.error||'Não consegui ler esse link.';return}
   BASE={...BASE,...r.dados,linkOrigem:url,origem:r.fonte,sincronizar:true,modoCadastro:/rulo/i.test(r.fonte)?'orulo':'aocubo'};preencher(BASE);setModo(BASE.modoCadastro);
-  $('impMsg').textContent=`Dados de ${r.fonte} preenchidos. Confira antes de salvar. A atualização automática fica ligada.`+(r.faltando&&r.faltando.length?` Não veio: ${r.faltando.map(k=>NOMES[k]||k).join(', ')}.`:'');
+  $('impMsg').textContent=`Extraído de ${r.fonte}: ${resumoExtraido(r.dados)}. Dados de ${r.fonte} preenchidos. Confira antes de salvar. A atualização automática fica ligada.`+(r.faltando&&r.faltando.length?` Não veio: ${r.faltando.map(k=>NOMES[k]||k).join(', ')}.`:'');
 }
 
 $('sinc').onclick=async()=>{aviso('Consultando AoCubo e Órulo...');const r=await API('/api/sincronizar',{method:'POST'});aviso(r.success?`Pronto: ${r.atualizados} atualizado(s), ${r.pausados} pausado(s), ${r.erros.length} com erro.`:(r.error||'Não consegui sincronizar.'));await load()};
@@ -478,14 +478,22 @@ $('dias').oninput=renderDash;
 $('busca').oninput=renderLista;
 $('imp').onclick=()=>importar('url');$('imp2').onclick=()=>importar('url2');
 $('txtCp').addEventListener('paste',()=>setTimeout(colarTexto,200));
-async function colarTexto(){
-  const t=$('txtCp').value.trim();if(t.length<80)return;
+function resumoExtraido(d){
+  const N={titulo:'título',preco:'preço',precoM2:'valor por m²',area:'área',dormitorios:'dormitórios',vagas:'vagas',localizacao:'localização',tipo:'tipo',estagio:'estágio',construtora:'construtora',apresentacao:'apresentação'};
+  const o=Object.keys(N).filter(k=>d[k]).map(k=>N[k]);
+  if((d.fotos||[]).length)o.push(d.fotos.length+' foto(s)');if((d.plantas||[]).length)o.push(d.plantas.length+' planta(s)');
+  if((d.lazer||[]).length)o.push(d.lazer.length+' item(ns) de lazer');if((d.tipologias||[]).length)o.push(d.tipologias.length+' tipologia(s)');if((d.infoTecnica||[]).length)o.push('informações técnicas');
+  return o.join(', ')||'nada';
+}
+$('extrairTxt').onclick=()=>colarTexto(true);
+async function colarTexto(manual){
+  const t=$('txtCp').value.trim();if(t.length<80){if(manual===true)$('impMsg').textContent='Cole primeiro o texto da página do imóvel.';return}
   $('impMsg').textContent='Lendo o texto colado...';
   const r=await API('/api/extrair-texto',{method:'POST',body:JSON.stringify({texto:t})});
   if(!r.success||!r.dados){$('impMsg').textContent='Não consegui ler o texto colado.';return}
   const limpo=Object.fromEntries(Object.entries(r.dados).filter(([,v])=>v!==''&&!(Array.isArray(v)&&!v.length)));
   BASE={...BASE,...limpo};preencher(BASE);
-  $('impMsg').textContent='Campos preenchidos a partir do texto colado. Confira antes de salvar.';
+  $('impMsg').textContent='Extraído do texto colado: '+resumoExtraido(limpo)+'. Confira antes de salvar.';
 }
 $('salvar').onclick=salvar;
 $('sair').onclick=()=>{sessionStorage.removeItem('cp_tk');location.reload()};
