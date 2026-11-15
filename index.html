@@ -133,6 +133,16 @@
 </div>
 
 <!-- SUBMENU DE FILTROS -->
+<section class="ins-section reveal" id="colecao" style="display:none">
+    <div class="ins-head"><h2>Nossa Coleção Exclusiva</h2>
+        <p>Selecione o imóvel dos seus sonhos com curadoria personalizada</p></div>
+    <div class="opp-wrap">
+        <button class="opp-seta esq" onclick="rolarColecao(-1)" aria-label="Anterior"><i class="fas fa-chevron-left"></i></button>
+        <div class="opp-track colecao-track" id="colecao-track"></div>
+        <button class="opp-seta dir" onclick="rolarColecao(1)" aria-label="Próximo"><i class="fas fa-chevron-right"></i></button>
+    </div>
+</section>
+
 <div class="filter-nav">
     <button class="filter-btn active" onclick="filtrarEstagio('todos')">Todos os Imóveis</button>
     <button class="filter-btn" onclick="filtrarEstagio('lancamentos')">Lançamentos</button>
@@ -140,6 +150,18 @@
     <button class="filter-btn" onclick="filtrarEstagio('prontos')">Prontos para morar</button>
     <button class="filter-btn" onclick="filtrarEstagio('usados')">Usados</button>
     <button class="filter-btn" onclick="filtrarEstagio('oportunidades')">Oportunidades</button>
+    <select id="search_ordenar" class="ordenar-select" onchange="aplicarFiltros()" aria-label="Ordenar por">
+        <option value="">Ordenar por</option>
+        <option value="recentes">Mais Recentes</option>
+        <option value="tipo">Tipo (Apt., Sobrado...)</option>
+        <option value="bairro">Bairro</option>
+        <option value="menosDorm">Menos Dormitório</option>
+        <option value="maisDorm">Mais Dormitório</option>
+        <option value="menorValor">Menor Valor</option>
+        <option value="maiorValor">Maior Valor</option>
+        <option value="menorArea">Menor Área</option>
+        <option value="maiorArea">Maior Área</option>
+    </select>
 </div>
 
 <!-- SEÇÃO: QUEM SOMOS — conteúdo carregado via /api/config (editável pelo painel) -->
@@ -173,6 +195,7 @@
             </div>
         </div>
     </div>
+    <div class="equipe-grid" id="equipe-grid" style="display:none"></div>
 </section>
 
 <!-- SEÇÃO: OPORTUNIDADES -->
@@ -199,8 +222,8 @@
 
 <!-- PORTFÓLIO PRINCIPAL -->
 <div class="section-header reveal">
-    <h2>Nossa Coleção Exclusiva</h2>
-    <p>Selecione o imóvel dos seus sonhos com curadoria personalizada</p>
+    <h2>Nosso Portfólio Completo</h2>
+    <p>Filtre por estágio, localização, valor e muito mais</p>
 </div>
 <div class="grid reveal" id="vitrine"></div>
 
@@ -560,6 +583,7 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
                 const lnk = document.getElementById('qs-linkedin');
                 if (lnk) lnk.href = qs.linkedin;
             }
+            renderEquipe(qs.equipe);
             // ── FIM QUEM SOMOS ───────────────────────────────────────────────
 
             // Atualizar Links de Redes
@@ -701,7 +725,8 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
         const min = Number(val('search_preco_min')) || 0, max = Number(val('search_preco_max')) || 0;
         const dorm = Number(val('search_dorm')) || 0, areaMin = Number(val('search_area')) || 0;
         const vagas = Number(val('search_vagas')) || 0, transacao = val('search_transacao'), tarja = val('search_tarja');
-        renderizarGrade(bancoImoveis.filter(i => {
+        const ordenar = val('search_ordenar');
+        let itens = bancoImoveis.filter(i => {
             const p = precoNum(i.preco);
             return (!q || [i.ref, i.titulo, i.localizacao, i.tipo, i.categoria].some(x => norm(x).includes(q))) &&
                 (fase === 'todos' || (fase === 'oportunidades' ? ehOpp(i) : i.estagio === fase)) &&
@@ -713,7 +738,20 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
                 (!transacao || i.transacao === transacao) &&
                 (!tarja || i.destaque === tarja) &&
                 (!areaMin || primeiroNum(i.area) >= areaMin);
-        }));
+        });
+        const ORDENADORES = {
+            recentes: (a, b) => (b.id || 0) - (a.id || 0),
+            tipo: (a, b) => norm(a.tipo).localeCompare(norm(b.tipo)),
+            bairro: (a, b) => norm(bairroDe(a.localizacao)).localeCompare(norm(bairroDe(b.localizacao))),
+            menosDorm: (a, b) => primeiroNum(a.dormitorios) - primeiroNum(b.dormitorios),
+            maisDorm: (a, b) => primeiroNum(b.dormitorios) - primeiroNum(a.dormitorios),
+            menorValor: (a, b) => precoNum(a.preco) - precoNum(b.preco),
+            maiorValor: (a, b) => precoNum(b.preco) - precoNum(a.preco),
+            menorArea: (a, b) => primeiroNum(a.area) - primeiroNum(b.area),
+            maiorArea: (a, b) => primeiroNum(b.area) - primeiroNum(a.area)
+        };
+        if (ordenar && ORDENADORES[ordenar]) itens = itens.slice().sort(ORDENADORES[ordenar]);
+        renderizarGrade(itens);
     }
     function irParaVitrine() { const v = document.getElementById('vitrine'); if (v) v.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     function filtrarBusca() { aplicarFiltros(); irParaVitrine(); }
@@ -1050,23 +1088,48 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
     document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModal(); });
 
     const ehOpp = i => i.estagio === 'oportunidades' || i.destaque === 'oportunidade';
+    function cartaoOpp(i) {
+        return `<article class="opp-card" tabindex="0" style="background-image:url('${capa(i)}')" onclick="abrirModal('${esc(i.id)}')" onkeydown="if(event.key==='Enter')abrirModal('${esc(i.id)}')">
+            <span class="opp-tag">${esc(FASES[i.estagio] || 'Oportunidade')}</span>
+            ${i.diferencial ? `<span class="opp-dif">${esc(i.diferencial)}</span>` : ''}
+            <div class="opp-info">
+                <h3>${esc(i.titulo)}</h3>
+                <p class="opp-loc">${esc(bairroDe(i.localizacao))}</p>
+                <div class="opp-chips">${i.dormitorios ? `<span>${esc(i.dormitorios)}</span>` : ''}${i.area ? `<span>${esc(i.area)}</span>` : ''}</div>
+                ${i.proximidade ? `<p class="opp-prox"><i class="fas fa-map-marker-alt"></i>${esc(i.proximidade)}</p>` : ''}
+                <div class="opp-preco">${esc(i.preco)}</div>
+            </div>
+        </article>`;
+    }
+    // "Oportunidades de venda": agora é curadoria manual (botão "+ Vitrine Oportunidade" no painel), mostra 3 por vez e roda sozinho
     function renderOportunidades() {
-        const l = bancoImoveis.filter(ehOpp), sec = document.getElementById('oportunidades');
+        const l = bancoImoveis.filter(i => i.oportunidadeVenda === true), sec = document.getElementById('oportunidades');
         sec.style.display = l.length ? '' : 'none';
-        document.getElementById('opp-track').innerHTML = l.map(i => `
-            <article class="opp-card" tabindex="0" style="background-image:url('${capa(i)}')" onclick="abrirModal('${esc(i.id)}')" onkeydown="if(event.key==='Enter')abrirModal('${esc(i.id)}')">
-                <span class="opp-tag">${esc(FASES[i.estagio] || 'Oportunidade')}</span>
-                ${i.diferencial ? `<span class="opp-dif">${esc(i.diferencial)}</span>` : ''}
-                <div class="opp-info">
-                    <h3>${esc(i.titulo)}</h3>
-                    <p class="opp-loc">${esc(bairroDe(i.localizacao))}</p>
-                    <div class="opp-chips">${i.dormitorios ? `<span>${esc(i.dormitorios)}</span>` : ''}${i.area ? `<span>${esc(i.area)}</span>` : ''}</div>
-                    ${i.proximidade ? `<p class="opp-prox"><i class="fas fa-map-marker-alt"></i>${esc(i.proximidade)}</p>` : ''}
-                    <div class="opp-preco">${esc(i.preco)}</div>
-                </div>
-            </article>`).join('');
+        document.getElementById('opp-track').innerHTML = l.map(cartaoOpp).join('');
+        autoRolar('opp-track', 3);
+    }
+    // "Nossa Coleção Exclusiva": curadoria manual (botão "+ Coleção Exclusiva" no painel), mostra 4 por vez e roda sozinho
+    function renderColecao() {
+        const l = bancoImoveis.filter(i => i.colecaoExclusiva === true), sec = document.getElementById('colecao');
+        sec.style.display = l.length ? '' : 'none';
+        document.getElementById('colecao-track').innerHTML = l.map(cartaoOpp).join('');
+        autoRolar('colecao-track', 4);
     }
     function rolarOpp(d) { const t = document.getElementById('opp-track'); t.scrollBy({ left: d * t.clientWidth * 0.9, behavior: 'smooth' }); }
+    function rolarColecao(d) { const t = document.getElementById('colecao-track'); t.scrollBy({ left: d * t.clientWidth * 0.9, behavior: 'smooth' }); }
+    // Gira sozinho só quando há mais imóveis selecionados do que cabem visíveis ao mesmo tempo (3 ou 4, conforme a seção)
+    const _autoRolarTimers = {};
+    function autoRolar(trackId, porVez) {
+        if (_autoRolarTimers[trackId]) clearInterval(_autoRolarTimers[trackId]);
+        const t = document.getElementById(trackId);
+        if (!t || t.children.length <= porVez) return;
+        _autoRolarTimers[trackId] = setInterval(() => {
+            if (!t.isConnected) { clearInterval(_autoRolarTimers[trackId]); return; }
+            const fim = t.scrollWidth - t.clientWidth - 4;
+            if (t.scrollLeft >= fim) t.scrollTo({ left: 0, behavior: 'smooth' });
+            else t.scrollBy({ left: t.clientWidth * 0.9, behavior: 'smooth' });
+        }, 4500);
+    }
 
     let bairrosTodos = false;
     function renderBairros() {
@@ -1085,6 +1148,18 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
         setTimeout(() => document.getElementById('search_bairro').focus(), 500);
     }
 
+    function renderEquipe(lista) {
+        const g = document.getElementById('equipe-grid'); if (!g) return;
+        const l = (lista || []).filter(p => p && p.nome);
+        g.style.display = l.length ? '' : 'none';
+        if (!l.length) return;
+        g.innerHTML = l.map(p => `<div class="equipe-card">
+            <div class="equipe-foto" style="background-image:url('${urlOk(p.foto) || FOTO_PADRAO}')"></div>
+            <strong>${esc(p.nome)}</strong>
+            ${p.cargo ? `<span>${esc(p.cargo)}</span>` : ''}
+            ${urlOk(p.linkedin) ? `<a href="${urlOk(p.linkedin)}" target="_blank" rel="noopener"><i class="fab fa-linkedin-in"></i> LinkedIn</a>` : ''}
+        </div>`).join('');
+    }
     function renderParceiros() {
         const l = (configGeral.parceiros || []).filter(p => p && p.nome), sec = document.getElementById('parceiros');
         sec.style.display = l.length ? '' : 'none';
@@ -1112,6 +1187,7 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
         atualizarMapa();
         renderMercado();
         renderOportunidades();
+        renderColecao();
         renderBairros();
         renderParceiros();
         initScrollReveal();

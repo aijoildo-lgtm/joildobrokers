@@ -187,6 +187,8 @@ app.patch('/api/imoveis/:id', exigirLogin, ah(async (req, res) => {
   const b = req.body || {}, set = { atualizadoEm: new Date().toISOString() };
   if ('ativo' in b) set.ativo = b.ativo === true;
   if ('emDestaque' in b) set.emDestaque = b.emDestaque === true;
+  if ('colecaoExclusiva' in b) set.colecaoExclusiva = b.colecaoExclusiva === true;
+  if ('oportunidadeVenda' in b) set.oportunidadeVenda = b.oportunidadeVenda === true;
   res.json({ success: await updImovel(req.params.id, set) });
 }));
 app.put('/api/imoveis/:id', exigirLogin, ah(async (req, res) => {

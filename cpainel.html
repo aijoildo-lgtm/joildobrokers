@@ -240,17 +240,19 @@ textarea{resize:vertical}
       </div>
       <div class="panel"><h3 style="font-size:19px;margin-bottom:14px">Marca e contatos</h3><div id="mCampos" class="g"></div></div>
       <div class="panel"><h3 style="font-size:19px;margin-bottom:14px">Seção Quem Somos</h3><div id="qCampos" class="g"></div></div>
+      <div class="panel"><h3 style="font-size:19px;margin-bottom:14px">Construtoras e incorporadoras parceiras</h3><div id="pCampos" class="g"></div></div>
       <div class="barra"><button class="btn" id="mSalvar2">Salvar alterações</button></div>
     </section>
   </main>
 </div>
 
 <datalist id="tipos"></datalist>
+<datalist id="pessoas"></datalist>
 <div class="aviso hidden" id="aviso"></div>
 <script src="/taxonomia.js"></script>
 <script>
 const $=id=>document.getElementById(id),DIA=864e5;
-const ESTAGIOS=[['','Não informado'],['lancamentos','Lançamento'],['construcao','Em construção'],['prontos','Pronto'],['usados','Usado'],['oportunidades','Oportunidade']];
+const ESTAGIOS=[['','Não informado'],['lancamentos','Lançamento'],['construcao','Em construção'],['prontos','Pronto'],['usados','Usado']];
 const TARJAS=[['none','Nenhuma'],['exclusivo','Exclusividade'],['desconto','Desconto'],['oportunidade','Oportunidade'],['decorado','Decorado'],['pronto','Pronto para morar']];
 const DEF={transacao:'Vender Imóvel',categoria:'Residencial',destaque:'none',visibilidade:'bairro'};
 const NOMES={titulo:'título',preco:'preço',area:'área',dormitorios:'dormitórios',foto:'foto'};
@@ -258,6 +260,7 @@ const SIMNAO=['Não','Sim'];
 const CAMPOS=[
 ['S','Dados do imóvel'],['titulo','Título (nome do empreendimento) *'],['ref','Código de referência'],['construtora','Construtora / incorporadora'],
 ['transacao','Finalidade',['Vender Imóvel','Alugar Imóvel']],['categoria','Categoria',['Residencial','Comercial']],
+['cadastradoPor','Cadastrado por','Q'],
 ['tipo','Tipo de imóvel','L'],['estagio','Estágio (situação)',ESTAGIOS],['destaque','Tarja no site',TARJAS],
 ['S','Localização'],['localizacao','Bairro, cidade - UF *'],['cep','CEP'],['logradouro','Logradouro'],['numero','Número'],['complemento','Complemento'],
 ['visibilidade','Visibilidade no site',[['bairro','Mostrar só o bairro'],['endereco','Mostrar endereço completo']]],['proximidade','Proximidade (ex.: 5 min do metrô)'],['lat','Latitude (opcional, para o mapa)'],['lng','Longitude (opcional)'],
@@ -284,7 +287,7 @@ $('fImovel').innerHTML=CAMPOS.map(([k,l,x])=>{
   const ctl=Array.isArray(x)?`<select id="f_${k}">${x.map(o=>{const[v,t]=Array.isArray(o)?o:[o,o];return `<option value="${v}">${t}</option>`}).join('')}</select>`
     :x==='P'?`<textarea id="f_${k}" rows="4" placeholder="Planta 01 - 3 dorm 84m² | https://..."></textarea>`:x==='X'?`<textarea id="f_${k}" rows="4"></textarea>`:x==='A'?`<textarea id="f_${k}" rows="4" placeholder="https://..."></textarea>`
     :x==='D'?`<textarea id="f_${k}" rows="3" maxlength="160"></textarea>`:x==='C'?`<div class="chk" id="f_${k}"></div><div class="linha-up"><input id="n_${k}" placeholder="Outra opção" style="max-width:240px"><button type="button" class="btn ghost sm" data-addchk="${k}">Adicionar</button></div>`:x==='T'?`<textarea id="f_${k}" rows="5"></textarea>`
-    :`<input id="f_${k}"${x==='L'?' list="tipos"':''}>`;
+    :`<input id="f_${k}"${x==='L'?' list="tipos"':x==='Q'?' list="pessoas" placeholder="Seu nome ou de quem cadastrou"':''}>`;
   return `<div class="f${['A','T','P','X','D','C'].includes(x)?' full':''}" ${att()}><label for="f_${k}">${l}</label>${ctl}${upl(k)}${(x==='A'||x==='P')?`<div class="gal" id="g_${k}"></div>`:''}</div>`;
 }).join('')+`<div class="sec" data-s="1">Tipologias e valores</div><div class="full" data-s="1" id="tipos-box"></div><div class="sec" data-s="4">Publicação</div><div class="f full" data-s="4" style="display:flex;gap:28px;flex-wrap:wrap"><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_emDestaque" style="width:auto">Destacar na página inicial</label><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_ativo" style="width:auto" checked>Publicado no site</label><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_sincronizar" style="width:auto" checked>Atualizar preço, condições e tipologias pelo link</label><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_espelharMidia" style="width:auto" checked>Espelhar fotos e plantas do portal</label></div>`;
 
@@ -310,6 +313,10 @@ async function load(){const r=await API('/api/admin/imoveis');if(Array.isArray(r
 async function entrar(){
   $('login').classList.add('hidden');$('app').classList.remove('hidden');
   $('tipos').innerHTML=[...new Set(Object.values(window.TAXONOMIA||{}).flatMap(c=>Object.values(c).flat()))].map(t=>`<option value="${esc(t)}">`).join('');
+  fetch('/api/config').then(r=>r.json()).then(c=>{
+    const q=c.quemSomos||{},nomes=[q.nome,...((q.equipe||[]).map(p=>p.nome))].filter(Boolean);
+    $('pessoas').innerHTML=nomes.map(n=>`<option value="${esc(n)}">`).join('');
+  }).catch(()=>{});
   await load();if(!timer)timer=setInterval(load,5*60e3);
 }
 $('fLogin').onsubmit=async e=>{
@@ -355,7 +362,7 @@ function renderLista(){
   const L=IM.filter(i=>!q||[i.titulo,i.ref,i.localizacao].some(x=>String(x||'').toLowerCase().includes(q)));
   $('rows').innerHTML=L.map(i=>{
     const n=(i.fotos||[]).length||(i.foto?1:0),pl=(i.plantas||[]).length,d=dataRef(i),dd=diasDesde(i),atrasado=dd!==null&&dd>lim()&&i.ativo!==false;
-    return `<tr><td>${i.foto?`<img class="thumb" src="${esc(i.foto)}" alt="">`:'<span class="thumb"></span>'}</td><td><b>${esc(i.titulo)}</b><br><span class="sub">${esc(i.ref)} · ${esc(i.localizacao)}</span></td><td>${esc(i.preco)}</td><td>${n} foto(s)${pl?` · ${pl} planta(s)`:''}</td><td>${d?fmt(d):'<span class="tag t-wa">sem data</span>'}${dd!==null&&i.ativo!==false?` <span class="tag ${nivel(i)==='bad'?'t-no':nivel(i)==='wa'?'t-wa':'t-ok'}">${dd} dias</span>`:''}</td><td>${i.ativo===false?'<span class="tag t-wa">Pausado</span>':'<span class="tag t-ok">Publicado</span>'}${i.emDestaque?'<span class="tag t-ok">Destaque</span>':''}${i.linkOrigem&&i.sincronizar!==false?'<span class="tag t-ok">Sincroniza</span>':''}${i.demo?'<span class="tag t-wa">Exemplo</span>':''}</td><td class="acoes"><a class="btn ghost sm" href="/imovel/${encodeURIComponent(i.ref)}" target="_blank" rel="noopener">Visualizar</a><button class="btn ghost sm" onclick="editar(${i.id})">Editar</button><button class="btn ghost sm" onclick="acao(${i.id},'destaque')">${i.emDestaque?'Tirar destaque':'Destacar'}</button><button class="btn ghost sm" onclick="acao(${i.id},'ativo')">${i.ativo===false?'Publicar':'Pausar'}</button><button class="btn ghost sm" onclick="acao(${i.id},'dup')">Duplicar</button><button class="btn danger sm" onclick="acao(${i.id},'del')">Excluir</button></td></tr>`;
+    return `<tr><td>${i.foto?`<img class="thumb" src="${esc(i.foto)}" alt="">`:'<span class="thumb"></span>'}</td><td><b>${esc(i.titulo)}</b><br><span class="sub">${esc(i.ref)} · ${esc(i.localizacao)}</span></td><td>${esc(i.preco)}</td><td>${n} foto(s)${pl?` · ${pl} planta(s)`:''}</td><td>${d?fmt(d):'<span class="tag t-wa">sem data</span>'}${dd!==null&&i.ativo!==false?` <span class="tag ${nivel(i)==='bad'?'t-no':nivel(i)==='wa'?'t-wa':'t-ok'}">${dd} dias</span>`:''}</td><td>${i.ativo===false?'<span class="tag t-wa">Pausado</span>':'<span class="tag t-ok">Publicado</span>'}${i.emDestaque?'<span class="tag t-ok">Destaque</span>':''}${i.linkOrigem&&i.sincronizar!==false?'<span class="tag t-ok">Sincroniza</span>':''}${i.demo?'<span class="tag t-wa">Exemplo</span>':''}</td><td class="acoes"><a class="btn ghost sm" href="/imovel/${encodeURIComponent(i.ref)}" target="_blank" rel="noopener">Visualizar</a><button class="btn ghost sm" onclick="editar(${i.id})">Editar</button><button class="btn ghost sm" onclick="acao(${i.id},'destaque')">${i.emDestaque?'Tirar destaque':'Destacar'}</button><button class="btn ghost sm" onclick="acao(${i.id},'colecao')" title="Aparece na seção 'Nossa Coleção Exclusiva' da home">${i.colecaoExclusiva?'Tirar da Coleção':'+ Coleção Exclusiva'}</button><button class="btn ghost sm" onclick="acao(${i.id},'oppVitrine')" title="Aparece na seção 'Oportunidades de venda' da home">${i.oportunidadeVenda?'Tirar da vitrine Opp.':'+ Vitrine Oportunidade'}</button><button class="btn ghost sm" onclick="acao(${i.id},'ativo')">${i.ativo===false?'Publicar':'Pausar'}</button><button class="btn ghost sm" onclick="acao(${i.id},'dup')">Duplicar</button><button class="btn danger sm" onclick="acao(${i.id},'del')">Excluir</button></td></tr>`;
   }).join('')||'<tr><td colspan="7" class="sub">Nenhum imóvel com essa busca.</td></tr>';
 }
 
@@ -364,6 +371,8 @@ async function acao(id,t){
   if(t==='del'){if(!confirm('Excluir este imóvel? Não tem como desfazer.'))return;await API('/api/imoveis/'+id,{method:'DELETE'});m='Imóvel excluído.'}
   else if(t==='dup'){await API('/api/duplicar-imovel/'+id,{method:'POST'});m='Cópia criada, pausada para você revisar.'}
   else if(t==='destaque'){await P({emDestaque:!it.emDestaque});m=it.emDestaque?'Destaque removido.':'Imóvel em destaque.'}
+  else if(t==='colecao'){await P({colecaoExclusiva:!it.colecaoExclusiva});m=it.colecaoExclusiva?'Removido da Coleção Exclusiva.':'Adicionado à Coleção Exclusiva da home.'}
+  else if(t==='oppVitrine'){await P({oportunidadeVenda:!it.oportunidadeVenda});m=it.oportunidadeVenda?'Removido da vitrine de Oportunidades.':'Adicionado à vitrine de Oportunidades da home.'}
   else if(t==='ativo'){await P({ativo:it.ativo===false});m=it.ativo===false?'Imóvel publicado.':'Imóvel pausado. Saiu do site.'}
   else if(t==='revisar'){await P({});m='Marcado como revisado hoje.'}
   aviso(m);await load();
@@ -585,8 +594,14 @@ async function loadMarca(){
   $('mCampos').innerHTML=`<div class="f full"><label for="m_logoUrl">Logo (imagem; deixe vazio para usar o nome)</label><input id="m_logoUrl" value="${esc(c.logoUrl||'')}" placeholder="https://...">${upBtn('m_logoUrl')}</div>`
     +MARCA_CAMPOS.map(([k,l])=>`<div class="f"><label for="m_${k}">${l}</label><input id="m_${k}" value="${esc(c[k]||'')}"></div>`).join('');
   $('qCampos').innerHTML=QS_CAMPOS.map(([k,l])=>`<div class="f ${['p1','p2'].includes(k)?'full':''}"><label for="q_${k}">${l}</label>${['p1','p2'].includes(k)?`<textarea id="q_${k}" rows="4">${esc(q[k]||'')}</textarea>`:`<input id="q_${k}" value="${esc(q[k]||'')}">`}</div>`).join('')
-    +`<div class="f full"><label for="q_foto">Foto do consultor (link)</label><input id="q_foto" value="${esc(q.foto||'')}" placeholder="https://...">${upBtn('q_foto')}</div>`;
+    +`<div class="f full"><label for="q_foto">Foto do consultor (link)</label><input id="q_foto" value="${esc(q.foto||'')}" placeholder="https://...">${upBtn('q_foto')}</div>`
+    +`<div class="f full"><label for="q_equipe">Outras pessoas da equipe (opcional) — uma por linha: Nome | Cargo | Foto (link) | LinkedIn (link)</label><textarea id="q_equipe" rows="4" placeholder="Ex.: Ana Silva | Corretora Associada | https://... | https://linkedin.com/in/...">${esc(equipeParaTexto(q.equipe))}</textarea><p class="dica">Deixe em branco para mostrar só você. Foto e LinkedIn são opcionais — pode deixar vazio entre as barras (|).</p></div>`;
+  if($('pCampos'))$('pCampos').innerHTML=`<div class="f full"><label for="m_parceiros">Construtoras e incorporadoras parceiras — uma por linha: Nome | Logo (link, opcional) | Site (link, opcional)</label><textarea id="m_parceiros" rows="5" placeholder="Ex.: Construtora Alfa | https://.../logo.png | https://construtoraalfa.com.br">${esc(parceirosParaTexto(c.parceiros))}</textarea><p class="dica">Sem logo, o site mostra só o nome. A seção só aparece no site quando há pelo menos um parceiro preenchido.</p></div>`;
 }
+function equipeParaTexto(arr){return (arr||[]).map(p=>[p.nome||'',p.cargo||'',p.foto||'',p.linkedin||''].join(' | ')).join('\n')}
+function textoParaEquipe(t){return String(t||'').split('\n').map(l=>l.split('|').map(x=>x.trim())).filter(p=>p[0]).map(p=>({nome:p[0],cargo:p[1]||'',foto:p[2]||'',linkedin:p[3]||''}))}
+function parceirosParaTexto(arr){return (arr||[]).filter(p=>p&&p.nome).map(p=>[p.nome||'',p.logo||'',p.link||''].join(' | ')).join('\n')}
+function textoParaParceiros(t){return String(t||'').split('\n').map(l=>l.split('|').map(x=>x.trim())).filter(p=>p[0]).map(p=>({nome:p[0],logo:p[1]||'',link:p[2]||''}))}
 async function salvarMarca(){
   if(!CFG){aviso('Aguarde carregar a página.');return}
   const c={...CFG,logoUrl:$('m_logoUrl').value.trim()};
@@ -594,6 +609,8 @@ async function salvarMarca(){
   c.quemSomos={...(CFG.quemSomos||{})};
   QS_CAMPOS.forEach(([k])=>c.quemSomos[k]=$('q_'+k).value.trim());
   c.quemSomos.foto=$('q_foto').value.trim();
+  c.quemSomos.equipe=textoParaEquipe($('q_equipe')?.value||'');
+  if($('m_parceiros'))c.parceiros=textoParaParceiros($('m_parceiros').value);
   const r=await API('/api/config',{method:'POST',body:JSON.stringify(c)});
   if(r.success){CFG=c;aviso('Marca e Quem Somos salvos. Atualize o site para ver.')}else aviso('Não consegui salvar. Tente de novo.');
 }
