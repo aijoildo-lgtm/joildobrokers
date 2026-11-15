@@ -94,6 +94,24 @@ th{font-size:12px;color:var(--mut);font-weight:600}
 textarea{resize:vertical}
 .linha-up{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px}
 .ajuda{font-size:12px;color:var(--mut);margin:4px 0 0}
+.modos{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:14px}
+.modo{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 14px;text-align:left;cursor:pointer;font-weight:700;color:var(--navy)}
+.modo b{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--line);margin-right:8px;font-size:12px}
+.modo small{display:block;font-weight:500;color:var(--mut);margin-top:3px;font-size:12px}
+.modo.on{border-color:var(--gold);box-shadow:inset 0 -3px 0 var(--gold)}.modo.on b{background:var(--navy);color:#fff}
+.chk{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:4px 14px;border:1px solid var(--line);border-radius:6px;padding:10px 12px;background:#fff}
+.chk label{display:flex;gap:8px;align-items:center;margin:0;font-weight:500;color:var(--ink);font-size:13px;cursor:pointer}
+.chk input{width:auto}
+.orcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-top:12px}
+.orc{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff;font-size:12px}
+.orc img,.orc .ph{width:100%;height:110px;object-fit:cover;background:var(--line);display:block}
+.orc div{padding:10px}.orc b{display:block;font-size:13px;margin-bottom:2px}
+.donut{width:120px;height:120px;border-radius:50%;display:grid;place-items:center;flex:none}
+.donut span{background:#fff;width:74px;height:74px;border-radius:50%;display:grid;place-items:center;font:700 22px 'Playfair Display',serif}
+.gprev{background:#fff;border:1px solid var(--line);border-radius:6px;padding:12px 14px}
+.gprev .gt{color:#1a0dab;font-size:18px;line-height:1.3}.gprev .gu{color:#006621;font-size:13px}.gprev .gd{color:#545454;font-size:13px}
+.cap{position:absolute;left:3px;right:3px;top:3px;background:rgba(10,17,40,.82);color:#fff;font-size:10px;padding:2px 5px;border-radius:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gal{grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}.gal img{height:80px}
 </style>
 </head>
 <body>
@@ -139,6 +157,7 @@ textarea{resize:vertical}
         <div class="panel"><h3>Por tipo de imóvel</h3><div id="g-tip"></div></div>
         <div class="panel"><h3>Mais acessados no site</h3><div id="g-top"></div></div>
       </div>
+      <div class="panel"><h3 style="font-size:19px;margin-bottom:6px">Mudanças vindas do AoCubo e da Órulo</h3><p class="dica" style="margin-bottom:12px">O que o espelho automático alterou no seu site.</p><div id="mudancas"></div></div>
       <div class="panel"><h3 style="font-size:19px;margin-bottom:14px">Últimas atualizações</h3><div id="recentes"></div></div>
     </section>
 
@@ -157,12 +176,35 @@ textarea{resize:vertical}
         <div><h2 class="head" id="ftitulo">Novo imóvel</h2><p class="sub">Os campos com * são obrigatórios para o imóvel aparecer no site.</p></div>
         <button class="btn ghost" data-v="lista">Voltar</button>
       </div>
-      <div class="importa">
-        <label for="url">Importar do AoCubo ou do Órulo</label>
-        <div style="display:flex;gap:8px;flex-wrap:wrap"><input id="url" placeholder="Cole o link do imóvel" style="flex:1;min-width:260px"><button class="btn" id="imp">Preencher dados</button></div>
-        <p class="dica" id="impMsg" style="margin-top:8px"></p>
-        <textarea id="txtCp" rows="4" style="margin-top:10px" placeholder="Ou abra a página do imóvel, aperte Ctrl+A, Ctrl+C e cole aqui: os campos são preenchidos sozinhos"></textarea>
+      <div class="modos" id="modos" role="tablist" aria-label="Forma de cadastro">
+        <button class="modo on" data-modo="manual"><b>1</b>Manual<small>Preencho tudo, no modelo do Migmidia</small></button>
+        <button class="modo" data-modo="aocubo"><b>2</b>AoCubo<small>Link do imóvel, atualização automática</small></button>
+        <button class="modo" data-modo="orulo"><b>3</b>Órulo<small>Buscar, filtrar e importar</small></button>
       </div>
+      <div class="importa hidden" id="m-aocubo">
+        <label for="url">Link do imóvel no AoCubo</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><input id="url" placeholder="https://aocubo.com/..." style="flex:1;min-width:260px"><button class="btn" id="imp">Importar e espelhar</button></div>
+        <p class="dica" style="margin-top:8px">O site passa a espelhar o AoCubo: preço, condições, tipologias, fotos e plantas são conferidos sozinhos a cada 6 horas e o que mudou aparece no Painel.</p>
+      </div>
+      <div class="importa hidden" id="m-orulo">
+        <label>Buscar empreendimentos na Órulo</label>
+        <div class="g" style="margin-top:6px">
+          <div class="f"><input id="or_q" placeholder="Nome do empreendimento"></div>
+          <div class="f"><input id="or_cidade" placeholder="Cidade (ex.: São Paulo)"></div>
+          <div class="f"><input id="or_bairro" placeholder="Bairro"></div>
+          <div class="f"><select id="or_estagio"><option value="">Qualquer estágio</option><option value="lancamentos">Lançamento</option><option value="construcao">Em construção</option><option value="prontos">Pronto</option></select></div>
+          <div class="f"><input id="or_preco" type="number" placeholder="Preço máximo (R$)"></div>
+          <div class="f"><button class="btn" id="orBuscar" style="width:100%">Buscar</button></div>
+        </div>
+        <div class="orcards" id="orRes"></div>
+        <label for="url2" style="margin-top:14px">Ou cole o link do empreendimento</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><input id="url2" placeholder="https://www.orulo.com.br/buildings/83363" style="flex:1;min-width:260px"><button class="btn" id="imp2">Importar</button></div>
+        <p class="dica" style="margin-top:8px">As fotos da Órulo chegam como link. Na etapa 2 você pode manter os links, enviar fotos do computador ou colar outros links.</p>
+      </div>
+      <p class="dica" id="impMsg" style="margin:0 0 10px"></p>
+      <details class="importa"><summary style="cursor:pointer;font-weight:600">Preencher a partir de texto copiado da página (opcional, vale para as 3 formas)</summary>
+        <textarea id="txtCp" rows="4" style="margin-top:10px" placeholder="Abra a página do imóvel, Ctrl+A, Ctrl+C e cole aqui: os campos são preenchidos sozinhos"></textarea>
+      </details>
       <div class="passos" id="passos" role="tablist" aria-label="Etapas do cadastro">
         <button class="passo on" data-passo="1"><b>1</b>Dados do imóvel</button>
         <button class="passo" data-passo="2"><b>2</b>Fotos e plantas</button>
@@ -174,7 +216,7 @@ textarea{resize:vertical}
         <button class="passo" data-sub="plantas">Plantas</button>
       </div>
       <div class="panel"><div id="fImovel" class="g"></div><p class="pend" id="pend"></p></div>
-      <div class="barra"><button class="btn ghost" data-v="lista">Cancelar</button><button class="btn ghost" id="ant">Anterior</button><button class="btn ghost" id="prox">Próximo</button><button class="btn" id="salvar">Salvar imóvel</button></div>
+      <div class="barra"><button class="btn ghost" data-v="lista">Cancelar</button><button class="btn ghost" id="ant">Anterior</button><button class="btn ghost" id="prox">Próximo</button><button class="btn ghost hidden" id="syncUm">Sincronizar este imóvel agora</button><button class="btn" id="salvar">Salvar imóvel</button></div>
     </section>
 
     <section id="v-conteudos" class="hidden">
@@ -210,35 +252,45 @@ textarea{resize:vertical}
 const $=id=>document.getElementById(id),DIA=864e5;
 const ESTAGIOS=[['','Não informado'],['lancamentos','Lançamento'],['construcao','Em construção'],['prontos','Pronto'],['usados','Usado'],['oportunidades','Oportunidade']];
 const TARJAS=[['none','Nenhuma'],['exclusivo','Exclusividade'],['desconto','Desconto'],['oportunidade','Oportunidade'],['decorado','Decorado'],['pronto','Pronto para morar']];
-const DEF={transacao:'Vender Imóvel',categoria:'Residencial',destaque:'none'};
+const DEF={transacao:'Vender Imóvel',categoria:'Residencial',destaque:'none',visibilidade:'bairro'};
 const NOMES={titulo:'título',preco:'preço',area:'área',dormitorios:'dormitórios',foto:'foto'};
+const SIMNAO=['Não','Sim'];
 const CAMPOS=[
-['S','Dados do imóvel'],['titulo','Título *'],['ref','Código de referência'],['construtora','Construtora / incorporadora'],
+['S','Dados do imóvel'],['titulo','Título (nome do empreendimento) *'],['ref','Código de referência'],['construtora','Construtora / incorporadora'],
 ['transacao','Finalidade',['Vender Imóvel','Alugar Imóvel']],['categoria','Categoria',['Residencial','Comercial']],
-['tipo','Tipo de imóvel','L'],['estagio','Estágio',ESTAGIOS],['destaque','Tarja no site',TARJAS],['preco','Valor a partir de *'],['precoM2','Valor por m² (ex.: R$ 11.040)'],
-['S','Localização'],['localizacao','Bairro, cidade - UF *'],['proximidade','Proximidade (ex.: 5 min do metrô)'],['lat','Latitude (opcional, para o mapa)'],['lng','Longitude (opcional)'],
-['S','Informações técnicas e lazer'],['infoTecnica','Informações técnicas (uma por linha: item: valor)','X'],['S','Características'],['area','Área (ex.: 142m²)'],['dormitorios','Dormitórios (ex.: 3 Suítes)'],['vagas','Vagas (ex.: 2 vagas)'],['diferencial','Diferencial'],['lazer','Características condominiais (uma por linha)','X'],['caracteristicasUnidade','Características da unidade (uma por linha)','X'],
-['S','Fotos do condomínio e do apartamento'],['foto','Foto de capa (vazio usa a primeira da galeria)'],['fotos','Galeria: um link por linha','A'],
-['S','Plantas'],['plantas','Plantas: uma por linha, no formato Nome | link','P'],['S','Atualização automática'],['linkOrigem','Link de origem (AoCubo ou Órulo)'],
-['S','Descrição e vídeo'],['apresentacao','Texto de apresentação','T'],['youtube','Vídeo do YouTube'],['videoArquivo','Vídeo enviado do computador (link)'],['tour360','Tour virtual 360°']];
+['tipo','Tipo de imóvel','L'],['estagio','Estágio (situação)',ESTAGIOS],['destaque','Tarja no site',TARJAS],
+['S','Localização'],['localizacao','Bairro, cidade - UF *'],['cep','CEP'],['logradouro','Logradouro'],['numero','Número'],['complemento','Complemento'],
+['visibilidade','Visibilidade no site',[['bairro','Mostrar só o bairro'],['endereco','Mostrar endereço completo']]],['proximidade','Proximidade (ex.: 5 min do metrô)'],['lat','Latitude (opcional, para o mapa)'],['lng','Longitude (opcional)'],
+['S','Valores'],['preco','Valor a partir de *'],['precoM2','Valor por m² (ex.: R$ 11.040)'],['condominio','Condomínio'],['iptu','IPTU'],['taxas','Taxas'],['obsValores','Observação sobre os valores'],
+['S','Medidas'],['area','Área útil (ex.: 142m²) *'],['areaTotal','Área total'],['areaPrivativa','Área privativa'],['areaConstruida','Área construída'],
+['S','Características'],['perfil','Perfil',['','Novo','Usado','Na planta']],['mobilia','Mobília',['','Não mobiliado','Semimobiliado','Mobiliado']],['dormitorios','Dormitórios (ex.: 3 Suítes) *'],['suites','Suítes'],['banheiros','Banheiros'],['salas','Salas'],['lavabos','Lavabos'],['vagas','Vagas (ex.: 2 vagas)'],['diferencial','Diferencial'],
+['lazer','Lazer e características do condomínio','C'],['caracteristicasUnidade','Características da unidade','C'],['proximidades','O que tem perto?','C'],
+['S','Informações técnicas e tipologias'],['infoTecnica','Informações técnicas (uma por linha: item: valor)','X'],
+['S','Fotos do condomínio e do apartamento'],['foto','Foto de capa (vazio usa a primeira da galeria)'],['fotos','Galeria: um link por linha (ou envie do computador)','A'],
+['S','Plantas'],['plantas','Plantas: uma por linha, no formato Nome | Metragem | link  (ex.: Planta 01 | 84 m² | https://...)','P'],
+['S','Atualização automática'],['linkOrigem','Link de origem (AoCubo ou Órulo)'],
+['S','Descrição e vídeo'],['apresentacao','Texto de apresentação','T'],['youtube','Vídeo do YouTube'],['videoArquivo','Vídeo enviado do computador (link)'],['tour360','Tour virtual 360°'],
+['S','Título e descrição no Google (SEO)'],['seoTitulo','Título no Google (até 80 caracteres)'],['seoDescricao','Descrição no Google (até 160 caracteres)','D'],['seoPalavras','Palavras-chave, separadas por vírgula (até 120)'],['seoPrev','','V'],
+['S','Dados privativos (não aparecem no site)'],['pv_proprietario','Proprietário'],['pv_corretor','Corretor responsável'],['pv_exclusividade','Exclusividade',SIMNAO],['pv_autorizacao','Autorização formalizada',SIMNAO],['pv_averbado','Averbado',SIMNAO],['pv_escriturado','Escriturado',SIMNAO],['pv_placa','Com placa',SIMNAO],['pv_chave','Chave na imobiliária',SIMNAO],['pv_ondeChave','Onde pegar a chave'],['pv_obs','Outras informações','T']];
 
 const UPLOAD={fotos:[['Escolher fotos do computador','multiple'],['Enviar uma pasta inteira','webkitdirectory multiple']],plantas:[['Escolher plantas','multiple'],['Enviar uma pasta de plantas','webkitdirectory multiple']],videoArquivo:[['Escolher vídeo do computador','']]};
 const upl=k=>UPLOAD[k]?`<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">${UPLOAD[k].map(([t,a])=>`<label class="btn ghost sm" style="display:inline-block;width:auto">${t}<input type="file" data-up="${k}" accept="${k==='videoArquivo'?'video/*':'image/*'}" ${a} style="display:none"></label>`).join('')}<span class="sub" id="up_${k}"></span></div>`:'';
-const STEP={'Dados do imóvel':1,'Localização':1,'Características':1,'Fotos do condomínio e do apartamento':2,'Plantas':2,'Atualização automática':4,'Descrição e vídeo':3};
+const STEP={'Dados do imóvel':1,'Localização':1,'Valores':1,'Medidas':1,'Características':1,'Informações técnicas e tipologias':1,'Título e descrição no Google (SEO)':3,'Dados privativos (não aparecem no site)':4,'Fotos do condomínio e do apartamento':2,'Plantas':2,'Atualização automática':4,'Descrição e vídeo':3};
 let ST=1,PP='';
 const att=()=>`data-s="${ST}"${PP?` data-p="${PP}"`:''}`;
 $('fImovel').innerHTML=CAMPOS.map(([k,l,x])=>{
+  if(x==='V')return `<div class="f full" ${att()}><div class="gprev" id="seoPrev"></div><div class="linha-up"><button type="button" class="btn ghost sm" id="seoGerar">Gerar título e descrição automaticamente</button><span class="dica">Se ficar vazio, o sistema gera ao salvar.</span></div></div>`;
   if(k==='S'){ST=STEP[l]||ST;PP=l.startsWith('Fotos')?'fotos':l==='Plantas'?'plantas':'';return `<div class="sec" ${att()}>${l}</div>`}
   const ctl=Array.isArray(x)?`<select id="f_${k}">${x.map(o=>{const[v,t]=Array.isArray(o)?o:[o,o];return `<option value="${v}">${t}</option>`}).join('')}</select>`
     :x==='P'?`<textarea id="f_${k}" rows="4" placeholder="Planta 01 - 3 dorm 84m² | https://..."></textarea>`:x==='X'?`<textarea id="f_${k}" rows="4"></textarea>`:x==='A'?`<textarea id="f_${k}" rows="4" placeholder="https://..."></textarea>`
-    :x==='T'?`<textarea id="f_${k}" rows="5"></textarea>`
+    :x==='D'?`<textarea id="f_${k}" rows="3" maxlength="160"></textarea>`:x==='C'?`<div class="chk" id="f_${k}"></div><div class="linha-up"><input id="n_${k}" placeholder="Outra opção" style="max-width:240px"><button type="button" class="btn ghost sm" data-addchk="${k}">Adicionar</button></div>`:x==='T'?`<textarea id="f_${k}" rows="5"></textarea>`
     :`<input id="f_${k}"${x==='L'?' list="tipos"':''}>`;
-  return `<div class="f${['A','T','P','X'].includes(x)?' full':''}" ${att()}><label for="f_${k}">${l}</label>${ctl}${upl(k)}${(x==='A'||x==='P')?`<div class="gal" id="g_${k}"></div>`:''}</div>`;
-}).join('')+`<div class="sec" data-s="1">Tipologias e valores</div><div class="full" data-s="1" id="tipos-box"></div><div class="sec" data-s="4">Publicação</div><div class="f full" data-s="4" style="display:flex;gap:28px;flex-wrap:wrap"><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_emDestaque" style="width:auto">Destacar na página inicial</label><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_ativo" style="width:auto" checked>Publicado no site</label><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_sincronizar" style="width:auto" checked>Atualizar preço e estágio pelo link</label></div>`;
+  return `<div class="f${['A','T','P','X','D','C'].includes(x)?' full':''}" ${att()}><label for="f_${k}">${l}</label>${ctl}${upl(k)}${(x==='A'||x==='P')?`<div class="gal" id="g_${k}"></div>`:''}</div>`;
+}).join('')+`<div class="sec" data-s="1">Tipologias e valores</div><div class="full" data-s="1" id="tipos-box"></div><div class="sec" data-s="4">Publicação</div><div class="f full" data-s="4" style="display:flex;gap:28px;flex-wrap:wrap"><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_emDestaque" style="width:auto">Destacar na página inicial</label><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_ativo" style="width:auto" checked>Publicado no site</label><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_sincronizar" style="width:auto" checked>Atualizar preço, condições e tipologias pelo link</label><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_espelharMidia" style="width:auto" checked>Espelhar fotos e plantas do portal</label></div>`;
 
 let IM=[],CUR=null,BASE={},timer=null;
 const lines=s=>s.split('\n').map(x=>x.trim()).filter(x=>/^https?:\/\//i.test(x));
-const linesPlantas=s=>s.split('\n').map(x=>x.trim()).filter(Boolean).map(x=>{const pt=x.includes('|')?x.split('|').map(y=>y.trim()):['',x];const nome=pt[0],url=pt[pt.length-1];return /^https?:\/\//i.test(url)?(nome?{nome,url}:url):null}).filter(Boolean);
+const linesPlantas=s=>s.split('\n').map(x=>x.trim()).filter(Boolean).map(x=>{const pt=x.includes('|')?x.split('|').map(y=>y.trim()):['',x];const url=pt[pt.length-1],nome=pt.length>1?pt[0]:'',area=pt.length>2?pt[1]:'';return /^https?:\/\//i.test(url)?((nome||area)?{nome,area,url}:url):null}).filter(Boolean);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=d=>new Date(d).toLocaleDateString('pt-BR');
 const dataRef=i=>[i.atualizadoEm,i.sincronizadoEm,i.criadoEm].filter(Boolean).sort().pop()||'';
@@ -286,7 +338,11 @@ function renderDash(){
   $('stale').innerHTML=S.length?`<table><thead><tr><th></th><th>Imóvel</th><th>Última atualização</th><th>Parado há</th><th>Falta preencher</th><th></th></tr></thead><tbody>${S.map(i=>{const d=dataRef(i),n=diasDesde(i),f=faltam(i);return `<tr><td>${thumb(i)}</td><td><b>${esc(i.titulo)}</b><br><span class="sub">${esc(i.ref)} · ${esc(i.localizacao)}</span></td><td>${d?fmt(d):'<span class="tag t-wa">sem data</span>'}</td><td><span class="tag t-no">${n===null?'—':n+' dias'}</span></td><td>${f.length?f.map(x=>`<span class="tag t-wa">${x}</span>`).join(''):'—'}</td><td class="acoes"><button class="btn ghost sm" onclick="editar(${i.id})">Editar</button><button class="btn sm" onclick="acao(${i.id},'revisar')">Marcar como revisado</button></td></tr>`}).join('')}</tbody></table>`
     :'<p class="sub" style="color:var(--ok);margin:0">Nenhum imóvel publicado passou do prazo.</p>';
   $('g-est').innerHTML=barras(conta(P,i=>ROT_EST[i.estagio||'']||'Não informado'),'Nenhum imóvel publicado.');
-  $('g-fin').innerHTML=barras(conta(P,i=>/alug/i.test(i.transacao||'')?'Aluguel':'Venda'),'Nenhum imóvel publicado.');
+  const vd=P.filter(i=>!/alug/i.test(i.transacao||'')).length,al=P.length-vd,pv=P.length?Math.round(vd/P.length*100):0;
+  $('g-fin').innerHTML=P.length?`<div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap"><div class="donut" style="background:conic-gradient(var(--navy) 0 ${pv}%,var(--gold) ${pv}% 100%)"><span>${P.length}</span></div><div class="dica" style="line-height:2"><span class="tag t-ok" style="background:var(--navy);color:#fff">Venda</span> ${vd} (${pv}%)<br><span class="tag" style="background:var(--gold);color:var(--navy)">Aluguel</span> ${al} (${100-pv}%)</div></div>`:'<p class="dica">Nenhum imóvel publicado.</p>';
+  const NM={preco:'preço',precoM2:'valor por m²',estagio:'estágio',area:'área',dormitorios:'dormitórios',vagas:'vagas',tipologias:'tipologias e valores',infoTecnica:'informações técnicas',foto:'foto de capa',fotos:'fotos',plantas:'plantas',lazer:'lazer'};
+  const M=P.filter(i=>(i.historico||[])[0]&&i.historico[0].campos.length).sort((a,b)=>b.historico[0].em.localeCompare(a.historico[0].em)).slice(0,8);
+  $('mudancas').innerHTML=M.length?`<table><thead><tr><th></th><th>Imóvel</th><th>Quando</th><th>O que mudou</th></tr></thead><tbody>${M.map(i=>{const h=i.historico[0],d=Math.floor((Date.now()-new Date(h.em))/DIA);return `<tr><td>${thumb(i)}</td><td><b>${esc(i.titulo)}</b><br><span class="sub">${esc(i.ref)}</span></td><td>${d===0?'hoje':'há '+d+' dia(s)'}</td><td>${h.campos.map(c=>`<span class="tag t-ok">${NM[c]||c}</span>`).join('')}</td></tr>`}).join('')}</tbody></table>`:'<p class="dica">Nenhuma mudança vinda dos portais ainda. Imóveis do AoCubo e da Órulo são conferidos sozinhos a cada 6 horas.</p>';
   $('g-tip').innerHTML=barras(conta(P,i=>i.tipo||'Não informado').slice(0,8),'Nenhum imóvel publicado.');
   $('g-top').innerHTML=barras(P.filter(i=>i.acessos>0).sort((a,b)=>b.acessos-a.acessos).slice(0,10).map(i=>[i.titulo,i.acessos]),'Os acessos passam a ser contados a cada visita ao imóvel no site.');
   const R=[...P].sort((a,b)=>String(dataRef(b)).localeCompare(String(dataRef(a)))).slice(0,8);
@@ -319,16 +375,16 @@ function ir(v){
   ['dash','lista','form','conteudos','marca'].forEach(s=>$('v-'+s).classList.toggle('hidden',s!==v));
   document.querySelectorAll('aside .nav').forEach(b=>b.classList.toggle('on',b.dataset.v===v||(v==='form'&&b.dataset.v==='novo')));
 }
-function abrir(it){CUR=it||null;BASE=it?{...it}:{};$('ftitulo').textContent=it?it.titulo:'Novo imóvel';$('url').value='';$('impMsg').textContent='';preencher(BASE);PASSO=1;SUB='fotos';ir('form');mostra();window.scrollTo(0,0)}
+function abrir(it){CUR=it||null;BASE=it?{...it}:{};$('ftitulo').textContent=it?it.titulo:'Novo imóvel';$('url').value='';$('impMsg').textContent='';preencher(BASE);setModo(it?(it.modoCadastro||(it.linkOrigem?(/orulo/i.test(it.linkOrigem)?'orulo':'aocubo'):'manual')):'manual');PASSO=1;SUB='fotos';ir('form');mostra();window.scrollTo(0,0)}
 function editar(id){abrir(IM.find(x=>x.id==id))}
 function preencher(d){
-  CAMPOS.forEach(([k,,x])=>{if(k==='S')return;const el=$('f_'+k);el.value=x==='P'?(d[k]||[]).map(p=>typeof p==='object'?`${p.nome||''} | ${p.url}`:p).join('\n'):(x==='A'||x==='X')?(d[k]||[]).map(y=>(y&&typeof y==='object')?(y.k+': '+y.v):y).join('\n'):(d[k]??DEF[k]??'');if(x==='A'||x==='P')galeria(k)});
-  $('f_emDestaque').checked=d.emDestaque===true;$('f_ativo').checked=d.ativo!==false;$('f_sincronizar').checked=d.sincronizar!==false;TIPS=(d.tipologias||[]).map(t=>({...t}));renderTips();pend();
+  CAMPOS.forEach(([k,,x])=>{if(k==='S'||x==='V')return;if(x==='C'){setChk(k,d[k]||[]);return}if(k.startsWith('pv_')){$('f_'+k).value=(d.privado||{})[k.slice(3)]||'';return}const el=$('f_'+k);el.value=x==='P'?(d[k]||[]).map(p=>typeof p==='object'?`${p.nome||''} | ${p.area||''} | ${p.url}`:p).join('\n'):(x==='A'||x==='X')?(d[k]||[]).map(y=>(y&&typeof y==='object')?(y.k+': '+y.v):y).join('\n'):(d[k]??DEF[k]??'');if(x==='A'||x==='P')galeria(k)});
+  $('f_emDestaque').checked=d.emDestaque===true;$('f_ativo').checked=d.ativo!==false;$('f_sincronizar').checked=d.sincronizar!==false;$('f_espelharMidia').checked=d.espelharMidia!==false;TIPS=(d.tipologias||[]).map(t=>({...t}));renderTips();pend();
 }
 function urlsDe(k){const v=$('f_'+k).value;return k==='plantas'?linesPlantas(v).map(p=>typeof p==='object'?p.url:p):lines(v)}
 function galeria(k){
-  const us=urlsDe(k);
-  $('g_'+k).innerHTML=us.slice(0,60).map((u,n)=>`<div class="th"><img src="${esc(u)}" alt="" loading="lazy" onerror="this.style.opacity=.2"><button type="button" class="x" data-del="${k}" data-n="${n}" title="Remover" aria-label="Remover">×</button>${k==='fotos'?`<button type="button" class="cp" data-capa="${n}" title="Usar como foto de capa">Capa</button>`:''}</div>`).join('');
+  const us=k==='plantas'?linesPlantas($('f_plantas').value).map(p=>typeof p==='object'?p:{url:p}):urlsDe(k).map(u=>({url:u}));
+  $('g_'+k).innerHTML=us.slice(0,60).map((p,n)=>`<div class="th"><img src="${esc(p.url)}" alt="" loading="lazy" onerror="this.style.opacity=.2">${k==='plantas'?`<span class="cap">${esc([p.nome,p.area].filter(Boolean).join(' · ')||'sem metragem')}</span>`:''}<button type="button" class="x" data-del="${k}" data-n="${n}" title="Remover" aria-label="Remover">×</button>${k==='fotos'?`<button type="button" class="cp" data-capa="${n}" title="Usar como foto de capa">Capa</button>`:''}</div>`).join('');
 }
 function remover(k,n){
   const t=$('f_'+k),ls=t.value.split('\n').map(x=>x.trim()).filter(Boolean);
@@ -336,8 +392,8 @@ function remover(k,n){
   t.value=ls.filter(x=>{if(!ok(x))return true;c++;return c!==n}).join('\n');galeria(k);pend();
 }
 function coleta(){
-  const o={};CAMPOS.forEach(([k,,x])=>{if(k==='S')return;const v=$('f_'+k).value;o[k]=x==='A'?lines(v):x==='P'?linesPlantas(v):x==='X'?v.split('\n').map(s=>s.trim()).filter(Boolean):v.trim()});
-  o.infoTecnica=(o.infoTecnica||[]).map(l=>{const i=l.indexOf(':');return i<0?{k:l,v:''}:{k:l.slice(0,i).trim(),v:l.slice(i+1).trim()}});o.emDestaque=$('f_emDestaque').checked;o.ativo=$('f_ativo').checked;o.sincronizar=$('f_sincronizar').checked;o.tipologias=TIPS.filter(t=>(t.nome||'').trim()).map(t=>({nome:t.nome||'',area:t.area||'',dorm:t.dorm||'',suites:t.suites||'',vagas:t.vagas||'',preco:t.preco||''}));return o;
+  const o={};CAMPOS.forEach(([k,,x])=>{if(k==='S'||x==='V')return;if(x==='C'){o[k]=getChk(k);return}if(k.startsWith('pv_')){(o.privado=o.privado||{})[k.slice(3)]=$('f_'+k).value.trim();return}const v=$('f_'+k).value;o[k]=x==='A'?lines(v):x==='P'?linesPlantas(v):x==='X'?v.split('\n').map(s=>s.trim()).filter(Boolean):v.trim()});
+  o.infoTecnica=(o.infoTecnica||[]).map(l=>{const i=l.indexOf(':');return i<0?{k:l,v:''}:{k:l.slice(0,i).trim(),v:l.slice(i+1).trim()}});o.emDestaque=$('f_emDestaque').checked;o.ativo=$('f_ativo').checked;o.sincronizar=$('f_sincronizar').checked;o.espelharMidia=$('f_espelharMidia').checked;o.tipologias=TIPS.filter(t=>(t.nome||'').trim()).map(t=>({nome:t.nome||'',area:t.area||'',dorm:t.dorm||'',suites:t.suites||'',vagas:t.vagas||'',preco:t.preco||''}));return o;
 }
 function pend(){
   const d=coleta(),f=[];
@@ -345,10 +401,10 @@ function pend(){
   if(!d.area)f.push('área');if(!d.dormitorios)f.push('dormitórios');if(!d.foto&&!d.fotos.length)f.push('foto');
   const bf=document.querySelector('[data-sub="fotos"]'),bp=document.querySelector('[data-sub="plantas"]');
   if(bf){bf.textContent=`Fotos do condomínio e apartamento (${d.fotos.length+(d.foto&&!d.fotos.includes(d.foto)?1:0)})`;bp.textContent=`Plantas (${d.plantas.length})`}
-  const p=$('pend');p.textContent=f.length?'Falta preencher: '+f.join(', ')+'.':'Cadastro completo.';p.style.color=f.length?'var(--warn)':'var(--ok)';
+  seoPrev();const p=$('pend');p.textContent=f.length?'Falta preencher: '+f.join(', ')+'.':'Cadastro completo.';p.style.color=f.length?'var(--warn)':'var(--ok)';
 }
 async function salvar(){
-  const d={...BASE,...coleta()};
+  const d={...BASE,...coleta()};d.modoCadastro=MODO;seoAuto(d);
   if(!d.titulo){aviso('Falta o título do imóvel.');$('f_titulo').focus();return}
   const r=CUR?await API('/api/imoveis/'+CUR.id,{method:'PUT',body:JSON.stringify({...d,demo:CUR.demo===true})})
             :await API('/api/adicionar-imovel',{method:'POST',body:JSON.stringify(d)});
@@ -356,14 +412,14 @@ async function salvar(){
   aviso(d.ativo?`Salvo e publicado no site${r.ref?' (código '+r.ref+')':''}.`:'Salvo como pausado. Não aparece no site.');
   await load();ir('lista');
 }
-async function importar(){
-  const url=$('url').value.trim();
+async function importar(id='url'){
+  const url=$(id).value.trim();
   if(!url){aviso('Cole o link do imóvel primeiro.');return}
   $('impMsg').textContent='Lendo a página do imóvel...';
   const r=await API('/api/importar-link',{method:'POST',body:JSON.stringify({url})});
   if(!r.success){$('impMsg').textContent=r.error||'Não consegui ler esse link.';return}
-  BASE={...BASE,...r.dados,linkOrigem:url,origem:r.fonte,sincronizar:true};preencher(BASE);
-  $('impMsg').textContent=`Dados de ${r.fonte} preenchidos. Confira antes de salvar.`+(r.faltando&&r.faltando.length?` Não veio: ${r.faltando.map(k=>NOMES[k]||k).join(', ')}.`:'');
+  BASE={...BASE,...r.dados,linkOrigem:url,origem:r.fonte,sincronizar:true,modoCadastro:/rulo/i.test(r.fonte)?'orulo':'aocubo'};preencher(BASE);setModo(BASE.modoCadastro);
+  $('impMsg').textContent=`Dados de ${r.fonte} preenchidos. Confira antes de salvar. A atualização automática fica ligada.`+(r.faltando&&r.faltando.length?` Não veio: ${r.faltando.map(k=>NOMES[k]||k).join(', ')}.`:'');
 }
 
 $('sinc').onclick=async()=>{aviso('Consultando AoCubo e Órulo...');const r=await API('/api/sincronizar',{method:'POST'});aviso(r.success?`Pronto: ${r.atualizados} atualizado(s), ${r.pausados} pausado(s), ${r.erros.length} com erro.`:(r.error||'Não consegui sincronizar.'));await load()};
@@ -382,7 +438,7 @@ document.addEventListener('change',async e=>{
     const r=await API('/api/upload',{method:'POST',body:JSON.stringify({tipo:alvo==='plantas'?'planta':video?'video':'foto',arquivo})});
     if(!r.success){aviso(r.error||`Não consegui enviar ${f.name}.`);break}
     if(video)$('f_videoArquivo').value=r.url;
-    else{const t=$('f_'+alvo);t.value=(t.value.trim()?t.value.trim()+'\n':'')+r.url;galeria(alvo)}
+    else{const t=$('f_'+alvo);t.value=(t.value.trim()?t.value.trim()+'\n':'')+(alvo==='plantas'?'Planta '+(t.value.split('\n').filter(Boolean).length+1)+' |  | ':'')+r.url;galeria(alvo)}
     ok++;
   }
   msg.textContent=ok?`${ok} arquivo(s) enviado(s).`:'';pend();
@@ -420,7 +476,7 @@ document.addEventListener('click',e=>{
 $('atualizar').onclick=load;
 $('dias').oninput=renderDash;
 $('busca').oninput=renderLista;
-$('imp').onclick=importar;
+$('imp').onclick=()=>importar('url');$('imp2').onclick=()=>importar('url2');
 $('txtCp').addEventListener('paste',()=>setTimeout(colarTexto,200));
 async function colarTexto(){
   const t=$('txtCp').value.trim();if(t.length<80)return;
@@ -535,6 +591,56 @@ async function salvarMarca(){
 }
 
 renderTips();
+// ---------- CAIXAS DE SELEÇÃO (lazer, unidade, proximidades) ----------
+const CAT={
+lazer:['Academia','Brinquedoteca','Churrasqueira','Cinema','Coworking','Espaço Beleza','Espaço Gourmet','Espaço Zen / Yoga','Heliponto','Horta','Jardim','Lavanderia','Lounge','Mini Mercado','Pet Place','Piscina','Piscina Aquecida','Piscina Coberta','Pista de Cooper','Playground','Portaria 24 Horas','Quadra de Tênis','Quadra Poliesportiva','Rooftop','Salão de Festas','Salão de Jogos','Sauna','SPA','Bicicletário','Elevador','Vista Panorâmica'],
+caracteristicasUnidade:['Varanda','Varanda Gourmet','Sacada com Churrasqueira','Suíte Master','Closet','Lavabo','Cozinha Americana','Cozinha Integrada','Área de Serviço','Dependência de Empregada','Ar-condicionado','Água Quente','Aquecimento a Gás','Armários Planejados','Home Office','Jardim Privativo','Terraço','Piso Porcelanato','Vista Panorâmica','Mobiliado'],
+proximidades:['Açougue, Feiras e Supermercados','Padaria','Restaurantes','Escolas Particulares','Escolas Públicas','Faculdade','Farmácia','Hospital','Estação de Metrô','Estação de Trem','Ponto de Ônibus','Parque','Praça','Shopping','Posto de Gasolina','Banco','Academia','Aeroporto']};
+const norm=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+function setChk(k,vals){
+  const marcados=new Set((vals||[]).map(norm)),cat=CAT[k]||[],extras=(vals||[]).filter(v=>!cat.some(c=>norm(c)===norm(v)));
+  $('f_'+k).innerHTML=[...cat,...extras].map(t=>`<label><input type="checkbox" value="${esc(t)}" ${marcados.has(norm(t))?'checked':''}>${esc(t)}</label>`).join('');
+}
+const getChk=k=>[...document.querySelectorAll('#f_'+k+' input:checked')].map(i=>i.value);
+document.addEventListener('click',e=>{
+  const k=e.target.dataset&&e.target.dataset.addchk;if(!k)return;
+  const inp=$('n_'+k),v=inp.value.trim();if(!v)return;
+  const atual=getChk(k);atual.push(v);const todos=[...document.querySelectorAll('#f_'+k+' input')].map(i=>i.value);
+  CAT[k]=[...new Set([...(CAT[k]||[]),...todos])];setChk(k,atual);inp.value='';
+});
+// ---------- FORMAS DE CADASTRO ----------
+let MODO='manual';
+function setModo(m){
+  MODO=m;
+  document.querySelectorAll('[data-modo]').forEach(b=>b.classList.toggle('on',b.dataset.modo===m));
+  $('m-aocubo').classList.toggle('hidden',m!=='aocubo');$('m-orulo').classList.toggle('hidden',m!=='orulo');
+  $('syncUm').classList.toggle('hidden',!(CUR&&CUR.linkOrigem));
+}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-modo]');if(b)setModo(b.dataset.modo)});
+$('syncUm').onclick=async()=>{aviso('Conferindo a origem...');const r=await API('/api/sincronizar/'+CUR.id,{method:'POST'});aviso(r.success?(r.atualizados?'Imóvel atualizado com os dados da origem.':'Nada mudou na origem.'):(r.error||'Não consegui sincronizar.'));await load();const n=IM.find(x=>x.id==CUR.id);if(n){CUR=n;BASE={...n};preencher(BASE);setModo(MODO)}};
+// busca na Órulo
+$('orBuscar').onclick=async()=>{
+  $('orRes').innerHTML='<p class="dica">Consultando a Órulo...</p>';
+  const r=await API('/api/orulo/buscar',{method:'POST',body:JSON.stringify({q:$('or_q').value.trim(),cidade:$('or_cidade').value.trim(),bairro:$('or_bairro').value.trim(),estagio:$('or_estagio').value,precoMax:$('or_preco').value})});
+  if(!r.success){$('orRes').innerHTML=`<p class="dica" style="color:var(--red)">${esc(r.error||'Não consegui buscar.')}</p>`;return}
+  $('orRes').innerHTML=r.itens.length?r.itens.map(x=>`<div class="orc">${x.foto?`<img src="${esc(x.foto)}" alt="" loading="lazy">`:'<span class="ph"></span>'}<div><b>${esc(x.nome)}</b>${esc([x.bairro,x.cidade].filter(Boolean).join(', '))}<br>${esc(ROT_EST[x.estagio]||'')}${x.precoTxt?' · a partir de '+esc(x.precoTxt):''}<br>${x.jaImportado?'<span class="tag t-ok" style="margin-top:6px">Já importado</span>':`<button class="btn sm" style="margin-top:8px" data-orid="${esc(x.id)}">Importar</button>`}</div></div>`).join(''):'<p class="dica">Nenhum empreendimento com esses filtros.</p>';
+};
+document.addEventListener('click',e=>{const id=e.target.dataset&&e.target.dataset.orid;if(!id)return;$('url2').value='https://www.orulo.com.br/buildings/'+id;importar('url2')});
+// ---------- SEO (Google) ----------
+function seoAuto(d,forcar){
+  const tipo=d.tipo||'Imóvel',bairro=String(d.localizacao||'').split(',')[0].trim();
+  if(!d.seoTitulo||forcar)d.seoTitulo=`${tipo} à venda em ${bairro||'São Paulo'} | ${d.titulo||''}`.slice(0,80);
+  if(!d.seoDescricao||forcar)d.seoDescricao=([d.titulo,d.localizacao,d.area,d.dormitorios,d.vagas,d.preco&&'a partir de '+d.preco].filter(Boolean).join(' · ')+'. Consultoria Joildo Brokers.').slice(0,160);
+  if(!d.seoPalavras||forcar)d.seoPalavras=[`${tipo.toLowerCase()} à venda ${bairro}`,`comprar ${tipo.toLowerCase()} ${bairro}`,d.titulo,d.construtora].filter(Boolean).join(', ').slice(0,120);
+}
+function seoPrev(){
+  const t=$('f_seoTitulo').value||$('f_titulo').value||'Título do imóvel',d=$('f_seoDescricao').value||'A descrição aparece aqui.';
+  $('seoPrev').innerHTML=`<div class="gt">${esc(t)}</div><div class="gu">${esc(location.origin)}/imovel/${esc($('f_ref').value||'REF-000000')}</div><div class="gd">${esc(d)}</div><p class="dica" style="margin-top:8px">${t.length}/80 · ${d.length}/160 · ${$('f_seoPalavras').value.length}/120</p>`;
+}
+$('f_seoTitulo').maxLength=80;$('f_seoPalavras').maxLength=120;
+document.addEventListener('click',e=>{if(e.target.id!=='seoGerar')return;const d=coleta();seoAuto(d,true);['seoTitulo','seoDescricao','seoPalavras'].forEach(k=>$('f_'+k).value=d[k]);seoPrev()});
+['seoTitulo','seoDescricao','seoPalavras','titulo','ref'].forEach(k=>$('f_'+k).addEventListener('input',seoPrev));
+seoPrev();
 if(sessionStorage.getItem('cp_tk'))entrar();
 </script>
 </body>

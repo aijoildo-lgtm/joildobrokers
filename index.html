@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Joildo Brokers | High Performance Real Estate Advisory</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="/style.css">
     <meta name="description" content="Joildo Brokers: consultoria imobiliária em São Paulo. Lançamentos, imóveis em construção, prontos e usados, com atendimento personalizado.">
     <meta property="og:title" content="Joildo Brokers | Consultoria Imobiliária">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
@@ -33,6 +33,14 @@
 .gal-aba{background:transparent;color:#C9D2E1;border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:8px 18px;font-weight:600;font-size:.82rem;font-family:inherit;cursor:pointer;transition:all .2s}
 .gal-aba:hover{border-color:var(--gold);color:#fff}
 .gal-aba.on{background:var(--gold);border-color:var(--gold);color:#0A1128}
+.gal-met{display:none;max-width:1300px;margin:0 auto;padding:0 24px 12px;gap:6px;flex-wrap:wrap;align-items:center;color:#C9D2E1;font-size:.78rem}
+.gal-met.on{display:flex}
+.gal-chip{background:#fff;color:#0A1128;border:2px solid transparent;border-radius:6px;padding:6px 12px;font:600 .8rem inherit;font-family:inherit;cursor:pointer}
+.gal-chip.on{border-color:var(--gold);background:#FFF8E1}
+.gal-strip{display:flex;gap:6px;overflow-x:auto;padding:8px 24px 14px;max-width:1300px;margin:0 auto;scrollbar-width:thin}
+.gal-strip .gt{flex:0 0 96px;height:66px;border-radius:6px;overflow:hidden;cursor:pointer;opacity:.55;border:2px solid transparent;background:#E2E8F0}
+.gal-strip .gt.on{opacity:1;border-color:var(--gold)}
+.gal-strip .gt img{width:100%;height:100%;display:block}
 </style>
 </head>
 <body>
@@ -767,6 +775,8 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
     function escolherTip(el, idx) {
         document.querySelectorAll('.tip-linha.sel').forEach(x => x.classList.remove('sel'));
         el.classList.add('sel'); TIP_SEL = idx;
+        const t = ((window.IMV_ATUAL || {}).tipologias || [])[idx], m = t ? numM2(t.area) : null;
+        if (m != null && galPlantas.some(p => p._m === m)) { plantaPorMetragem(m); const pl = document.getElementById('gal-palco'); if (pl) pl.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
     }
     function enviarProposta(id) {
         const i = bancoImoveis.find(x => String(x.id) === String(id)) || {};
@@ -797,10 +807,11 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
         galFotosBase = galFotos;
 
         const plantas = (i.plantas || []).map((p, n) =>
-            typeof p === 'string' ? { nome: 'Planta ' + (n + 1), url: p } : { nome: p.nome || 'Planta ' + (n + 1), url: p.url }
-        ).map(p => ({ nome: p.nome, url: urlOk(p.url) })).filter(p => p.url);
+            typeof p === 'string' ? { nome: 'Planta ' + (n + 1), url: p } : { nome: p.nome || 'Planta ' + (n + 1), url: p.url, area: p.area }
+        ).map(p => ({ nome: p.nome, url: urlOk(p.url), _m: numM2(p.area) ?? m2DoNome(p.nome) })).filter(p => p.url);
         galPlantas = plantas;
 
+        window.IMV_ATUAL = i;
         const yt = youtubeEmbed(i.youtube);
         const tipologias = i.tipologias || [];
         const lazer = i.lazer || [];
@@ -820,10 +831,11 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
     <button class="gal-aba on" data-m="fotos" role="tab" aria-selected="true" onclick="galModoIr('fotos')">Fotos do condomínio e apartamento (${galFotosBase.length})</button>
     <button class="gal-aba" data-m="plantas" role="tab" aria-selected="false" onclick="galModoIr('plantas')">Plantas (${plantas.length})</button>
   </div>` : ''}
-  <div style="max-width:1300px;margin:0 auto;padding:0 0 0 0">
-    <div style="display:grid;grid-template-columns:2fr 1fr;gap:4px;height:460px">
+  <div class="gal-met" id="gal-metragens"></div>
+  <div style="max-width:1300px;margin:0 auto">
+    <div style="display:block">
       <!-- Foto principal -->
-      <div id="gal-palco" style="position:relative;overflow:hidden;cursor:pointer" onclick="galProx()">
+      <div id="gal-palco" style="position:relative;overflow:hidden;cursor:pointer;height:min(62vw,540px)" onclick="galProx()" ontouchstart="window._tx=event.touches[0].clientX" ontouchend="const d=event.changedTouches[0].clientX-window._tx;if(Math.abs(d)>40){d<0?galProx():galAnter()}">
         <img id="gal-img-modal" src="${galFotos[0]}" alt="${esc(i.titulo)}" style="width:100%;height:100%;object-fit:cover;transition:opacity .4s">
         <div style="position:absolute;bottom:14px;left:14px;background:rgba(10,17,40,.75);color:#fff;padding:5px 12px;border-radius:20px;font-size:.78rem;backdrop-filter:blur(4px)" id="gal-contador">1 / ${galFotos.length}</div>
         <div style="position:absolute;top:14px;left:14px;background:var(--gold);color:#fff;padding:3px 10px;border-radius:4px;font-size:.72rem;font-weight:700">${esc(FASES[i.estagio] || 'Imóvel')}</div>
@@ -832,7 +844,7 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
         <button onclick="event.stopPropagation();galProx()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.85);border:none;border-radius:50%;width:36px;height:36px;cursor:pointer;font-size:.9rem">›</button>
       </div>
       <!-- Thumbs laterais -->
-      <div id="gal-thumbs" style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:4px"></div>
+      <div id="gal-thumbs" class="gal-strip"></div>
     </div>
   </div>
 </div>
@@ -871,12 +883,14 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
     <!-- Características da unidade -->
     ${caracUnid.length ? `<div style="margin-bottom:28px"><h4 style="font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--primary);margin-bottom:12px">Características da <em style="color:var(--gold)">unidade</em></h4><div class="chips">${caracUnid.map(x => `<span class="chip">${esc(x)}</span>`).join('')}</div></div>` : ''}
 
+    ${(i.proximidades || []).length ? `<div style="margin-bottom:28px"><h4 style="font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--primary);margin-bottom:12px">O que tem <em style="color:var(--gold)">perto</em></h4><div class="chips">${i.proximidades.map(x => `<span class="chip">${esc(x)}</span>`).join('')}</div></div>` : ''}
     <!-- Infos técnicas -->
     ${infoTec.length ? `<div style="margin-bottom:28px"><h4 style="font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--primary);margin-bottom:12px">Informações <em style="color:var(--gold)">técnicas</em></h4><div class="tech-grid">${infoTec.map(x => `<div class="tech-item"><span>${esc(x.k)}</span><b>${esc(x.v)}</b></div>`).join('')}</div></div>` : ''}
 
     <!-- Localização -->
     <div style="margin-bottom:28px">
       <h4 style="font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--primary);margin-bottom:12px">Viver em <em style="color:var(--gold)">${esc(bairro || 'São Paulo')}</em></h4>
+      ${(i.visibilidade === 'endereco' && i.logradouro) ? `<p style="margin:0 0 10px;font-size:.88rem">${esc([i.logradouro, i.numero, i.complemento].filter(Boolean).join(', '))}${i.cep ? ' · CEP ' + esc(i.cep) : ''}</p>` : ''}
       ${i.proximidade ? `<div style="display:flex;align-items:center;gap:8px;padding:12px 16px;background:#F8FAFC;border-radius:8px;border-left:3px solid var(--gold);margin-bottom:12px"><span style="font-size:.88rem;color:var(--text-dark)">${esc(i.proximidade)}</span></div>` : ''}
       <div style="background:#F1F5F9;border-radius:12px;height:200px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:.85rem;flex-direction:column;gap:6px">Localização em ${esc(i.localizacao)}</div>
     </div>
@@ -904,7 +918,7 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
   <div style="position:sticky;top:80px">
     <div style="background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:26px;box-shadow:0 4px 24px rgba(10,17,40,.10)">
       <div style="font-size:.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Venda · Cód. ${esc(i.ref)}</div>
-      ${i.preco ? `<div style="font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px">A partir de</div>` : ''}<div style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:var(--primary);line-height:1.1">${esc(i.preco)}</div>${i.precoM2 ? `<div style="font-size:.85rem;color:var(--text-muted);margin:4px 0 14px">${esc(i.precoM2)}/m²</div>` : '<div style="margin-bottom:14px"></div>'}
+      ${i.preco ? `<div style="font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px">A partir de</div>` : ''}<div style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:var(--primary);line-height:1.1">${esc(i.preco)}</div>${i.precoM2 ? `<div style="font-size:.85rem;color:var(--text-muted);margin:4px 0 14px">${esc(i.precoM2)}/m²</div>` : '<div style="margin-bottom:14px"></div>'}${(i.condominio || i.iptu) ? `<div style="font-size:.8rem;color:var(--text-muted);margin:-6px 0 14px">${[i.condominio && 'Condomínio ' + esc(i.condominio), i.iptu && 'IPTU ' + esc(i.iptu)].filter(Boolean).join(' · ')}</div>` : ''}
 
       <button onclick="enviarLeadModal('${esc(i.id)}')" style="width:100%;padding:14px;background:#C0392B;color:#fff;border:none;border-radius:8px;font-size:.95rem;font-weight:700;cursor:pointer;margin-bottom:10px;font-family:inherit">Solicitar Consultoria Privada</button>
       <a href="${`https://api.whatsapp.com/send?phone=${configGeral.whatsapp||'5511951377033'}&text=${encodeURIComponent('Olá! Tenho interesse no imóvel ' + (i.titulo||'') + ' (' + (i.ref||'') + '). Pode me passar mais informações?')}`}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;border:2px solid var(--primary);color:var(--primary);border-radius:8px;font-size:.88rem;font-weight:600;text-decoration:none;margin-bottom:16px;transition:all .2s" onmouseover="this.style.background='var(--primary)';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='var(--primary)'">
@@ -932,6 +946,8 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
         m.style.display = 'flex';
         document.body.style.overflow = 'hidden';
         galThumbs();
+        document.title = i.seoTitulo || `${i.titulo} | Joildo Brokers`;
+        try { const alvo = `/imovel/${encodeURIComponent(i.ref || i.id)}`; if (!location.pathname.startsWith(alvo)) history.pushState(null, '', alvo); } catch (e) {}
         // Auto-avanço da galeria
         if (galFotos.length > 1) {
             galTimerModal = setInterval(() => galProx(true), 4000);
@@ -945,14 +961,23 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
         const box = document.getElementById('gal-thumbs');
         if (!box) return;
         const pl = galModo === 'plantas';
-        const html = galFotos.slice(1, 5).map((u, idx) => {
-            const extra = idx === 3 && galFotos.length > 5 ? `<div style="position:absolute;inset:0;background:rgba(10,17,40,.62);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.1rem;font-weight:700;border-radius:8px">+${galFotos.length - 4}</div>` : '';
-            return `<div onclick="galIr(${idx + 1})" style="cursor:pointer;position:relative;border-radius:8px;overflow:hidden;aspect-ratio:4/3;background:${pl ? '#fff' : '#E2E8F0'}">
-                <img src="${u}" alt="" style="width:100%;height:100%;object-fit:${pl ? 'contain' : 'cover'};border-radius:8px;transition:transform .3s" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
-                ${extra}
-            </div>`;
-        }).join('');
-        box.innerHTML = html || `<div style="background:#1a2f46;border-radius:8px;grid-column:1/-1;grid-row:1/-1;display:flex;align-items:center;justify-content:center;color:#64748b;font-size:.85rem">${pl ? 'Toque na planta para ampliar' : 'Mais fotos em breve'}</div>`;
+        box.innerHTML = galFotos.map((u, idx) => `<div class="gt${idx === galAtual ? ' on' : ''}" onclick="galIr(${idx});clearInterval(galTimerModal)" style="background:${pl ? '#fff' : '#E2E8F0'}"><img src="${u}" alt="" loading="lazy" style="object-fit:${pl ? 'contain' : 'cover'}"></div>`).join('');
+    }
+    // METRAGEM → PLANTA: m² como número (aceita "84 m²", "84,5m²" ou o número dentro do nome da planta)
+    function numM2(v) { const t = String(v == null ? '' : v).replace(/m²|m2/gi, '').trim().replace(/\.(?=\d{3}\b)/g, '').replace(',', '.'); const n = parseFloat(t); return isFinite(n) ? n : null; }
+    function m2DoNome(n) { const m = String(n || '').match(/(\d{2,4}(?:[.,]\d+)?)\s*m²/i); return m ? numM2(m[1]) : null; }
+    function galMetragens() {
+        const box = document.getElementById('gal-metragens');
+        if (!box) return;
+        const ms = [...new Set(galPlantas.map(p => p._m).filter(v => v != null))].sort((a, b) => a - b);
+        box.classList.toggle('on', galModo === 'plantas' && ms.length > 0);
+        box.innerHTML = ms.length ? '<span>Escolha a metragem:</span>' + ms.map(m => `<button type="button" class="gal-chip${galPlantas[galAtual] && galPlantas[galAtual]._m === m ? ' on' : ''}" onclick="plantaPorMetragem(${m})">${String(m).replace('.', ',')} m²</button>`).join('') : '';
+    }
+    function plantaPorMetragem(m) {
+        if (!galPlantas.length) return;
+        if (galModo !== 'plantas') galModoIr('plantas');
+        const k = galPlantas.findIndex(p => p._m === m);
+        if (k >= 0) { galIr(k); clearInterval(galTimerModal); }
     }
     // Alterna entre as duas opções: fotos do condomínio e apartamento | plantas
     function galModoIr(m) {
@@ -966,6 +991,7 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
         if (img) img.style.objectFit = m === 'plantas' ? 'contain' : 'cover';
         galThumbs();
         galIr(0);
+        galMetragens();
         if (m === 'fotos' && galFotos.length > 1) galTimerModal = setInterval(() => galProx(true), 4000);
     }
 
@@ -975,11 +1001,16 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
         const img = document.getElementById('gal-img-modal');
         const cnt = document.getElementById('gal-contador');
         if (img) { img.style.opacity = 0; setTimeout(() => { img.src = galFotos[galAtual]; img.style.opacity = 1; }, 200); }
+        document.querySelectorAll('#gal-thumbs .gt').forEach((t, n) => { t.classList.toggle('on', n === galAtual); if (n === galAtual && t.scrollIntoView) t.scrollIntoView({ block: 'nearest', inline: 'center' }); });
+        if (galModo === 'plantas') galMetragens();
         if (cnt) cnt.textContent = (galModo === 'plantas' && galPlantas[galAtual] && galPlantas[galAtual].nome ? galPlantas[galAtual].nome + ' · ' : '') + (galAtual + 1) + ' / ' + galFotos.length;
     }
     function galProx(auto) { galIr(galAtual + 1); if (!auto) clearInterval(galTimerModal); }
     function galAnter() { galIr(galAtual - 1); clearInterval(galTimerModal); }
+    const TITULO_SITE = document.title;
     function fecharModal() {
+        document.title = TITULO_SITE;
+        try { if (location.pathname.startsWith('/imovel/')) history.pushState(null, '', '/'); } catch (e) {}
         document.getElementById('propertyModal').style.display = 'none';
         document.body.style.overflow = '';
         clearInterval(galTimerModal);
@@ -1065,6 +1096,8 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
         renderBairros();
         renderParceiros();
         initScrollReveal();
+        const mm = location.pathname.match(/^\/imovel\/([^/]+)/);
+        if (mm) { const x = bancoImoveis.find(y => String(y.ref || y.id).toLowerCase() === decodeURIComponent(mm[1]).toLowerCase()); if (x) abrirModal(x.id); }
     }
     carregar();
 </script>

@@ -116,16 +116,20 @@ const getConfig = async () => {
 const saveConfig = async (c) => db ? db.collection('config').updateOne({ _id: 'site' }, { $set: { dados: c } }, { upsert: true }) : gravarJson(CONFIG_FILE, c);
 
 // VALIDAÇÃO DO IMÓVEL (só campos conhecidos, com limites)
-const TXT = ['ref','titulo','preco','foto','localizacao','estagio','destaque','area','dormitorios','vagas','youtube','tour360','transacao','categoria','tipo','apresentacao','diferencial','proximidade','origem','linkOrigem','videoArquivo','sincronizadoEm','construtora','precoM2'];
+const TXT = ['ref','titulo','preco','foto','localizacao','estagio','destaque','area','dormitorios','vagas','youtube','tour360','transacao','categoria','tipo','apresentacao','diferencial','proximidade','origem','linkOrigem','videoArquivo','sincronizadoEm','construtora','precoM2','seoTitulo','seoDescricao','seoPalavras','cep','logradouro','numero','complemento','visibilidade','iptu','condominio','taxas','obsValores','areaTotal','areaPrivativa','areaConstruida','perfil','mobilia','banheiros','suites','salas','lavabos','modoCadastro'];
 const s2 = (v, n) => String(v == null ? '' : v).slice(0, n);
 function limpar(b) {
   const o = {};
   TXT.forEach(k => { if (b[k] != null) o[k] = s2(b[k], k === 'apresentacao' ? 4000 : 500); });
   o.fotos = (Array.isArray(b.fotos) ? b.fotos : []).map(u => s2(u, 500)).filter(u => /^https?:\/\//i.test(u)).slice(0, 100);
   // plantas: texto (link) ou objeto { nome, url }
-  o.plantas = (Array.isArray(b.plantas) ? b.plantas : []).map(p => (p && typeof p === 'object') ? { nome: s2(p.nome, 120), url: s2(p.url, 500) } : s2(p, 500))
+  o.plantas = (Array.isArray(b.plantas) ? b.plantas : []).map(p => (p && typeof p === 'object') ? { nome: s2(p.nome, 120), area: s2(p.area, 40), url: s2(p.url, 500) } : s2(p, 500))
     .filter(p => /^https?:\/\//i.test(typeof p === 'string' ? p : p.url)).slice(0, 100);
   o.lazer = (Array.isArray(b.lazer) ? b.lazer : []).map(x => s2(x, 80)).filter(Boolean).slice(0, 60);
+  o.proximidades = (Array.isArray(b.proximidades) ? b.proximidades : []).map(x => s2(x, 80)).filter(Boolean).slice(0, 60);
+  const pv = b.privado && typeof b.privado === 'object' ? b.privado : {};
+  o.privado = {}; ['proprietario','corretor','exclusividade','autorizacao','averbado','escriturado','placa','chave','ondeChave','obs'].forEach(k => { o.privado[k] = s2(pv[k], k === 'obs' ? 2000 : 200); });
+  o.espelharMidia = b.espelharMidia !== false;
   o.caracteristicasUnidade = (Array.isArray(b.caracteristicasUnidade) ? b.caracteristicasUnidade : []).map(x => s2(x, 80)).filter(Boolean).slice(0, 60);
   o.tipologias = (Array.isArray(b.tipologias) ? b.tipologias : []).slice(0, 40).map(t => ({ nome: s2(t.nome, 80), area: s2(t.area, 40), dorm: s2(t.dorm, 20), suites: s2(t.suites, 20), vagas: s2(t.vagas, 20), preco: s2(t.preco, 40) })).filter(t => t.nome);
   o.infoTecnica = (Array.isArray(b.infoTecnica) ? b.infoTecnica : []).slice(0, 40).map(x => ({ k: s2(x.k, 80), v: s2(x.v, 200) })).filter(x => x.k);
@@ -139,9 +143,31 @@ function limpar(b) {
 }
 const novaRef = () => `REF-${Math.floor(100000 + Math.random() * 900000)}`;
 
+const escA = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const slug = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 80);
+app.get('/imovel/:ref/:slug?', ah(async (req, res) => {
+  const i = (await getImoveis()).find(x => x.ativo !== false && String(x.ref).toLowerCase() === String(req.params.ref).toLowerCase());
+  let html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
+  if (i) {
+    const base = `${req.protocol}://${req.get('host')}`, url = `${base}/imovel/${i.ref}/${slug(i.titulo)}`;
+    const titulo = i.seoTitulo || `${i.titulo} | ${i.tipo || 'Imóvel'} à venda em ${i.localizacao}`;
+    const desc = i.seoDescricao || [i.titulo, i.localizacao, i.area, i.dormitorios, i.vagas, i.preco && `a partir de ${i.preco}`].filter(Boolean).join(' · ');
+    const img = i.foto || (i.fotos || [])[0] || '';
+    html = html.replace(/<title>[\s\S]*?<\/title>/, `<title>${escA(titulo)}</title>`)
+      .replace(/<meta name="description"[^>]*>/, `<meta name="description" content="${escA(desc)}">`)
+      .replace(/<meta property="og:title"[^>]*>/, `<meta property="og:title" content="${escA(titulo)}"><meta property="og:description" content="${escA(desc)}"><meta property="og:url" content="${escA(url)}">${img ? `<meta property="og:image" content="${escA(img)}">` : ''}<link rel="canonical" href="${escA(url)}">${i.seoPalavras ? `<meta name="keywords" content="${escA(i.seoPalavras)}">` : ''}`);
+  }
+  res.type('html').send(html);
+}));
+app.get('/sitemap.xml', ah(async (req, res) => {
+  const base = `${req.protocol}://${req.get('host')}`;
+  const urls = (await getImoveis()).filter(i => i.ativo !== false && i.demo !== true).map(i => `<url><loc>${escA(base + '/imovel/' + i.ref + '/' + slug(i.titulo))}</loc><lastmod>${String(i.atualizadoEm || i.criadoEm || '').slice(0, 10)}</lastmod></url>`);
+  res.type('xml').send(`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${base}/</loc></url>${urls.join('')}</urlset>`);
+}));
 // APIs
 app.get('/api/versao', (req, res) => res.json({ versao: '2026-11-14-q', banco: bancoStatus }));
-app.get('/api/imoveis', ah(async (req, res) => res.json((await getImoveis()).filter(i => i.ativo !== false))));
+const publico = (i) => { const { privado, linkOrigem, origem, sincronizar, espelharMidia, historico, sincronizadoEm, ...r } = i; return r; };
+app.get('/api/imoveis', ah(async (req, res) => res.json((await getImoveis()).filter(i => i.ativo !== false).map(publico))));
 app.get('/api/admin/imoveis', exigirLogin, ah(async (req, res) => res.json(await getImoveis())));
 app.get('/api/config', ah(async (req, res) => res.json(await getConfig())));
 app.post('/api/config', exigirLogin, ah(async (req, res) => { await saveConfig(req.body); res.json({ success: true, message: 'Configurações atualizadas!' }); }));
@@ -325,6 +351,21 @@ app.post(['/api/minerar-orulo', '/api/importar-link'], exigirLogin, async (req, 
   }
 });
 
+// BUSCA NO ÓRULO (filtros) para escolher o empreendimento e importar
+app.post('/api/orulo/buscar', exigirLogin, async (req, res) => {
+  if (!process.env.ORULO_CLIENT_ID || !process.env.ORULO_CLIENT_SECRET)
+    return res.json({ success: false, error: 'Falta ligar a API da Órulo: defina ORULO_CLIENT_ID e ORULO_CLIENT_SECRET no Render.' });
+  try {
+    const feitos = (await getImoveis()).map(i => (String(i.linkOrigem || '').match(/buildings\/(\d+)/) || [])[1]).filter(Boolean);
+    const r = await orulo.listar(req.body || {});
+    res.json({ success: true, itens: r.itens.map(x => ({ ...x, jaImportado: feitos.includes(String(x.id)) })), pagina: r.pagina });
+  } catch (e) {
+    const st = e.response && e.response.status;
+    console.error('Erro busca Órulo:', st, e.message);
+    res.json({ success: false, error: `Não consegui consultar a Órulo (${st ? 'HTTP ' + st : e.code || e.message}). Use o link do empreendimento.` });
+  }
+});
+
 // ===== CONTEÚDOS (blog, notícias e depoimentos editáveis pelo painel) =====
 const CONTEUDOS_FILE = path.join(__dirname, 'conteudos.json');
 const U = (id) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=700&q=80`;
@@ -448,7 +489,24 @@ app.post('/api/upload', exigirLogin, async (req, res) => {
 // ===== SINCRONIZAÇÃO COM AOCUBO E ÓRULO (preço, estágio, área, dormitórios e vagas) =====
 // Agende uma chamada a cada poucas horas: GET /api/sincronizar?chave=SYNC_KEY
 let sincronizando = false;
-const CAMPOS_SYNC = ['preco', 'estagio', 'area', 'dormitorios', 'vagas'];
+const CAMPOS_SYNC = ['preco', 'precoM2', 'estagio', 'area', 'dormitorios', 'vagas'];
+const CAMPOS_LISTA = ['tipologias', 'infoTecnica'];       // condições comerciais
+const CAMPOS_MIDIA = ['foto', 'fotos', 'plantas', 'lazer']; // espelho de mídia (desliga com espelharMidia=false)
+const vazio = (v) => Array.isArray(v) ? !v.length : !v;
+function mesclarPlantas(novas, atuais) {
+  // mantém nome e metragem digitados à mão quando a planta (mesmo link) continua na origem
+  const por = new Map((atuais || []).filter(p => p && typeof p === 'object').map(p => [p.url, p]));
+  return (novas || []).map(p => { const o = typeof p === 'string' ? { url: p } : p, a = por.get(o.url); return a ? { ...o, nome: a.nome || o.nome, area: a.area || o.area } : o; });
+}
+function diferencas(i, novo) {
+  const set = {}, campos = [...CAMPOS_SYNC, ...CAMPOS_LISTA, ...(i.espelharMidia === false ? [] : CAMPOS_MIDIA)];
+  campos.forEach(k => {
+    if (vazio(novo[k])) return;                       // origem sem o dado: nunca apaga o que já existe
+    const v = k === 'plantas' ? mesclarPlantas(novo[k], i[k]) : novo[k];
+    if (JSON.stringify(v) !== JSON.stringify(i[k] == null ? (Array.isArray(v) ? [] : '') : i[k])) set[k] = v;
+  });
+  return set;
+}
 async function buscarOrigem(i) {
   if (/(^|\.)orulo\.com\.br$/i.test(new URL(i.linkOrigem).hostname)) {
     const m = String(i.linkOrigem).match(/buildings\/(\d+)/i);
@@ -458,17 +516,17 @@ async function buscarOrigem(i) {
   const r = await axios.get(i.linkOrigem, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122 Safari/537.36', 'Accept-Language': 'pt-BR,pt;q=0.9' }, timeout: 15000, maxRedirects: 3 });
   return extrairAoCubo(String(r.data), i.linkOrigem);
 }
-async function sincronizarImoveis() {
-  const alvos = (await getImoveis()).filter(i => i.linkOrigem && i.sincronizar !== false);
+async function sincronizarImoveis(somenteId) {
+  const alvos = (await getImoveis()).filter(i => i.linkOrigem && i.sincronizar !== false && (!somenteId || String(i.id) === String(somenteId)));
   const rel = { total: alvos.length, atualizados: 0, semMudanca: 0, pausados: 0, erros: [] };
   for (const i of alvos) {
     const agora = new Date().toISOString();
     try {
-      const novo = await buscarOrigem(i), set = {};
-      CAMPOS_SYNC.forEach(k => { if (novo[k] && novo[k] !== i[k]) set[k] = novo[k]; });
-      if (Object.keys(set).length) rel.atualizados++; else rel.semMudanca++;
+      const novo = await buscarOrigem(i), set = diferencas(i, novo), mudou = Object.keys(set);
+      if (mudou.length) rel.atualizados++; else rel.semMudanca++;
       // atualizadoEm só muda quando a origem trouxe dado novo; conferir sem mudança grava só a data da conferência
-      await updImovel(i.id, Object.keys(set).length ? { ...set, sincronizadoEm: agora, atualizadoEm: agora } : { sincronizadoEm: agora });
+      const historico = [{ em: agora, campos: mudou }, ...(i.historico || [])].slice(0, 20);
+      await updImovel(i.id, mudou.length ? { ...set, sincronizadoEm: agora, atualizadoEm: agora, historico } : { sincronizadoEm: agora });
     } catch (e) {
       const st = e.response && e.response.status;
       // Só pausa quando a origem respondeu 404 (anúncio retirado). Erro de rede não pausa nada.
@@ -482,14 +540,19 @@ const podeSincronizar = (req, res, next) =>
   ((process.env.SYNC_KEY && req.query.chave === process.env.SYNC_KEY) || tokenValido(req.headers['x-token'])) ? next()
   : res.status(401).json({ success: false, error: 'Não autorizado.' });
 const rodarSincronizacao = async (req, res) => {
+  const somenteId = req.params && req.params.id;
   if (sincronizando) return res.json({ success: false, error: 'A sincronização já está rodando. Aguarde terminar.' });
   sincronizando = true;
-  try { res.json({ success: true, ...(await sincronizarImoveis()) }); }
+  try { res.json({ success: true, ...(await sincronizarImoveis(somenteId)) }); }
   catch (e) { console.error('Erro na sincronização:', e.message); res.status(500).json({ success: false, error: 'Erro interno na sincronização.' }); }
   finally { sincronizando = false; }
 };
 app.get('/api/sincronizar', podeSincronizar, rodarSincronizacao);
 app.post('/api/sincronizar', podeSincronizar, rodarSincronizacao);
+app.post('/api/sincronizar/:id', exigirLogin, rodarSincronizacao);
+// Espelho automático: roda sozinho a cada SYNC_HORAS (padrão 6). No Render gratuito o servidor dorme; agende também um ping em /api/sincronizar?chave=SYNC_KEY.
+const SYNC_MS = Math.max(1, Number(process.env.SYNC_HORAS) || 6) * 3600e3;
+setInterval(async () => { if (sincronizando) return; sincronizando = true; try { console.log('Sincronização automática:', JSON.stringify(await sincronizarImoveis())); } catch (e) { console.error('Sync automática falhou:', e.message); } finally { sincronizando = false; } }, SYNC_MS).unref();
 
 // ===== ACESSOS POR IMÓVEL (alimenta o dashboard do Cpainel) =====
 // Conta 1 visita por visitante a cada hora; grava em lote a cada minuto para não sobrecarregar o banco.

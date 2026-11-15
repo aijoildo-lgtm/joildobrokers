@@ -49,7 +49,7 @@ function mapear(b, imgs, plantas) {
   const dt = entregaRaw.match(/^(\d{4})-(\d{2})/);
   const entrega = dt ? `${dt[2]}/${dt[1]}` : entregaRaw;
   const fotos = lista(imgs, 'images', 'items').map(urlDe).filter(Boolean).slice(0, 30);
-  const pl = lista(plantas, 'floor_plans', 'items').map(p => ({ nome: texto(pega(p, 'name', 'title', 'description', 'label')), url: urlDe(p) })).filter(p => p.url).slice(0, 20);
+  const pl = lista(plantas, 'floor_plans', 'items').map(p => ({ nome: texto(pega(p, 'name', 'title', 'description', 'label')), area: num(pega(p, 'private_area', 'area')) ? fmtN(num(pega(p, 'private_area', 'area'))) + ' m²' : '', url: urlDe(p) })).filter(p => p.url).slice(0, 20);
   const capa = urlDe(b.default_image) || fotos[0] || '';
   if (capa && !fotos.includes(capa)) fotos.unshift(capa);
   const bairro = texto(pega(end, 'area', 'neighborhood')), cidade = texto(end.city), uf = texto(end.state);
@@ -91,4 +91,24 @@ async function importar(id) {
   ]);
   return mapear(b, imgs, plantas);
 }
-module.exports = { importar, mapear };
+// Lista empreendimentos com filtros. Os filtros vão para a API e também são aplicados aqui, porque os nomes
+// dos parâmetros aceitos dependem da sua conta Órulo (confira em documento.orulo.com.br).
+async function listar(f) {
+  const q = { page: Math.max(1, +f.pagina || 1), results_per_page: 24 };
+  if (f.q) q.name = f.q; if (f.estado) q.state = f.estado; if (f.cidade) q.city = f.cidade;
+  const d = await chamar('/buildings', q);
+  const arr = Array.isArray(d) ? d : lista(d, 'buildings', 'items', 'results');
+  const low = (v) => String(v || '').toLowerCase();
+  let itens = arr.map(b => {
+    const end = b.address || {}, est = texto(pega(b, 'status', 'stage', 'construction_status', 'situation'));
+    return { id: b.id, nome: texto(b.name), bairro: texto(pega(end, 'area', 'neighborhood')), cidade: texto(end.city), estado: texto(end.state),
+      estagio: (ESTAGIOS.find(([re]) => re.test(est)) || [])[1] || '', preco: num(pega(b, 'min_price', 'price')), foto: urlDe(b.default_image) };
+  });
+  if (f.q) itens = itens.filter(x => low(x.nome).includes(low(f.q)));
+  if (f.bairro) itens = itens.filter(x => low(x.bairro).includes(low(f.bairro)));
+  if (f.cidade) itens = itens.filter(x => low(x.cidade).includes(low(f.cidade)));
+  if (f.estagio) itens = itens.filter(x => x.estagio === f.estagio);
+  if (+f.precoMax) itens = itens.filter(x => !x.preco || x.preco <= +f.precoMax);
+  return { itens: itens.map(x => ({ ...x, precoTxt: x.preco ? brl(x.preco) : '' })), pagina: q.page };
+}
+module.exports = { importar, mapear, listar };
