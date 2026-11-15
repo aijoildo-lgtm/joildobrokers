@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPanel MigMídia | Joildo Brokers</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --primary: #0A1128; --gold: #D4AF37; --bg: #F1F5F9; --white: #ffffff; }
+        * { margin:0; padding:0; box-sizing:border-box; font-family: 'Montserrat', sans-serif; }
+        body { background: var(--bg); padding: 20px; }
+        
+        #login-screen { position: fixed; inset: 0; background: var(--primary); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        .login-box { background: white; padding: 40px; border-radius: 12px; width: 100%; max-width: 380px; text-align: center; }
+        .login-box input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 6px; }
+
+        .container { max-width: 1050px; margin: 0 auto; background: var(--white); padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); display: none; }
+        h2 { color: var(--primary); border-bottom: 2px solid var(--gold); padding-bottom: 10px; margin-bottom: 25px; }
+        
+        .tab-menu { display: flex; gap: 10px; margin-bottom: 25px; }
+        .tab-btn { padding: 12px 24px; background: #E2E8F0; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: var(--primary); }
+        .tab-btn.active { background: var(--primary); color: white; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .section-title { background: #f8f9fa; padding: 10px 15px; font-weight: bold; margin-top: 25px; border-left: 4px solid var(--gold); font-size: 0.9rem; text-transform: uppercase; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; padding: 15px 0; }
+        .form-group { display: flex; flex-direction: column; }
+        label { font-size: 0.75rem; font-weight: bold; margin-bottom: 5px; text-transform: uppercase; color: #555; }
+        input, select, textarea { padding: 10px; border: 1px solid #CBD5E1; border-radius: 6px; outline: none; font-size: 0.9rem; }
+        
+        .btn-pub { background: #198754; color: white; border: none; padding: 16px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1rem; margin-top: 25px; text-transform: uppercase; }
+            .tabela-imoveis { width: 100%; border-collapse: collapse; font-size: .85rem; }
+        .tabela-imoveis th, .tabela-imoveis td { padding: 10px 8px; border-bottom: 1px solid #E2E8F0; text-align: left; vertical-align: middle; }
+        .tabela-imoveis button { padding: 6px 10px; margin: 2px; border: 1px solid #CBD5E1; background: #fff; border-radius: 6px; cursor: pointer; font-size: .78rem; }
+    </style>
+</head>
+<body>
+
+    <!-- TELA DE LOGIN -->
+    <div id="login-screen">
+        <div class="login-card login-box">
+            <h2 style="color:var(--primary); margin-bottom: 10px;">JOILDO <span>BROKERS</span></h2>
+            <p style="font-size:0.8rem; color:#666; margin-bottom: 20px;">Painel de Controle Estilo MigMídia</p>
+            <input type="text" id="user" placeholder="Usuário (adm)">
+            <input type="password" id="pass" placeholder="Senha (1234)">
+            <button onclick="fazerLogin()" style="width:100%; padding:12px; background:var(--primary); color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">ACESSAR CPANEL</button>
+        </div>
+    </div>
+
+    <!-- PAINEL CPANEL -->
+    <div class="container" id="panel">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+            <h2><i class="fas fa-cogs"></i> Painel de Controle de Imóveis & Sistema</h2>
+            <a href="/" target="_blank" style="color:var(--primary); font-weight:bold; text-decoration:none;"><i class="fas fa-external-link-alt"></i> Ver Site no Ar</a>
+        </div>
+
+        <div class="tab-menu" style="flex-wrap:wrap">
+            <button class="tab-btn active" data-tab="imoveis" onclick="switchTab('imoveis')"><i class="fas fa-plus-circle"></i> Novo / Editar imóvel</button>
+            <button class="tab-btn" data-tab="lista" onclick="switchTab('lista')"><i class="fas fa-list"></i> Meus imóveis</button>
+            <button class="tab-btn" data-tab="conteudos" onclick="switchTab('conteudos')"><i class="fas fa-newspaper"></i> Blog, Notícias & Depoimentos</button>
+            <button class="tab-btn" data-tab="ia" onclick="switchTab('ia')"><i class="fas fa-wand-magic-sparkles"></i> Assistente IA</button>
+            <button class="tab-btn" data-tab="redes" onclick="switchTab('redes')"><i class="fas fa-share-alt"></i> Marca & Redes</button>
+        </div>
+
+        <!-- ABA 1: IMÓVEIS -->
+        <div class="tab-content active" id="tab-imoveis">
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label>Link do imóvel (AoCubo ou Órulo): preenche os dados, fotos e plantas</label>
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="urlOrulo" style="flex:1" placeholder="https://aocubo.com/imovel/... ou https://www.orulo.com.br/buildings/...">
+                    <button onclick="minerar()" style="padding:10px 20px; background:var(--primary); color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Puxar dados do link</button>
+                </div>
+            </div>
+
+            <div id="editBanner" style="display:none;background:#FFF8E1;border-left:4px solid var(--gold);padding:12px 15px;margin-bottom:15px;border-radius:6px;font-size:.9rem">
+                <b>Editando:</b> <span id="editNome"></span>
+                <button type="button" onclick="cancelarEdicao()" style="float:right;padding:4px 12px;cursor:pointer">Cancelar edição</button>
+            </div>
+            <form onsubmit="salvar(event)">
+                <div class="section-title">1. Transação e Categoria</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Transação</label><select id="transacao"><option>Vender Imóvel</option><option>Alugar Imóvel</option></select></div>
+                    <div class="form-group"><label>Categoria</label><select id="categoria"></select></div>
+                    <div class="form-group">
+                        <label>Tipo de Imóvel</label>
+                        <select id="tipo"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tarja de Destaque</label>
+                        <select id="destaque">
+                            <option value="none">Nenhuma</option>
+                            <option value="exclusivo">Exclusividade</option>
+                            <option value="desconto">20% de Desconto</option>
+                            <option value="oportunidade">Oportunidade</option>
+                            <option value="decorado">Decorado</option>
+                            <option value="pronto">Pronto para Morar</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Destaque na Home (carrossel do topo)</label>
+                        <select id="emDestaque"><option value="nao">Não destacar</option><option value="sim">Sim, destacar na Home</option></select></div>
+                </div>
+
+                <div class="section-title">2. Endereço do Imóvel</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Cidade / Bairro / UF</label><input type="text" id="cidade" placeholder="São Paulo - SP"></div>
+                    <div class="form-group"><label>Link de origem (AoCubo ou Órulo)</label><input type="url" id="linkOrigem" placeholder="https://..."></div>
+                    <div class="form-group"><label>Publicação</label><div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:8px"><label style="font-weight:normal"><input type="checkbox" id="ativo" checked style="width:auto"> Publicado no site</label><label style="font-weight:normal"><input type="checkbox" id="sincronizar" checked style="width:auto"> Atualizar preço e estágio pelo link</label></div></div>
+                </div>
+
+                <div class="section-title">3. Dados do Anúncio & Características</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Título do Anúncio</label><input type="text" id="titulo" required placeholder="Ex: Town Residences Jardins"></div>
+                    <div class="form-group"><label>Preço (R$)</label><input type="text" id="preco" required placeholder="Ex: R$ 850.000"></div>
+                    <div class="form-group"><label>Estágio / Categoria</label>
+                        <select id="estagio">
+                            <option value="lancamentos">Lançamentos</option>
+                            <option value="construcao">Em construção</option>
+                            <option value="prontos">Prontos para morar</option>
+                            <option value="usados">Usados</option>
+                            <option value="oportunidades">Oportunidades</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Construtora / incorporadora</label><input type="text" id="construtora" placeholder="Ex: Construtora Alfa"></div>
+                    <div class="form-group"><label>Valor por m² (R$)</label><input type="text" id="precoM2" placeholder="Ex: R$ 11.040"></div>
+                    <div class="form-group"><label>Área Útil (m²)</label><input type="text" id="area" placeholder="Ex: 110m²"></div>
+                    <div class="form-group"><label>Dormitórios</label><input type="text" id="dormitorios" placeholder="Ex: 3 dorms"></div>
+                    <div class="form-group"><label>Vagas</label><input type="text" id="vagas" placeholder="Ex: 2 vagas"></div>
+                </div>
+
+                <div class="section-title">4. Mídias (Fotos, Vídeo e Tour 360)</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>URL Foto Capa <label style="cursor:pointer;background:var(--primary);color:#fff;padding:4px 10px;border-radius:4px;font-size:.75rem;margin-left:8px;display:inline-block">Enviar do computador<input type="file" accept="image/*" hidden onchange="subirArquivos(this,'foto')"></label></label><input type="url" id="foto" placeholder="https://... (ou deixe vazio para usar a 1ª da galeria)"></div>
+                    <div class="form-group"><label>Link Vídeo YouTube</label><input type="url" id="youtube" placeholder="https://youtube.com/..."></div>
+                    <div class="form-group"><label>Link Tour Virtual 360°</label><input type="url" id="tour360" placeholder="https://..."></div>
+                </div>
+                <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+                    <div class="form-group"><label>Galeria de fotos (um link por linha) <label style="cursor:pointer;background:var(--primary);color:#fff;padding:4px 10px;border-radius:4px;font-size:.75rem;margin-left:8px;display:inline-block">Enviar fotos do computador<input type="file" accept="image/*" multiple hidden onchange="subirArquivos(this,'fotos')"></label></label>
+                        <textarea id="fotos" rows="6" placeholder="Clique com o botão direito na foto do Órulo, escolha Copiar endereço da imagem, cole aqui e aperte Enter. Repita para cada foto."></textarea></div>
+                    <div class="form-group"><label>Plantas (um link por linha) <label style="cursor:pointer;background:var(--primary);color:#fff;padding:4px 10px;border-radius:4px;font-size:.75rem;margin-left:8px;display:inline-block">Enviar plantas do computador<input type="file" accept="image/*" multiple hidden onchange="subirArquivos(this,'plantas')"></label></label>
+                        <textarea id="plantas" rows="6" placeholder="Um link de imagem por linha, para cada planta do imóvel."></textarea></div>
+                </div>
+
+                <div class="section-title">5. Apresentação, tipologias, lazer e informações técnicas</div>
+                <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+                    <div class="form-group"><label>Diferencial do anúncio (aparece em Oportunidades)</label><input type="text" id="diferencial" placeholder="Ex: Varanda gourmet"></div>
+                    <div class="form-group"><label>Localização em destaque</label><input type="text" id="proximidade" placeholder="Ex: 3 min. do Metrô Tucuruvi"></div>
+                </div>
+                <div class="form-group"><label>Breve apresentação do projeto <button type="button" onclick="iaApresentacao()" style="margin-left:8px;padding:3px 10px;font-size:.7rem;cursor:pointer;border:1px solid var(--gold);background:#fff;border-radius:4px">✨ Escrever com IA</button></label>
+                    <textarea id="apresentacao" rows="4" placeholder="Texto de apresentação do empreendimento."></textarea></div>
+                <div class="form-group"><label>Tipologias e valores (uma por linha: Nome | Área | Dormitórios | Suítes | Vagas | Preço)</label>
+                    <textarea id="tipologias" rows="5" placeholder="Studio | 26 m² | 1 | 0 | 0 | R$ 260.810&#10;Apartamento | 43 m² | 2 | 1 | 1 | R$ 539.000"></textarea></div>
+                <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+                    <div class="form-group"><label>Lazer e comodidades (um por linha)</label>
+                        <textarea id="lazer" rows="6" placeholder="Piscina&#10;Academia&#10;Salão de festas"></textarea></div>
+                    <div class="form-group"><label>Informações técnicas (uma por linha: Item: valor)</label>
+                        <textarea id="infoTecnica" rows="6" placeholder="Previsão de entrega: 02/2029&#10;Número de torres: 1&#10;Total de unidades: 267"></textarea></div>
+                </div>
+                <p id="faltasBox" style="font-size:.85rem;margin:10px 0 4px"></p>
+                <button type="submit" class="btn-pub" id="btnPublicar"><i class="fas fa-check-circle"></i> Publicar Imóvel no Portal</button>
+                <button type="button" onclick="salvarRascunho()" style="width:100%;margin-top:10px;padding:12px;background:#64748B;color:#fff;border:none;border-radius:6px;font-weight:bold;cursor:pointer">Salvar como rascunho (não aparece no site)</button>
+            </form>
+        </div>
+
+        <!-- ABA 2: CONFIGURAÇÕES -->
+        <div class="tab-content" id="tab-conteudos">
+            <div id="cBanner" style="display:none;background:#FFF8E1;border-left:4px solid var(--gold);padding:12px 15px;margin-bottom:15px;border-radius:6px;font-size:.9rem">
+                <b>Editando conteúdo.</b> <button type="button" onclick="limparConteudoForm()" style="float:right;padding:4px 12px;cursor:pointer">Cancelar edição</button></div>
+            <div class="section-title" id="cTituloForm">Novo conteúdo</div>
+            <div class="form-grid">
+                <div class="form-group"><label>Tipo</label><select id="c_tipo" onchange="ajustarTipoConteudo()"><option value="blog">Blog (Conteúdos para inspirar)</option><option value="noticia">Notícia (Joildo Informa)</option><option value="depoimento">Depoimento de cliente</option></select></div>
+                <div class="form-group"><label>Data</label><input type="date" id="c_data"></div>
+                <div class="form-group" id="g_categoria"><label>Etiqueta (ex: Investimento)</label><input type="text" id="c_categoria"></div>
+                <div class="form-group" id="g_estrelas" style="display:none"><label>Estrelas</label><select id="c_estrelas"><option>5</option><option>4</option><option>3</option></select></div>
+            </div>
+            <div class="form-group" id="g_titulo"><label>Título <button type="button" onclick="iaTitulos()" style="margin-left:8px;padding:3px 10px;font-size:.7rem;cursor:pointer;border:1px solid var(--gold);background:#fff;border-radius:4px">✨ Sugerir títulos</button></label><input type="text" id="c_titulo"></div>
+            <div class="form-grid" style="grid-template-columns:1fr 1fr">
+                <div class="form-group" id="g_imagem"><label>URL da imagem</label><input type="url" id="c_imagem" placeholder="https://..."></div>
+                <div class="form-group" id="g_link"><label>Link do artigo completo (opcional)</label><input type="url" id="c_link" placeholder="https://..."></div>
+                <div class="form-group" id="g_autor" style="display:none"><label>Autor do depoimento</label><input type="text" id="c_autor" placeholder="Ex: Maria S., Compradora"></div>
+            </div>
+            <div class="form-group"><label>Texto <button type="button" onclick="iaTextoConteudo()" style="margin-left:8px;padding:3px 10px;font-size:.7rem;cursor:pointer;border:1px solid var(--gold);background:#fff;border-radius:4px">✨ Escrever / melhorar com IA</button></label><textarea id="c_texto" rows="8"></textarea></div>
+            <button type="button" class="btn-pub" id="btnConteudo" onclick="salvarConteudo()"><i class="fas fa-check-circle"></i> Publicar conteúdo</button>
+            <div class="section-title" style="margin-top:35px">Conteúdos publicados no site</div>
+            <div id="lista-conteudos"></div>
+        </div>
+
+        <div class="tab-content" id="tab-ia">
+            <div class="section-title">Preencher o cadastro de um imóvel a partir de um texto</div>
+            <p style="font-size:.85rem;color:#555;margin:10px 0">Cole o texto do Órulo, do WhatsApp da construtora ou de uma tabela. A IA separa os dados e preenche o formulário para você conferir. Ela não inventa o que não estiver no texto.</p>
+            <textarea id="ia_extrair" rows="7" style="width:100%" placeholder="Cole aqui o texto do imóvel..."></textarea>
+            <button type="button" class="btn-pub" style="background:var(--primary);margin-top:10px" onclick="iaExtrair()"><i class="fas fa-wand-magic-sparkles"></i> Preencher formulário com IA</button>
+            <div class="section-title">Pedir um texto (post de blog, legenda, e-mail, resposta a cliente...)</div>
+            <textarea id="ia_pedido" rows="4" style="width:100%;margin-top:10px" placeholder="Ex: Escreva um post explicando as etapas do financiamento imobiliário para quem compra o primeiro imóvel."></textarea>
+            <button type="button" class="btn-pub" style="background:var(--primary);margin-top:10px" onclick="iaLivre()"><i class="fas fa-pen-nib"></i> Gerar texto</button>
+            <textarea id="ia_saida" rows="12" style="width:100%;margin-top:15px" placeholder="O texto gerado aparece aqui. Você pode editar."></textarea>
+            <button type="button" style="margin-top:8px;padding:10px 18px;cursor:pointer" onclick="usarComoPost()">Usar como novo conteúdo do blog</button>
+        </div>
+
+        <div class="tab-content" id="tab-lista"><div id="lista-imoveis"></div></div>
+
+        <div class="tab-content" id="tab-redes">
+            <div class="section-title">Marca, Slogan, Redes Sociais e Contato</div>
+            <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+                <div class="form-group" style="grid-column: 1/-1;">
+                    <label><i class="fas fa-quote-left" style="color:var(--gold)"></i> Frase de Impacto / Slogan (Abaixo do Nome)</label>
+                    <input type="text" id="cfg_slogan" placeholder="Ex: Ética e dedicação para tornar seus sonhos realidade">
+                </div>
+                <div class="form-group" style="grid-column: 1/-1;">
+                    <label><i class="fas fa-image" style="color:var(--primary)"></i> URL da Logomarca em Imagem (Opcional - Link PNG/SVG)</label>
+                    <input type="url" id="cfg_logoUrl" placeholder="https://seu-site.com/logo.png (Deixe em branco para texto padrão)">
+                </div>
+                <div class="form-group">
+                    <label><i class="fab fa-linkedin" style="color:#0A66C2"></i> LinkedIn Profissional (Joildo Costa)</label>
+                    <input type="url" id="cfg_linkedin" placeholder="https://www.linkedin.com/in/joildo-costa-0154a29b/">
+                </div>
+                <div class="form-group">
+                    <label><i class="fab fa-instagram" style="color:#E4405F"></i> Instagram Oficial</label>
+                    <input type="url" id="cfg_instagram" placeholder="https://www.instagram.com/seu-perfil">
+                </div>
+                <div class="form-group">
+                    <label><i class="fab fa-facebook" style="color:#1877F2"></i> Facebook Oficial</label>
+                    <input type="url" id="cfg_facebook" placeholder="https://www.facebook.com/sua-pagina">
+                </div>
+                <div class="form-group">
+                    <label><i class="fab fa-youtube" style="color:#FF0000"></i> Canal do YouTube</label>
+                    <input type="url" id="cfg_youtube" placeholder="https://www.youtube.com/@seu-canal">
+                </div>
+                <div class="form-group">
+                    <label><i class="fab fa-whatsapp" style="color:#25D366"></i> Telefone WhatsApp (Apenas Números)</label>
+                    <input type="text" id="cfg_whatsapp" placeholder="5511999999999">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-phone-alt" style="color:var(--primary)"></i> Telefone de Exibição</label>
+                    <input type="text" id="cfg_telefone" placeholder="(11) 99999-9999">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-envelope" style="color:var(--gold)"></i> E-mail de Contato</label>
+                    <input type="email" id="cfg_email" placeholder="contato@joildobrokers.com.br">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-id-card" style="color:var(--primary)"></i> Número do CRECI</label>
+                    <input type="text" id="cfg_creci" placeholder="CRECI 245890-F">
+                </div>
+            </div>
+            <div class="form-group" style="margin-top:20px;"><label>Construtoras e incorporadoras parceiras (uma por linha: Nome | URL do logo | Link do site)</label>
+                    <textarea id="cfg_parceiros" rows="6" placeholder="Construtora Exemplo | https://site.com/logo.png | https://site.com&#10;Outra Incorporadora"></textarea>
+                    <small style="color:#64748B">O logo e o link são opcionais. Sem logo, o nome aparece escrito.</small></div>
+                <button type="button" class="btn-pub" style="background: var(--primary);" onclick="salvarConfigRedes()">
+                <i class="fas fa-save"></i> Salvar Configurações no Site
+            </button>
+        </div>
+
+    </div>
+
+    <script src="/taxonomia.js"></script>
+    <script>
+        function montarTipos() {
+            const g = TAXONOMIA[document.getElementById('categoria').value] || {};
+            document.getElementById('tipo').innerHTML = Object.keys(g).map(k => `<optgroup label="${k}">${g[k].map(t => `<option>${t}</option>`).join('')}</optgroup>`).join('');
+        }
+        (function () {
+            const c = document.getElementById('categoria');
+            c.innerHTML = Object.keys(TAXONOMIA).map(k => `<option>${k}</option>`).join('');
+            c.onchange = montarTipos; montarTipos();
+        })();
+
+        let TOKEN = sessionStorage.getItem('tk') || '';
+        const H = () => ({'Content-Type':'application/json','x-token':TOKEN});
+        async function fazerLogin() {
+            const res = await fetch('/api/login', {method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({user: document.getElementById('user').value, pass: document.getElementById('pass').value})});
+            const r = await res.json();
+            if(r.success) {
+                TOKEN = r.token; sessionStorage.setItem('tk', TOKEN);
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('panel').style.display = 'block';
+                carregarConfigAdmin();
+                caixaTexto();
+            } else { alert('Acesso negado!'); }
+        }
+
+        const esc = t => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        const linhas = id => document.getElementById(id).value.split('\n').map(x => x.trim()).filter(Boolean);
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === 'tab-' + tab));
+            if (tab === 'lista') carregarLista();
+            if (tab === 'conteudos') carregarConteudos();
+        }
+        async function carregarLista() {
+            const box = document.getElementById('lista-imoveis');
+            const res = await fetch('/api/admin/imoveis', { headers: H() });
+            if (res.status === 401) { sessionStorage.removeItem('tk'); alert('Sessão expirada. Entre de novo.'); return location.reload(); }
+            const d = await res.json(); IMOVEIS = d;
+            const fmt = s => s ? new Date(s).toLocaleDateString('pt-BR') : '-';
+            box.innerHTML = d.length ? `<table class="tabela-imoveis"><tr><th>Ref</th><th>Imóvel</th><th>Publicado</th><th>Atualizado</th><th>Status</th><th>Ações</th></tr>${d.map(i => `
+                <tr><td>${esc(i.ref)}</td><td>${esc(i.titulo)}${i.demo ? ' <em>(exemplo)</em>' : ''}</td><td>${fmt(i.criadoEm)}</td><td>${fmt(i.atualizadoEm || i.criadoEm)}</td>
+                <td>${i.ativo === false ? 'Inativo' : 'Ativo'}${i.emDestaque ? ' | Destaque' : ''}</td>
+                <td><button onclick="editarImovel('${i.id}')" style="background:var(--primary);color:#fff">✏️ Editar</button>
+                <button onclick="acaoImovel('${i.id}', {ativo: ${i.ativo === false}})">${i.ativo === false ? 'Ativar' : 'Desativar'}</button>
+                <button onclick="acaoImovel('${i.id}', {emDestaque: ${!i.emDestaque}})">${i.emDestaque ? 'Tirar destaque' : 'Destacar'}</button>
+                <button onclick="duplicar('${i.id}')">Duplicar</button>
+                <button onclick="excluir('${i.id}')">Excluir</button></td></tr>`).join('')}</table>` : '<p>Nenhum imóvel cadastrado.</p>';
+        }
+        async function acaoImovel(id, corpo) { await fetch('/api/imoveis/' + id, { method: 'PATCH', headers: H(), body: JSON.stringify(corpo) }); carregarLista(); }
+        async function duplicar(id) { const r = await (await fetch('/api/duplicar-imovel/' + id, { method: 'POST', headers: H() })).json(); alert(r.success ? 'Cópia criada como inativa (' + r.ref + '). Ative quando estiver pronta.' : 'Não foi possível duplicar.'); carregarLista(); }
+        async function excluir(id) { if (!confirm('Excluir este imóvel? Esta ação não pode ser desfeita.')) return; await fetch('/api/imoveis/' + id, { method: 'DELETE', headers: H() }); carregarLista(); }
+        async function carregarConfigAdmin() {
+            try {
+                const res = await fetch('/api/config');
+                const config = await res.json();
+                document.getElementById('cfg_slogan').value = config.slogan || '';
+                document.getElementById('cfg_logoUrl').value = config.logoUrl || '';
+                document.getElementById('cfg_linkedin').value = config.linkedin || '';
+                document.getElementById('cfg_instagram').value = config.instagram || '';
+                document.getElementById('cfg_facebook').value = config.facebook || '';
+                document.getElementById('cfg_youtube').value = config.youtube || '';
+                document.getElementById('cfg_whatsapp').value = config.whatsapp || '';
+                document.getElementById('cfg_telefone').value = config.telefone || '';
+                document.getElementById('cfg_email').value = config.email || '';
+                document.getElementById('cfg_creci').value = config.creci || '';
+                document.getElementById('cfg_parceiros').value = (config.parceiros || []).map(p => [p.nome, p.logo || '', p.link || ''].join(' | ')).join('\n');
+            } catch(e) {}
+        }
+
+        async function salvarConfigRedes() {
+            const config = {
+                slogan: document.getElementById('cfg_slogan').value,
+                logoUrl: document.getElementById('cfg_logoUrl').value,
+                linkedin: document.getElementById('cfg_linkedin').value,
+                instagram: document.getElementById('cfg_instagram').value,
+                facebook: document.getElementById('cfg_facebook').value,
+                youtube: document.getElementById('cfg_youtube').value,
+                whatsapp: document.getElementById('cfg_whatsapp').value,
+                telefone: document.getElementById('cfg_telefone').value,
+                email: document.getElementById('cfg_email').value,
+                creci: document.getElementById('cfg_creci').value,
+                parceiros: linhas('cfg_parceiros').map(l => { const p = l.split('|').map(x => x.trim()); return { nome: p[0] || '', logo: p[1] || '', link: p[2] || '' }; }).filter(p => p.nome)
+            };
+
+            const res = await fetch('/api/config', {
+                method: 'POST',
+                headers: H(),
+                body: JSON.stringify(config)
+            });
+            const r = await res.json();
+            if(r.success) alert('✅ Configurações Atualizadas com Sucesso!');
+        }
+
+        const plantaLinha = p => (p && typeof p === 'object') ? ((p.nome ? p.nome + ' | ' : '') + p.url) : String(p);
+        const CAMPOS_OBRIG = [['titulo','Título'],['preco','Preço'],['cidade','Cidade / Bairro / UF'],['area','Área'],['dormitorios','Dormitórios'],['vagas','Vagas'],['construtora','Construtora'],['foto','Foto de capa'],['apresentacao','Apresentação'],['tipologias','Tipologias e valores'],['lazer','Lazer e comodidades'],['infoTecnica','Informações técnicas']];
+        function faltasForm() {
+            const v = id => (document.getElementById(id).value || '').trim();
+            const lst = { tipologias: linhas('tipologias').length, lazer: linhas('lazer').length, infoTecnica: linhas('infoTecnica').length, foto: v('foto') || linhas('fotos').length };
+            return CAMPOS_OBRIG.filter(([id]) => !(id in lst ? lst[id] : v(id))).map(([id, nome]) => ({ id, nome }));
+        }
+        function marcarFaltas() {
+            const f = faltasForm(), ids = new Set(f.map(x => x.id));
+            CAMPOS_OBRIG.forEach(([id]) => { const el = document.getElementById(id); if (el) el.style.outline = ids.has(id) ? '2px solid #B42318' : ''; });
+            const box = document.getElementById('faltasBox');
+            if (box) { box.textContent = f.length ? 'Falta preencher: ' + f.map(x => x.nome).join(', ') + '.' : 'Cadastro completo.'; box.style.color = f.length ? '#9A5B00' : '#067647'; }
+        }
+        document.addEventListener('input', e => { if (e.target.closest && e.target.closest('#tab-imoveis form')) marcarFaltas(); });
+        async function subirArquivos(input, alvo) {
+            const arqs = [...input.files]; input.value = '';
+            if (!arqs.length) return;
+            const el = document.getElementById(alvo); let ok = 0;
+            for (const f of arqs) {
+                if (!f.type.startsWith('image/')) continue;
+                if (f.size > 20 * 1024 * 1024) { alert(f.name + ' passa de 20 MB.'); continue; }
+                const dataUrl = await new Promise((resolve, reject) => { const fr = new FileReader(); fr.onload = () => resolve(fr.result); fr.onerror = reject; fr.readAsDataURL(f); });
+                const resp = await fetch('/api/upload', { method: 'POST', headers: H(), body: JSON.stringify({ tipo: alvo === 'plantas' ? 'planta' : 'foto', arquivo: dataUrl }) });
+                if (resp.status === 401) { sessionStorage.removeItem('tk'); return location.reload(); }
+                const r = await resp.json();
+                if (!r.success) { alert(r.error || 'Não consegui enviar ' + f.name); break; }
+                const nome = f.name.replace(/\.[^.]+$/, '');
+                if (alvo === 'foto') el.value = r.url;
+                else el.value = (el.value.trim() ? el.value.trim() + '\n' : '') + (alvo === 'plantas' ? nome + ' | ' + r.url : r.url);
+                ok++;
+            }
+            marcarFaltas();
+            if (ok) alert(ok + ' arquivo(s) enviado(s).');
+        }
+        function salvarRascunho() { window.RASCUNHO = true; document.getElementById('ativo').checked = false; document.querySelector('#tab-imoveis form').requestSubmit(); }
+        function preencher(d) {
+            const set = (id, v) => { if (v) document.getElementById(id).value = v; };
+            set('titulo', d.titulo); set('preco', d.preco); set('cidade', d.localizacao);
+            set('area', d.area); set('dormitorios', d.dormitorios); set('vagas', d.vagas); set('foto', d.foto);
+            set('apresentacao', d.apresentacao); set('estagio', d.estagio); set('diferencial', d.diferencial); set('proximidade', d.proximidade);
+            if (d.categoria) { document.getElementById('categoria').value = d.categoria; montarTipos(); }
+            if (d.tipo) {
+                const sel = document.getElementById('tipo');
+                if (![...sel.options].some(o => o.value === d.tipo)) sel.insertAdjacentHTML('beforeend', `<option>${esc(d.tipo)}</option>`);
+                sel.value = d.tipo;
+            }
+            if (d.fotos && d.fotos.length) set('fotos', d.fotos.join('\n'));
+            if (d.plantas && d.plantas.length) set('plantas', d.plantas.map(plantaLinha).join('\n'));
+            if (d.tipologias && d.tipologias.length) set('tipologias', d.tipologias.map(t => [t.nome, t.area, t.dorm, t.suites, t.vagas, t.preco].join(' | ')).join('\n'));
+            if (d.lazer && d.lazer.length) set('lazer', d.lazer.join('\n'));
+            if (d.infoTecnica && d.infoTecnica.length) set('infoTecnica', d.infoTecnica.map(x => x.k + ': ' + x.v).join('\n'));
+            set('construtora', d.construtora); set('precoM2', d.precoM2); set('linkOrigem', d.linkOrigem);
+            if (d.transacao) document.getElementById('transacao').value = d.transacao;
+            if (d.destaque) document.getElementById('destaque').value = d.destaque;
+            if (d.emDestaque !== undefined) document.getElementById('emDestaque').value = d.emDestaque ? 'sim' : 'nao';
+            set('youtube', d.youtube); set('tour360', d.tour360);
+            if (d.linkOrigem !== undefined) document.getElementById('sincronizar').checked = d.sincronizar !== false;
+            if (d.ativo !== undefined) document.getElementById('ativo').checked = d.ativo !== false;
+            marcarFaltas();
+        }
+        function caixaTexto() {
+            if (document.getElementById('textoOrulo')) return;
+            const box = document.createElement('div');
+            box.id = 'textoOrulo';
+            box.innerHTML = '<textarea id="txtOrulo" rows="6" style="width:100%;margin-top:10px;padding:10px" placeholder="Abra o imóvel no Órulo logado, aperte Ctrl+A e Ctrl+C, e cole o texto aqui"></textarea>' +
+                '<button type="button" onclick="extrairTexto()" style="margin-top:8px;padding:10px 18px;cursor:pointer">Extrair do texto colado</button>';
+            const st = document.createElement('p'); st.id = 'statusTexto'; st.style.cssText = 'font-size:.85rem;color:#555;margin:8px 0 0';
+        box.appendChild(st);
+        document.getElementById('urlOrulo').insertAdjacentElement('afterend', box);
+        // Colar o texto já preenche a seção sozinho (sem botão)
+        document.getElementById('txtOrulo').addEventListener('paste', () => setTimeout(() => extrairTexto(true), 200));
+        }
+        async function salvarSessao() {
+            const cookie = document.getElementById('cookieOrulo').value.trim();
+            if(!cookie) return alert('Cole o cookie primeiro.');
+            const res = await fetch('/api/orulo-sessao', {method:'POST', headers:H(), body: JSON.stringify({cookie})});
+            const r = await res.json();
+            if(r.success) { document.getElementById('cookieOrulo').value = ''; alert('Sessão salva. Clique em Puxar Dados do Órulo de novo.'); }
+        }
+        async function extrairTexto(silencioso) {
+            const txt = document.getElementById('txtOrulo').value;
+            const st = document.getElementById('statusTexto');
+            if (txt.trim().length < 80) { if (!silencioso) alert('Cole o texto completo da página do imóvel.'); return; }
+            if (st) st.textContent = 'Lendo o texto colado e preenchendo os campos...';
+            const res = await fetch('/api/extrair-texto', {method:'POST', headers:H(), body: JSON.stringify({texto: txt})});
+            if (res.status === 401) { sessionStorage.removeItem('tk'); return location.reload(); }
+            const r = await res.json();
+            const d = r.dados || {};
+            preencher(d);
+            const falta = [];
+            if (!(d.tipologias||[]).length) falta.push('tipologias');
+            if (!(d.lazer||[]).length) falta.push('lazer');
+            if (!(d.infoTecnica||[]).length) falta.push('informações técnicas');
+            if (st) st.textContent = 'Campos preenchidos a partir do texto colado.' + (falta.length ? ' Não encontrei: ' + falta.join(', ') + '. Complete manualmente.' : ' Confira antes de publicar.');
+        }
+        async function minerar() {
+            const url = document.getElementById('urlOrulo').value;
+            if(!url) return alert('Cole a URL do Órulo!');
+            const res = await fetch('/api/importar-link', {method:'POST', headers:H(), body: JSON.stringify({url})});
+            if(res.status === 401) { alert('Sessão expirada. A página vai recarregar, entre de novo.'); sessionStorage.removeItem('tk'); return location.reload(); }
+            const r = await res.json();
+            if(r.success) {
+                if (typeof EDIT_ID !== 'undefined' && EDIT_ID) cancelarEdicao();
+                preencher(r.dados);
+                if(r.precisaTexto) { caixaTexto(); alert('Peguei só parte dos dados. Faltaram: ' + r.faltando.join(', ') + '. Cole o texto da página para completar.' + (r.diag ? '\n\nDados recebidos (para ajuste): ' + r.diag : '')); }
+                else alert('Dados extraídos. Confira antes de publicar.');
+            } else { caixaTexto(); alert(r.error ); }
+        }
+
+        async function salvar(e) {
+            e.preventDefault();
+            const lista = (id) => document.getElementById(id).value.split(/\s+/).map(x => x.trim()).filter(x => /^https?:\/\//i.test(x));
+            const fotos = lista('fotos');
+            const plantas = linhas('plantas').map(l => { const p = l.split('|').map(x => x.trim()); const url = p[p.length - 1]; return /^https?:\/\//i.test(url) ? (p.length > 1 && p[0] ? { nome: p[0], url } : url) : null; }).filter(Boolean);
+            const capa = document.getElementById('foto').value.trim() || fotos[0] || '';
+            const ehRascunho = !!window.RASCUNHO; window.RASCUNHO = false;
+            if(!capa) return alert('Informe a foto de capa ou cole pelo menos um link na galeria de fotos.');
+            if(!fotos.includes(capa)) fotos.unshift(capa);
+            if (!ehRascunho && document.getElementById('ativo').checked) { const falt = faltasForm(); if (falt.length) { marcarFaltas(); return alert('Antes de publicar, preencha: ' + falt.map(x => x.nome).join(', ') + '. Ou salve como rascunho.'); } }
+            const imovel = {
+                fotos: fotos, plantas: plantas,
+                transacao: document.getElementById('transacao').value,
+                categoria: document.getElementById('categoria').value,
+                tipo: document.getElementById('tipo').value,
+                emDestaque: document.getElementById('emDestaque').value === 'sim',
+                apresentacao: document.getElementById('apresentacao').value.trim(),
+                diferencial: document.getElementById('diferencial').value.trim(),
+                proximidade: document.getElementById('proximidade').value.trim(),
+                tipologias: linhas('tipologias').map(l => { const p = l.split('|').map(x => x.trim()); return { nome: p[0] || '', area: p[1] || '', dorm: p[2] || '', suites: p[3] || '', vagas: p[4] || '', preco: p[5] || '' }; }),
+                lazer: linhas('lazer'),
+                infoTecnica: linhas('infoTecnica').map(l => { const k = l.indexOf(':'); return k < 0 ? { k: l, v: '' } : { k: l.slice(0, k).trim(), v: l.slice(k + 1).trim() }; }),
+                titulo: document.getElementById('titulo').value,
+                preco: document.getElementById('preco').value,
+                localizacao: document.getElementById('cidade').value || 'São Paulo - SP',
+                estagio: document.getElementById('estagio').value,
+                destaque: document.getElementById('destaque').value,
+                area: document.getElementById('area').value,
+                dormitorios: document.getElementById('dormitorios').value,
+                vagas: document.getElementById('vagas').value,
+                foto: capa,
+                construtora: document.getElementById('construtora').value.trim(), precoM2: document.getElementById('precoM2').value.trim(), linkOrigem: document.getElementById('linkOrigem').value.trim(), sincronizar: document.getElementById('sincronizar').checked, ativo: document.getElementById('ativo').checked,
+                youtube: document.getElementById('youtube').value,
+                tour360: document.getElementById('tour360').value
+            };
+
+            if (EDIT_ID) { imovel.ref = EDIT_ORIG.ref; imovel.ativo = EDIT_ORIG.ativo !== false; imovel.demo = EDIT_ORIG.demo === true; }
+            const res = await fetch(EDIT_ID ? '/api/imoveis/' + EDIT_ID : '/api/adicionar-imovel', {
+                method: EDIT_ID ? 'PUT' : 'POST',
+                headers: H(),
+                body: JSON.stringify(imovel)
+            });
+            const r = await res.json();
+            if(!r.success) return alert(r.error || 'Não foi possível salvar.');
+            if(r.success) {
+                alert(EDIT_ID ? '✅ Alterações salvas no site!' : '🎉 Imóvel Publicado no Portal! REF: ' + r.ref);
+                e.target.reset(); montarTipos(); EDIT_ID = null; EDIT_ORIG = null; atualizarBanner(); window.scrollTo(0, 0); switchTab('lista');
+            }
+        }
+
+        // ===== EDIÇÃO DE IMÓVEL =====
+        let IMOVEIS = [], EDIT_ID = null, EDIT_ORIG = null;
+        const val = (id, v) => { document.getElementById(id).value = v == null ? '' : v; };
+        function atualizarBanner() {
+            document.getElementById('editBanner').style.display = EDIT_ID ? 'block' : 'none';
+            document.getElementById('editNome').textContent = EDIT_ORIG ? EDIT_ORIG.titulo + ' (' + EDIT_ORIG.ref + ')' : '';
+            document.getElementById('btnPublicar').innerHTML = EDIT_ID ? '<i class="fas fa-save"></i> Salvar alterações' : '<i class="fas fa-check-circle"></i> Publicar Imóvel no Portal';
+        }
+        function cancelarEdicao() { EDIT_ID = null; EDIT_ORIG = null; document.querySelector('#tab-imoveis form').reset(); montarTipos(); atualizarBanner(); }
+        function editarImovel(id) {
+            const i = IMOVEIS.find(x => String(x.id) === String(id)); if (!i) return;
+            EDIT_ID = i.id; EDIT_ORIG = i; switchTab('imoveis');
+            val('transacao', i.transacao || 'Vender Imóvel');
+            val('categoria', i.categoria || 'Residencial'); montarTipos();
+            const sel = document.getElementById('tipo');
+            if (i.tipo && ![...sel.options].some(o => o.value === i.tipo)) sel.insertAdjacentHTML('beforeend', `<option>${esc(i.tipo)}</option>`);
+            val('tipo', i.tipo);
+            val('destaque', i.destaque || 'none'); val('emDestaque', i.emDestaque ? 'sim' : 'nao');
+            val('cidade', i.localizacao); val('titulo', i.titulo); val('preco', i.preco); val('estagio', i.estagio || 'lancamentos');
+            val('area', i.area); val('dormitorios', i.dormitorios); val('vagas', i.vagas);
+            val('foto', i.foto); val('youtube', i.youtube); val('tour360', i.tour360);
+            val('fotos', (i.fotos || []).join('\n')); val('plantas', (i.plantas || []).map(plantaLinha).join('\n'));
+            val('construtora', i.construtora); val('precoM2', i.precoM2); val('linkOrigem', i.linkOrigem);
+            document.getElementById('sincronizar').checked = i.sincronizar !== false; document.getElementById('ativo').checked = i.ativo !== false;
+            marcarFaltas();
+            val('diferencial', i.diferencial); val('proximidade', i.proximidade); val('apresentacao', i.apresentacao);
+            val('tipologias', (i.tipologias || []).map(t => [t.nome, t.area, t.dorm, t.suites, t.vagas, t.preco].join(' | ')).join('\n'));
+            val('lazer', (i.lazer || []).join('\n'));
+            val('infoTecnica', (i.infoTecnica || []).map(x => x.k + ': ' + x.v).join('\n'));
+            atualizarBanner(); window.scrollTo(0, 0);
+        }
+
+        // ===== IA =====
+        async function ia(tarefa, instrucao, dados) {
+            const res = await fetch('/api/ia', { method: 'POST', headers: H(), body: JSON.stringify({ tarefa, instrucao, dados }) });
+            const r = await res.json().catch(() => ({}));
+            if (!r.success) { alert(r.error || 'Erro na IA.'); return null; }
+            return r.texto;
+        }
+        function dadosImovelForm() {
+            return { titulo: titulo.value, preco: preco.value, localizacao: cidade.value, tipo: tipo.value, area: area.value, dormitorios: dormitorios.value, vagas: vagas.value,
+                diferencial: diferencial.value, proximidade: proximidade.value, lazer: linhas('lazer'), tipologias: linhas('tipologias'), infoTecnica: linhas('infoTecnica') };
+        }
+        async function iaApresentacao() {
+            if (!titulo.value) return alert('Preencha pelo menos o título do imóvel.');
+            const t = await ia('apresentacao', apresentacao.value ? 'Texto atual para melhorar: ' + apresentacao.value : '', dadosImovelForm());
+            if (t) apresentacao.value = t;
+        }
+        async function iaExtrair() {
+            const txt = ia_extrair.value.trim(); if (!txt) return alert('Cole o texto primeiro.');
+            const t = await ia('extrair', txt); if (!t) return;
+            let d; try { d = JSON.parse(t.replace(/^```json|```$/g, '').trim()); } catch (e) { return alert('A IA não devolveu dados legíveis. Tente de novo.'); }
+            cancelarEdicao(); switchTab('imoveis');
+            const set = (id, v) => { if (v) val(id, v); };
+            set('titulo', d.titulo); set('preco', d.preco); set('cidade', d.localizacao); set('area', d.area); set('dormitorios', d.dormitorios);
+            set('vagas', d.vagas); set('diferencial', d.diferencial); set('proximidade', d.proximidade); set('apresentacao', d.apresentacao);
+            if (Array.isArray(d.lazer) && d.lazer.length) val('lazer', d.lazer.join('\n'));
+            alert('Formulário preenchido. Confira os dados e acrescente fotos antes de publicar.');
+        }
+        async function iaLivre() {
+            const p = ia_pedido.value.trim(); if (!p) return alert('Descreva o que quer escrever.');
+            const t = await ia('post', p); if (t) ia_saida.value = t;
+        }
+        function usarComoPost() {
+            if (!ia_saida.value.trim()) return alert('Gere um texto primeiro.');
+            limparConteudoForm(); switchTab('conteudos'); val('c_tipo', 'blog'); ajustarTipoConteudo(); val('c_texto', ia_saida.value);
+        }
+        async function iaTitulos() {
+            const base = c_texto.value || c_titulo.value; if (!base) return alert('Escreva o texto ou um tema primeiro.');
+            const t = await ia('titulos', base); if (!t) return;
+            const esc1 = prompt('Sugestões (copie a que preferir):\n\n' + t, t.split('\n')[0]); if (esc1) c_titulo.value = esc1;
+        }
+        async function iaTextoConteudo() {
+            const base = c_texto.value.trim();
+            const t = base ? await ia('revisar', base) : await ia('post', c_titulo.value || ''); if (t) c_texto.value = t;
+        }
+
+        // ===== CONTEÚDOS =====
+        let CONTEUDOS = [], C_EDIT = null;
+        const NOME_TIPO = { blog: 'Blog', noticia: 'Notícia', depoimento: 'Depoimento' };
+        function ajustarTipoConteudo() {
+            const dep = c_tipo.value === 'depoimento';
+            g_estrelas.style.display = g_autor.style.display = dep ? '' : 'none';
+            g_categoria.style.display = g_titulo.style.display = g_imagem.style.display = g_link.style.display = dep ? 'none' : '';
+        }
+        function limparConteudoForm() {
+            C_EDIT = null; ['c_titulo','c_categoria','c_imagem','c_link','c_autor','c_texto'].forEach(i => val(i, ''));
+            val('c_data', new Date().toISOString().slice(0, 10)); val('c_estrelas', '5');
+            cBanner.style.display = 'none'; cTituloForm.textContent = 'Novo conteúdo'; btnConteudo.innerHTML = '<i class="fas fa-check-circle"></i> Publicar conteúdo'; ajustarTipoConteudo();
+        }
+        async function carregarConteudos() {
+            if (!c_data.value) limparConteudoForm();
+            const res = await fetch('/api/admin/conteudos', { headers: H() });
+            if (res.status === 401) { sessionStorage.removeItem('tk'); alert('Sessão expirada. Entre de novo.'); return location.reload(); }
+            CONTEUDOS = await res.json();
+            lista_conteudos.innerHTML = CONTEUDOS.length ? `<table class="tabela-imoveis"><tr><th>Tipo</th><th>Título / Texto</th><th>Data</th><th>Status</th><th>Ações</th></tr>${CONTEUDOS.map(c => `
+                <tr><td>${NOME_TIPO[c.tipo] || c.tipo}</td><td>${esc((c.titulo || c.texto || '').slice(0, 70))}</td><td>${esc(c.data)}</td><td>${c.ativo === false ? 'Oculto' : 'No ar'}</td>
+                <td><button onclick="editarConteudo('${c.id}')" style="background:var(--primary);color:#fff">✏️ Editar</button>
+                <button onclick="toggleConteudo('${c.id}', ${c.ativo === false})">${c.ativo === false ? 'Mostrar' : 'Ocultar'}</button>
+                <button onclick="excluirConteudo('${c.id}')">Excluir</button></td></tr>`).join('')}</table>` : '<p>Nada publicado.</p>';
+        }
+        function editarConteudo(id) {
+            const c = CONTEUDOS.find(x => String(x.id) === String(id)); if (!c) return;
+            C_EDIT = c.id; val('c_tipo', c.tipo); ajustarTipoConteudo();
+            val('c_titulo', c.titulo); val('c_categoria', c.categoria); val('c_data', c.data); val('c_imagem', c.imagem); val('c_link', c.link);
+            val('c_texto', c.texto); val('c_autor', c.autor); val('c_estrelas', c.estrelas || 5);
+            cBanner.style.display = 'block'; cTituloForm.textContent = 'Editando conteúdo'; btnConteudo.innerHTML = '<i class="fas fa-save"></i> Salvar alterações'; window.scrollTo(0, 0);
+        }
+        async function salvarConteudo() {
+            const body = { tipo: c_tipo.value, titulo: c_titulo.value, categoria: c_categoria.value, data: c_data.value, imagem: c_imagem.value, link: c_link.value, texto: c_texto.value, autor: c_autor.value, estrelas: c_estrelas.value, ativo: C_EDIT ? (CONTEUDOS.find(x => x.id === C_EDIT) || {}).ativo !== false : true };
+            const res = await fetch(C_EDIT ? '/api/conteudos/' + C_EDIT : '/api/conteudos', { method: C_EDIT ? 'PUT' : 'POST', headers: H(), body: JSON.stringify(body) });
+            const r = await res.json();
+            if (!r.success) return alert(r.error || 'Não foi possível salvar.');
+            alert('✅ Salvo! Já aparece no site.'); limparConteudoForm(); carregarConteudos();
+        }
+        async function toggleConteudo(id, ativo) { await fetch('/api/conteudos/' + id, { method: 'PATCH', headers: H(), body: JSON.stringify({ ativo }) }); carregarConteudos(); }
+        async function excluirConteudo(id) { if (!confirm('Excluir este conteúdo?')) return; await fetch('/api/conteudos/' + id, { method: 'DELETE', headers: H() }); carregarConteudos(); }
+    </script>
+</body>
+</html>

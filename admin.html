@@ -1,631 +1,647 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CPanel MigMídia | Joildo Brokers</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root { --primary: #0A1128; --gold: #D4AF37; --bg: #F1F5F9; --white: #ffffff; }
-        * { margin:0; padding:0; box-sizing:border-box; font-family: 'Montserrat', sans-serif; }
-        body { background: var(--bg); padding: 20px; }
-        
-        #login-screen { position: fixed; inset: 0; background: var(--primary); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-        .login-box { background: white; padding: 40px; border-radius: 12px; width: 100%; max-width: 380px; text-align: center; }
-        .login-box input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 6px; }
-
-        .container { max-width: 1050px; margin: 0 auto; background: var(--white); padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); display: none; }
-        h2 { color: var(--primary); border-bottom: 2px solid var(--gold); padding-bottom: 10px; margin-bottom: 25px; }
-        
-        .tab-menu { display: flex; gap: 10px; margin-bottom: 25px; }
-        .tab-btn { padding: 12px 24px; background: #E2E8F0; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: var(--primary); }
-        .tab-btn.active { background: var(--primary); color: white; }
-
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-
-        .section-title { background: #f8f9fa; padding: 10px 15px; font-weight: bold; margin-top: 25px; border-left: 4px solid var(--gold); font-size: 0.9rem; text-transform: uppercase; }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; padding: 15px 0; }
-        .form-group { display: flex; flex-direction: column; }
-        label { font-size: 0.75rem; font-weight: bold; margin-bottom: 5px; text-transform: uppercase; color: #555; }
-        input, select, textarea { padding: 10px; border: 1px solid #CBD5E1; border-radius: 6px; outline: none; font-size: 0.9rem; }
-        
-        .btn-pub { background: #198754; color: white; border: none; padding: 16px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1rem; margin-top: 25px; text-transform: uppercase; }
-            .tabela-imoveis { width: 100%; border-collapse: collapse; font-size: .85rem; }
-        .tabela-imoveis th, .tabela-imoveis td { padding: 10px 8px; border-bottom: 1px solid #E2E8F0; text-align: left; vertical-align: middle; }
-        .tabela-imoveis button { padding: 6px 10px; margin: 2px; border: 1px solid #CBD5E1; background: #fff; border-radius: 6px; cursor: pointer; font-size: .78rem; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cpainel · Joildo Brokers</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0A1128;--navy2:#162447;--gold:#D4AF37;--paper:#F3F5F9;--ink:#0F172A;--mut:#64748B;--line:#DDE3EC;--red:#B42318;--ok:#067647;--warn:#9A5B00}
+*{box-sizing:border-box;font-family:Montserrat,system-ui,sans-serif}
+body{margin:0;background:var(--paper);color:var(--ink);font-size:14px;line-height:1.5}
+h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:700;margin:0;line-height:1.2}
+.hidden{display:none!important}
+button{font:inherit}
+#login{min-height:100vh;display:grid;place-items:center;background:var(--navy)}
+.box{background:#fff;border-radius:6px;padding:34px;width:min(360px,92vw);border-top:3px solid var(--gold)}
+input,select,textarea{width:100%;padding:10px 12px;border:1px solid #C5CEDB;border-radius:6px;font:inherit;background:#fff;color:var(--ink)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:transparent}
+label{display:block;font-size:12px;font-weight:600;color:var(--mut);margin-bottom:5px}
+.f{margin-bottom:14px}
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:0 16px}
+.full{grid-column:1/-1}
+.sec{grid-column:1/-1;font-family:'Playfair Display',serif;font-size:18px;border-bottom:1px solid var(--line);padding:18px 0 8px;margin:10px 0 14px}
+.btn{background:var(--navy);color:#fff;border:1px solid var(--navy);border-radius:6px;padding:10px 16px;font-weight:600;cursor:pointer}
+.btn:hover{background:var(--navy2)}
+.btn.ghost{background:#fff;color:var(--navy);border-color:#C5CEDB}
+.btn.ghost:hover{border-color:var(--gold)}
+.btn.sm{padding:6px 10px;font-size:12px}
+.btn.danger{background:#fff;color:var(--red);border-color:#F3C4BF}
+.btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+#app{display:grid;grid-template-columns:216px 1fr;min-height:100vh}
+aside{background:var(--navy);color:#fff;padding:24px 14px;display:flex;flex-direction:column;gap:2px}
+.logo{font-family:'Playfair Display',serif;font-size:19px;margin:0 0 24px 8px}
+.logo span{color:var(--gold);font-style:italic}
+aside .nav{background:none;border:0;color:#C9D2E1;text-align:left;padding:10px 12px;border-radius:6px;cursor:pointer;font-weight:600;font-size:13px}
+aside .nav:hover,aside .nav.on{background:rgba(212,175,55,.14);color:#fff}
+aside a{color:#C9D2E1;font-size:12px;padding:10px 12px;text-decoration:none}
+aside a:hover{color:var(--gold)}
+aside .sair{margin-top:auto}
+main{padding:30px 34px;overflow:auto;min-width:0}
+.top{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:20px}
+.head{font-size:26px;margin-bottom:4px}
+.sub{color:var(--mut);font-size:13px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin:20px 0 26px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:#fff}
+.card{padding:16px 18px;border-left:1px solid var(--line);font-size:12px;color:var(--mut);font-weight:600}
+.card:first-child{border-left:0}
+.card b{display:block;font-size:26px;color:var(--ink);font-weight:700;margin-top:2px}
+.card.bad b{color:var(--red)}
+.panel{background:#fff;border:1px solid var(--line);border-radius:8px;padding:20px;margin-bottom:18px}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:11px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:12px;color:var(--mut);font-weight:600}
+.thumb{width:60px;height:42px;object-fit:cover;border-radius:4px;background:var(--line);display:block}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;margin:0 4px 4px 0}
+.t-ok{background:#E7F6EE;color:var(--ok)}.t-no{background:#FDECEA;color:var(--red)}.t-wa{background:#FDF3E1;color:var(--warn)}
+.acoes{white-space:nowrap}.acoes .btn{margin-left:4px}
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:6px;margin-top:8px}
+.gal img{width:100%;height:62px;object-fit:cover;border-radius:4px;background:var(--line)}
+.dica{font-size:12px;color:var(--mut);margin:0}
+.pend{font-size:13px;font-weight:600;margin:8px 0 0}
+.barra{position:sticky;bottom:0;background:var(--paper);border-top:1px solid var(--line);padding:14px 0;margin-top:16px;display:flex;gap:10px;justify-content:flex-end}
+.importa{background:#fff;border:1px solid var(--line);border-radius:8px;padding:18px;margin-bottom:18px}
+.aviso{position:fixed;bottom:20px;right:20px;background:var(--navy);color:#fff;padding:12px 16px;border-radius:6px;border-left:3px solid var(--gold);z-index:99;max-width:360px;font-size:13px}
+@media(max-width:820px){#app{grid-template-columns:1fr}aside{flex-direction:row;overflow-x:auto;padding:10px}.logo{display:none}aside .sair{margin:0}aside a{display:none}main{padding:18px}}
+.tp-row{display:grid;grid-template-columns:1.6fr .9fr .7fr .7fr .7fr 1.2fr auto;gap:8px;align-items:center;margin-bottom:8px}
+.tp-cab{font-size:12px;color:var(--mut);font-weight:600}
+.tp-row input{padding:8px 10px}
+@media(max-width:820px){.tp-row{grid-template-columns:1fr 1fr}.tp-cab{display:none}}
+.passos{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 16px}
+.passo{background:#fff;border:1px solid var(--line);border-radius:6px;padding:9px 14px;font-weight:600;font-size:13px;cursor:pointer;color:var(--mut)}
+.passo b{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--line);color:var(--ink);font-size:11px;margin-right:8px}
+.passo.on{border-color:var(--gold);color:var(--navy);box-shadow:inset 0 -3px 0 var(--gold)}
+.passo.on b{background:var(--navy);color:#fff}
+.passo:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.subs .passo{border-radius:999px}
+.graf{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;margin-bottom:18px}
+.graf .panel{margin-bottom:0}
+.graf h3{font-size:17px;margin-bottom:12px}
+.bar{display:grid;grid-template-columns:40% 1fr 34px;gap:8px;align-items:center;margin-bottom:8px;font-size:12px}
+.bt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--mut);font-weight:600}
+.bb{background:var(--paper);border-radius:4px;height:14px;overflow:hidden}
+.bb i{display:block;height:100%;background:var(--navy);border-radius:4px}
+.bar b{text-align:right}
+.th{position:relative}
+.th img{display:block}
+.th .x,.th .cp{position:absolute;border:0;cursor:pointer;font-size:11px;font-weight:700;border-radius:4px}
+.th .x{top:3px;right:3px;width:20px;height:20px;background:rgba(10,17,40,.8);color:#fff;line-height:20px;padding:0}
+.th .cp{left:3px;bottom:3px;padding:2px 6px;background:rgba(255,255,255,.92);color:var(--navy)}
+.th .cp:hover,.th .x:hover{background:var(--gold);color:var(--navy)}
+.hint{font-size:12px;color:var(--mut);margin:0 0 14px}
+.acoes .btn{margin:2px 0 2px 4px}
+.btn,.passo,.tag{white-space:nowrap}
+.campo-hide{display:none!important}
+textarea{resize:vertical}
+.linha-up{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px}
+.ajuda{font-size:12px;color:var(--mut);margin:4px 0 0}
+.modos{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:14px}
+.modo{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 14px;text-align:left;cursor:pointer;font-weight:700;color:var(--navy)}
+.modo b{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--line);margin-right:8px;font-size:12px}
+.modo small{display:block;font-weight:500;color:var(--mut);margin-top:3px;font-size:12px}
+.modo.on{border-color:var(--gold);box-shadow:inset 0 -3px 0 var(--gold)}.modo.on b{background:var(--navy);color:#fff}
+.chk{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:4px 14px;border:1px solid var(--line);border-radius:6px;padding:10px 12px;background:#fff}
+.chk label{display:flex;gap:8px;align-items:center;margin:0;font-weight:500;color:var(--ink);font-size:13px;cursor:pointer}
+.chk input{width:auto}
+.orcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-top:12px}
+.orc{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff;font-size:12px}
+.orc img,.orc .ph{width:100%;height:110px;object-fit:cover;background:var(--line);display:block}
+.orc div{padding:10px}.orc b{display:block;font-size:13px;margin-bottom:2px}
+.donut{width:120px;height:120px;border-radius:50%;display:grid;place-items:center;flex:none}
+.donut span{background:#fff;width:74px;height:74px;border-radius:50%;display:grid;place-items:center;font:700 22px 'Playfair Display',serif}
+.gprev{background:#fff;border:1px solid var(--line);border-radius:6px;padding:12px 14px}
+.gprev .gt{color:#1a0dab;font-size:18px;line-height:1.3}.gprev .gu{color:#006621;font-size:13px}.gprev .gd{color:#545454;font-size:13px}
+.cap{position:absolute;left:3px;right:3px;top:3px;background:rgba(10,17,40,.82);color:#fff;font-size:10px;padding:2px 5px;border-radius:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gal{grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}.gal img{height:80px}
+</style>
 </head>
 <body>
 
-    <!-- TELA DE LOGIN -->
-    <div id="login-screen">
-        <div class="login-card login-box">
-            <h2 style="color:var(--primary); margin-bottom: 10px;">JOILDO <span>BROKERS</span></h2>
-            <p style="font-size:0.8rem; color:#666; margin-bottom: 20px;">Painel de Controle Estilo MigMídia</p>
-            <input type="text" id="user" placeholder="Usuário (adm)">
-            <input type="password" id="pass" placeholder="Senha (1234)">
-            <button onclick="fazerLogin()" style="width:100%; padding:12px; background:var(--primary); color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">ACESSAR CPANEL</button>
+<section id="login">
+  <form class="box" id="fLogin">
+    <h2>Cpainel</h2>
+    <p class="sub" style="margin:6px 0 22px">Joildo Brokers. Entre com seu usuário e senha.</p>
+    <div class="f"><label for="lu">Usuário</label><input id="lu" autocomplete="username" required></div>
+    <div class="f"><label for="lp">Senha</label><input id="lp" type="password" autocomplete="current-password" required></div>
+    <p id="lerr" style="color:var(--red);min-height:20px;font-size:13px;margin:0 0 10px"></p>
+    <button class="btn" style="width:100%">Entrar</button>
+  </form>
+</section>
+
+<div id="app" class="hidden">
+  <aside>
+    <div class="logo">Cpainel <span>Joildo</span></div>
+    <button class="nav on" data-v="dash">Painel</button>
+    <button class="nav" data-v="lista">Imóveis</button>
+    <button class="nav" data-v="novo">Novo imóvel</button>
+    <button class="nav" data-v="conteudos">Conteúdos do site</button>
+    <button class="nav" data-v="marca">Marca e Quem Somos</button>
+    <a href="/" target="_blank" rel="noopener">Ver o site</a>
+    <button class="nav sair" id="sair">Sair</button>
+  </aside>
+  <main>
+    <section id="v-dash">
+      <div class="top">
+        <div><h2 class="head" id="titulo"></h2><p class="sub" id="ts"></p></div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <label for="dias" style="margin:0">Alertar após</label>
+          <input id="dias" type="number" min="1" value="90" style="width:84px">
+          <span class="sub">dias</span>
+          <button class="btn" id="sinc">Sincronizar com os portais</button><button class="btn ghost" id="atualizar">Atualizar</button>
         </div>
-    </div>
+      </div>
+      <div class="cards" id="cards"></div>
+      <div class="panel"><h3 style="font-size:19px;margin-bottom:6px">Precisam de atualização</h3><p class="dica" style="margin-bottom:12px">Imóveis publicados sem atualização no sistema há mais dias do que o prazo acima (padrão: 90 dias).</p><div id="stale"></div></div>
+      <div class="graf">
+        <div class="panel"><h3>Por estágio</h3><div id="g-est"></div></div>
+        <div class="panel"><h3>Por finalidade</h3><div id="g-fin"></div></div>
+        <div class="panel"><h3>Por tipo de imóvel</h3><div id="g-tip"></div></div>
+        <div class="panel"><h3>Mais acessados no site</h3><div id="g-top"></div></div>
+      </div>
+      <div class="panel"><h3 style="font-size:19px;margin-bottom:6px">Mudanças vindas do AoCubo e da Órulo</h3><p class="dica" style="margin-bottom:12px">O que o espelho automático alterou no seu site.</p><div id="mudancas"></div></div>
+      <div class="panel"><h3 style="font-size:19px;margin-bottom:14px">Últimas atualizações</h3><div id="recentes"></div></div>
+    </section>
 
-    <!-- PAINEL CPANEL -->
-    <div class="container" id="panel">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
-            <h2><i class="fas fa-cogs"></i> Painel de Controle de Imóveis & Sistema</h2>
-            <a href="/" target="_blank" style="color:var(--primary); font-weight:bold; text-decoration:none;"><i class="fas fa-external-link-alt"></i> Ver Site no Ar</a>
+    <section id="v-lista" class="hidden">
+      <div class="top">
+        <div><h2 class="head">Imóveis</h2><p class="sub">Tudo que está cadastrado. Imóvel pausado não aparece no site.</p></div>
+        <input id="busca" placeholder="Buscar por título, código ou bairro" style="max-width:320px">
+      </div>
+      <div class="panel" style="overflow:auto;padding:6px 14px">
+        <table><thead><tr><th></th><th>Imóvel</th><th>Preço</th><th>Mídia</th><th>Última atualização</th><th>Status</th><th></th></tr></thead><tbody id="rows"></tbody></table>
+      </div>
+    </section>
+
+    <section id="v-form" class="hidden">
+      <div class="top">
+        <div><h2 class="head" id="ftitulo">Novo imóvel</h2><p class="sub">Os campos com * são obrigatórios para o imóvel aparecer no site.</p></div>
+        <button class="btn ghost" data-v="lista">Voltar</button>
+      </div>
+      <div class="modos" id="modos" role="tablist" aria-label="Forma de cadastro">
+        <button class="modo on" data-modo="manual"><b>1</b>Manual<small>Preencho tudo, no modelo do Migmidia</small></button>
+        <button class="modo" data-modo="aocubo"><b>2</b>AoCubo<small>Link do imóvel, atualização automática</small></button>
+        <button class="modo" data-modo="orulo"><b>3</b>Órulo<small>Buscar, filtrar e importar</small></button>
+      </div>
+      <div class="importa hidden" id="m-aocubo">
+        <label for="url">Link do imóvel no AoCubo</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><input id="url" placeholder="https://aocubo.com/..." style="flex:1;min-width:260px"><button class="btn" id="imp">Importar e espelhar</button></div>
+        <p class="dica" style="margin-top:8px">O site passa a espelhar o AoCubo: preço, condições, tipologias, fotos e plantas são conferidos sozinhos a cada 6 horas e o que mudou aparece no Painel.</p>
+      </div>
+      <div class="importa hidden" id="m-orulo">
+        <label>Buscar empreendimentos na Órulo</label>
+        <div class="g" style="margin-top:6px">
+          <div class="f"><input id="or_q" placeholder="Nome do empreendimento"></div>
+          <div class="f"><input id="or_cidade" placeholder="Cidade (ex.: São Paulo)"></div>
+          <div class="f"><input id="or_bairro" placeholder="Bairro"></div>
+          <div class="f"><select id="or_estagio"><option value="">Qualquer estágio</option><option value="lancamentos">Lançamento</option><option value="construcao">Em construção</option><option value="prontos">Pronto</option></select></div>
+          <div class="f"><input id="or_preco" type="number" placeholder="Preço máximo (R$)"></div>
+          <div class="f"><button class="btn" id="orBuscar" style="width:100%">Buscar</button></div>
         </div>
+        <div class="orcards" id="orRes"></div>
+        <label for="url2" style="margin-top:14px">Ou cole o link do empreendimento</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><input id="url2" placeholder="https://www.orulo.com.br/buildings/83363" style="flex:1;min-width:260px"><button class="btn" id="imp2">Importar</button></div>
+        <p class="dica" style="margin-top:8px">As fotos da Órulo chegam como link. Na etapa 2 você pode manter os links, enviar fotos do computador ou colar outros links.</p>
+      </div>
+      <p class="dica" id="impMsg" style="margin:0 0 10px"></p>
+      <details class="importa"><summary style="cursor:pointer;font-weight:600">Preencher a partir de texto copiado da página (opcional, vale para as 3 formas)</summary>
+        <textarea id="txtCp" rows="4" style="margin-top:10px" placeholder="Abra a página do imóvel, Ctrl+A, Ctrl+C e cole aqui: os campos são preenchidos sozinhos"></textarea>
+      </details>
+      <div class="passos" id="passos" role="tablist" aria-label="Etapas do cadastro">
+        <button class="passo on" data-passo="1"><b>1</b>Dados do imóvel</button>
+        <button class="passo" data-passo="2"><b>2</b>Fotos e plantas</button>
+        <button class="passo" data-passo="3"><b>3</b>Descrição e vídeo</button>
+        <button class="passo" data-passo="4"><b>4</b>Publicação</button>
+      </div>
+      <div class="passos subs hidden" id="subs">
+        <button class="passo on" data-sub="fotos">Fotos do condomínio e apartamento</button>
+        <button class="passo" data-sub="plantas">Plantas</button>
+      </div>
+      <div class="panel"><div id="fImovel" class="g"></div><p class="pend" id="pend"></p></div>
+      <div class="barra"><button class="btn ghost" data-v="lista">Cancelar</button><button class="btn ghost" id="ant">Anterior</button><button class="btn ghost" id="prox">Próximo</button><button class="btn ghost hidden" id="syncUm">Sincronizar este imóvel agora</button><button class="btn" id="salvar">Salvar imóvel</button></div>
+    </section>
 
-        <div class="tab-menu" style="flex-wrap:wrap">
-            <button class="tab-btn active" data-tab="imoveis" onclick="switchTab('imoveis')"><i class="fas fa-plus-circle"></i> Novo / Editar imóvel</button>
-            <button class="tab-btn" data-tab="lista" onclick="switchTab('lista')"><i class="fas fa-list"></i> Meus imóveis</button>
-            <button class="tab-btn" data-tab="conteudos" onclick="switchTab('conteudos')"><i class="fas fa-newspaper"></i> Blog, Notícias & Depoimentos</button>
-            <button class="tab-btn" data-tab="ia" onclick="switchTab('ia')"><i class="fas fa-wand-magic-sparkles"></i> Assistente IA</button>
-            <button class="tab-btn" data-tab="redes" onclick="switchTab('redes')"><i class="fas fa-share-alt"></i> Marca & Redes</button>
-        </div>
+    <section id="v-conteudos" class="hidden">
+      <div class="top">
+        <div><h2 class="head">Conteúdos do site</h2><p class="sub">Edite as seções "Conteúdos para você se inspirar", "Acompanhe nossas notícias" e "Depoimentos" da página inicial. Item oculto não aparece no site.</p></div>
+        <button class="btn" id="cnNovo">Novo conteúdo</button>
+      </div>
+      <div class="passos" role="tablist" aria-label="Seção">
+        <button class="passo on" data-ct="blog">Blog · Conteúdos para você se inspirar</button>
+        <button class="passo" data-ct="noticia">Notícias · Acompanhe nossas notícias</button>
+        <button class="passo" data-ct="depoimento">Depoimentos</button>
+      </div>
+      <div class="panel hidden" id="cnForm"></div>
+      <div class="panel" style="overflow:auto;padding:6px 14px"><table><thead><tr><th></th><th>Título ou depoimento</th><th>Categoria / autor</th><th>Data</th><th>No site</th><th></th></tr></thead><tbody id="cnRows"></tbody></table></div>
+    </section>
 
-        <!-- ABA 1: IMÓVEIS -->
-        <div class="tab-content active" id="tab-imoveis">
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label>Link do imóvel (AoCubo ou Órulo): preenche os dados, fotos e plantas</label>
-                <div style="display:flex; gap:10px;">
-                    <input type="text" id="urlOrulo" style="flex:1" placeholder="https://aocubo.com/imovel/... ou https://www.orulo.com.br/buildings/...">
-                    <button onclick="minerar()" style="padding:10px 20px; background:var(--primary); color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Puxar dados do link</button>
-                </div>
-            </div>
+    <section id="v-marca" class="hidden">
+      <div class="top">
+        <div><h2 class="head">Marca e Quem Somos</h2><p class="sub">Textos, fotos e contatos que aparecem no topo, no rodapé e na seção "Quem Somos" do site.</p></div>
+        <button class="btn" id="mSalvar">Salvar alterações</button>
+      </div>
+      <div class="panel"><h3 style="font-size:19px;margin-bottom:14px">Marca e contatos</h3><div id="mCampos" class="g"></div></div>
+      <div class="panel"><h3 style="font-size:19px;margin-bottom:14px">Seção Quem Somos</h3><div id="qCampos" class="g"></div></div>
+      <div class="barra"><button class="btn" id="mSalvar2">Salvar alterações</button></div>
+    </section>
+  </main>
+</div>
 
-            <div id="editBanner" style="display:none;background:#FFF8E1;border-left:4px solid var(--gold);padding:12px 15px;margin-bottom:15px;border-radius:6px;font-size:.9rem">
-                <b>Editando:</b> <span id="editNome"></span>
-                <button type="button" onclick="cancelarEdicao()" style="float:right;padding:4px 12px;cursor:pointer">Cancelar edição</button>
-            </div>
-            <form onsubmit="salvar(event)">
-                <div class="section-title">1. Transação e Categoria</div>
-                <div class="form-grid">
-                    <div class="form-group"><label>Transação</label><select id="transacao"><option>Vender Imóvel</option><option>Alugar Imóvel</option></select></div>
-                    <div class="form-group"><label>Categoria</label><select id="categoria"></select></div>
-                    <div class="form-group">
-                        <label>Tipo de Imóvel</label>
-                        <select id="tipo"></select>
-                    </div>
-                    <div class="form-group">
-                        <label>Tarja de Destaque</label>
-                        <select id="destaque">
-                            <option value="none">Nenhuma</option>
-                            <option value="exclusivo">Exclusividade</option>
-                            <option value="desconto">20% de Desconto</option>
-                            <option value="oportunidade">Oportunidade</option>
-                            <option value="decorado">Decorado</option>
-                            <option value="pronto">Pronto para Morar</option>
-                        </select>
-                    </div>
-                    <div class="form-group"><label>Destaque na Home (carrossel do topo)</label>
-                        <select id="emDestaque"><option value="nao">Não destacar</option><option value="sim">Sim, destacar na Home</option></select></div>
-                </div>
+<datalist id="tipos"></datalist>
+<div class="aviso hidden" id="aviso"></div>
+<script src="/taxonomia.js"></script>
+<script>
+const $=id=>document.getElementById(id),DIA=864e5;
+const ESTAGIOS=[['','Não informado'],['lancamentos','Lançamento'],['construcao','Em construção'],['prontos','Pronto'],['usados','Usado'],['oportunidades','Oportunidade']];
+const TARJAS=[['none','Nenhuma'],['exclusivo','Exclusividade'],['desconto','Desconto'],['oportunidade','Oportunidade'],['decorado','Decorado'],['pronto','Pronto para morar']];
+const DEF={transacao:'Vender Imóvel',categoria:'Residencial',destaque:'none',visibilidade:'bairro'};
+const NOMES={titulo:'título',preco:'preço',area:'área',dormitorios:'dormitórios',foto:'foto'};
+const SIMNAO=['Não','Sim'];
+const CAMPOS=[
+['S','Dados do imóvel'],['titulo','Título (nome do empreendimento) *'],['ref','Código de referência'],['construtora','Construtora / incorporadora'],
+['transacao','Finalidade',['Vender Imóvel','Alugar Imóvel']],['categoria','Categoria',['Residencial','Comercial']],
+['tipo','Tipo de imóvel','L'],['estagio','Estágio (situação)',ESTAGIOS],['destaque','Tarja no site',TARJAS],
+['S','Localização'],['localizacao','Bairro, cidade - UF *'],['cep','CEP'],['logradouro','Logradouro'],['numero','Número'],['complemento','Complemento'],
+['visibilidade','Visibilidade no site',[['bairro','Mostrar só o bairro'],['endereco','Mostrar endereço completo']]],['proximidade','Proximidade (ex.: 5 min do metrô)'],['lat','Latitude (opcional, para o mapa)'],['lng','Longitude (opcional)'],
+['S','Valores'],['preco','Valor a partir de *'],['precoM2','Valor por m² (ex.: R$ 11.040)'],['condominio','Condomínio'],['iptu','IPTU'],['taxas','Taxas'],['obsValores','Observação sobre os valores'],
+['S','Medidas'],['area','Área útil (ex.: 142m²) *'],['areaTotal','Área total'],['areaPrivativa','Área privativa'],['areaConstruida','Área construída'],
+['S','Características'],['perfil','Perfil',['','Novo','Usado','Na planta']],['mobilia','Mobília',['','Não mobiliado','Semimobiliado','Mobiliado']],['dormitorios','Dormitórios (ex.: 3 Suítes) *'],['suites','Suítes'],['banheiros','Banheiros'],['salas','Salas'],['lavabos','Lavabos'],['vagas','Vagas (ex.: 2 vagas)'],['diferencial','Diferencial'],
+['lazer','Lazer e características do condomínio','C'],['caracteristicasUnidade','Características da unidade','C'],['proximidades','O que tem perto?','C'],
+['S','Informações técnicas e tipologias'],['infoTecnica','Informações técnicas (uma por linha: item: valor)','X'],
+['S','Fotos do condomínio e do apartamento'],['foto','Foto de capa (vazio usa a primeira da galeria)'],['fotos','Galeria: um link por linha (ou envie do computador)','A'],
+['S','Plantas'],['plantas','Plantas: uma por linha, no formato Nome | Metragem | link  (ex.: Planta 01 | 84 m² | https://...)','P'],
+['S','Atualização automática'],['linkOrigem','Link de origem (AoCubo ou Órulo)'],
+['S','Descrição e vídeo'],['apresentacao','Texto de apresentação','T'],['youtube','Vídeo do YouTube'],['videoArquivo','Vídeo enviado do computador (link)'],['tour360','Tour virtual 360°'],
+['S','Título e descrição no Google (SEO)'],['seoTitulo','Título no Google (até 80 caracteres)'],['seoDescricao','Descrição no Google (até 160 caracteres)','D'],['seoPalavras','Palavras-chave, separadas por vírgula (até 120)'],['seoPrev','','V'],
+['S','Dados privativos (não aparecem no site)'],['pv_proprietario','Proprietário'],['pv_corretor','Corretor responsável'],['pv_exclusividade','Exclusividade',SIMNAO],['pv_autorizacao','Autorização formalizada',SIMNAO],['pv_averbado','Averbado',SIMNAO],['pv_escriturado','Escriturado',SIMNAO],['pv_placa','Com placa',SIMNAO],['pv_chave','Chave na imobiliária',SIMNAO],['pv_ondeChave','Onde pegar a chave'],['pv_obs','Outras informações','T']];
 
-                <div class="section-title">2. Endereço do Imóvel</div>
-                <div class="form-grid">
-                    <div class="form-group"><label>Cidade / Bairro / UF</label><input type="text" id="cidade" placeholder="São Paulo - SP"></div>
-                    <div class="form-group"><label>Link de origem (AoCubo ou Órulo)</label><input type="url" id="linkOrigem" placeholder="https://..."></div>
-                    <div class="form-group"><label>Publicação</label><div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:8px"><label style="font-weight:normal"><input type="checkbox" id="ativo" checked style="width:auto"> Publicado no site</label><label style="font-weight:normal"><input type="checkbox" id="sincronizar" checked style="width:auto"> Atualizar preço e estágio pelo link</label></div></div>
-                </div>
+const UPLOAD={fotos:[['Escolher fotos do computador','multiple'],['Enviar uma pasta inteira','webkitdirectory multiple']],plantas:[['Escolher plantas','multiple'],['Enviar uma pasta de plantas','webkitdirectory multiple']],videoArquivo:[['Escolher vídeo do computador','']]};
+const upl=k=>UPLOAD[k]?`<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">${UPLOAD[k].map(([t,a])=>`<label class="btn ghost sm" style="display:inline-block;width:auto">${t}<input type="file" data-up="${k}" accept="${k==='videoArquivo'?'video/*':'image/*'}" ${a} style="display:none"></label>`).join('')}<span class="sub" id="up_${k}"></span></div>`:'';
+const STEP={'Dados do imóvel':1,'Localização':1,'Valores':1,'Medidas':1,'Características':1,'Informações técnicas e tipologias':1,'Título e descrição no Google (SEO)':3,'Dados privativos (não aparecem no site)':4,'Fotos do condomínio e do apartamento':2,'Plantas':2,'Atualização automática':4,'Descrição e vídeo':3};
+let ST=1,PP='';
+const att=()=>`data-s="${ST}"${PP?` data-p="${PP}"`:''}`;
+$('fImovel').innerHTML=CAMPOS.map(([k,l,x])=>{
+  if(x==='V')return `<div class="f full" ${att()}><div class="gprev" id="seoPrev"></div><div class="linha-up"><button type="button" class="btn ghost sm" id="seoGerar">Gerar título e descrição automaticamente</button><span class="dica">Se ficar vazio, o sistema gera ao salvar.</span></div></div>`;
+  if(k==='S'){ST=STEP[l]||ST;PP=l.startsWith('Fotos')?'fotos':l==='Plantas'?'plantas':'';return `<div class="sec" ${att()}>${l}</div>`}
+  const ctl=Array.isArray(x)?`<select id="f_${k}">${x.map(o=>{const[v,t]=Array.isArray(o)?o:[o,o];return `<option value="${v}">${t}</option>`}).join('')}</select>`
+    :x==='P'?`<textarea id="f_${k}" rows="4" placeholder="Planta 01 - 3 dorm 84m² | https://..."></textarea>`:x==='X'?`<textarea id="f_${k}" rows="4"></textarea>`:x==='A'?`<textarea id="f_${k}" rows="4" placeholder="https://..."></textarea>`
+    :x==='D'?`<textarea id="f_${k}" rows="3" maxlength="160"></textarea>`:x==='C'?`<div class="chk" id="f_${k}"></div><div class="linha-up"><input id="n_${k}" placeholder="Outra opção" style="max-width:240px"><button type="button" class="btn ghost sm" data-addchk="${k}">Adicionar</button></div>`:x==='T'?`<textarea id="f_${k}" rows="5"></textarea>`
+    :`<input id="f_${k}"${x==='L'?' list="tipos"':''}>`;
+  return `<div class="f${['A','T','P','X','D','C'].includes(x)?' full':''}" ${att()}><label for="f_${k}">${l}</label>${ctl}${upl(k)}${(x==='A'||x==='P')?`<div class="gal" id="g_${k}"></div>`:''}</div>`;
+}).join('')+`<div class="sec" data-s="1">Tipologias e valores</div><div class="full" data-s="1" id="tipos-box"></div><div class="sec" data-s="4">Publicação</div><div class="f full" data-s="4" style="display:flex;gap:28px;flex-wrap:wrap"><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_emDestaque" style="width:auto">Destacar na página inicial</label><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_ativo" style="width:auto" checked>Publicado no site</label><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_sincronizar" style="width:auto" checked>Atualizar preço, condições e tipologias pelo link</label><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_espelharMidia" style="width:auto" checked>Espelhar fotos e plantas do portal</label></div>`;
 
-                <div class="section-title">3. Dados do Anúncio & Características</div>
-                <div class="form-grid">
-                    <div class="form-group"><label>Título do Anúncio</label><input type="text" id="titulo" required placeholder="Ex: Town Residences Jardins"></div>
-                    <div class="form-group"><label>Preço (R$)</label><input type="text" id="preco" required placeholder="Ex: R$ 850.000"></div>
-                    <div class="form-group"><label>Estágio / Categoria</label>
-                        <select id="estagio">
-                            <option value="lancamentos">Lançamentos</option>
-                            <option value="construcao">Em construção</option>
-                            <option value="prontos">Prontos para morar</option>
-                            <option value="usados">Usados</option>
-                            <option value="oportunidades">Oportunidades</option>
-                        </select>
-                    </div>
-                    <div class="form-group"><label>Construtora / incorporadora</label><input type="text" id="construtora" placeholder="Ex: Construtora Alfa"></div>
-                    <div class="form-group"><label>Valor por m² (R$)</label><input type="text" id="precoM2" placeholder="Ex: R$ 11.040"></div>
-                    <div class="form-group"><label>Área Útil (m²)</label><input type="text" id="area" placeholder="Ex: 110m²"></div>
-                    <div class="form-group"><label>Dormitórios</label><input type="text" id="dormitorios" placeholder="Ex: 3 dorms"></div>
-                    <div class="form-group"><label>Vagas</label><input type="text" id="vagas" placeholder="Ex: 2 vagas"></div>
-                </div>
+let IM=[],CUR=null,BASE={},timer=null;
+const lines=s=>s.split('\n').map(x=>x.trim()).filter(x=>/^https?:\/\//i.test(x));
+const linesPlantas=s=>s.split('\n').map(x=>x.trim()).filter(Boolean).map(x=>{const pt=x.includes('|')?x.split('|').map(y=>y.trim()):['',x];const url=pt[pt.length-1],nome=pt.length>1?pt[0]:'',area=pt.length>2?pt[1]:'';return /^https?:\/\//i.test(url)?((nome||area)?{nome,area,url}:url):null}).filter(Boolean);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=d=>new Date(d).toLocaleDateString('pt-BR');
+const dataRef=i=>[i.atualizadoEm,i.sincronizadoEm,i.criadoEm].filter(Boolean).sort().pop()||'';
+const diasDesde=i=>{const d=dataRef(i);return d?Math.floor((Date.now()-new Date(d))/DIA):null};
+const lim=()=>Math.max(1,parseInt($('dias').value,10)||90);
+const reais=()=>IM.filter(i=>i.demo!==true);
+const pubs=()=>reais().filter(i=>i.ativo!==false);
+const desat=()=>pubs().filter(i=>{const d=diasDesde(i);return d===null||d>lim()}).sort((a,b)=>(diasDesde(b)??1e9)-(diasDesde(a)??1e9));
 
-                <div class="section-title">4. Mídias (Fotos, Vídeo e Tour 360)</div>
-                <div class="form-grid">
-                    <div class="form-group"><label>URL Foto Capa <label style="cursor:pointer;background:var(--primary);color:#fff;padding:4px 10px;border-radius:4px;font-size:.75rem;margin-left:8px;display:inline-block">Enviar do computador<input type="file" accept="image/*" hidden onchange="subirArquivos(this,'foto')"></label></label><input type="url" id="foto" placeholder="https://... (ou deixe vazio para usar a 1ª da galeria)"></div>
-                    <div class="form-group"><label>Link Vídeo YouTube</label><input type="url" id="youtube" placeholder="https://youtube.com/..."></div>
-                    <div class="form-group"><label>Link Tour Virtual 360°</label><input type="url" id="tour360" placeholder="https://..."></div>
-                </div>
-                <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
-                    <div class="form-group"><label>Galeria de fotos (um link por linha) <label style="cursor:pointer;background:var(--primary);color:#fff;padding:4px 10px;border-radius:4px;font-size:.75rem;margin-left:8px;display:inline-block">Enviar fotos do computador<input type="file" accept="image/*" multiple hidden onchange="subirArquivos(this,'fotos')"></label></label>
-                        <textarea id="fotos" rows="6" placeholder="Clique com o botão direito na foto do Órulo, escolha Copiar endereço da imagem, cole aqui e aperte Enter. Repita para cada foto."></textarea></div>
-                    <div class="form-group"><label>Plantas (um link por linha) <label style="cursor:pointer;background:var(--primary);color:#fff;padding:4px 10px;border-radius:4px;font-size:.75rem;margin-left:8px;display:inline-block">Enviar plantas do computador<input type="file" accept="image/*" multiple hidden onchange="subirArquivos(this,'plantas')"></label></label>
-                        <textarea id="plantas" rows="6" placeholder="Um link de imagem por linha, para cada planta do imóvel."></textarea></div>
-                </div>
+function aviso(t){const x=$('aviso');x.textContent=t;x.classList.remove('hidden');clearTimeout(x._t);x._t=setTimeout(()=>x.classList.add('hidden'),3200)}
+async function API(p,o={}){
+  const r=await fetch(p,{...o,headers:{'Content-Type':'application/json','x-token':sessionStorage.getItem('cp_tk')||''}});
+  if(r.status===401){sessionStorage.removeItem('cp_tk');aviso('Sessão expirada. Entre de novo.');setTimeout(()=>location.reload(),1500);return{success:false}}
+  return r.json().catch(()=>({success:false}));
+}
+async function load(){const r=await API('/api/admin/imoveis');if(Array.isArray(r)){IM=r;renderDash();renderLista()}}
+async function entrar(){
+  $('login').classList.add('hidden');$('app').classList.remove('hidden');
+  $('tipos').innerHTML=[...new Set(Object.values(window.TAXONOMIA||{}).flatMap(c=>Object.values(c).flat()))].map(t=>`<option value="${esc(t)}">`).join('');
+  await load();if(!timer)timer=setInterval(load,5*60e3);
+}
+$('fLogin').onsubmit=async e=>{
+  e.preventDefault();
+  const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user:$('lu').value.trim(),pass:$('lp').value})}).then(x=>x.json()).catch(()=>({}));
+  if(!r.success){$('lerr').textContent='Usuário ou senha incorretos.';return}
+  sessionStorage.setItem('cp_tk',r.token);entrar();
+};
 
-                <div class="section-title">5. Apresentação, tipologias, lazer e informações técnicas</div>
-                <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
-                    <div class="form-group"><label>Diferencial do anúncio (aparece em Oportunidades)</label><input type="text" id="diferencial" placeholder="Ex: Varanda gourmet"></div>
-                    <div class="form-group"><label>Localização em destaque</label><input type="text" id="proximidade" placeholder="Ex: 3 min. do Metrô Tucuruvi"></div>
-                </div>
-                <div class="form-group"><label>Breve apresentação do projeto <button type="button" onclick="iaApresentacao()" style="margin-left:8px;padding:3px 10px;font-size:.7rem;cursor:pointer;border:1px solid var(--gold);background:#fff;border-radius:4px">✨ Escrever com IA</button></label>
-                    <textarea id="apresentacao" rows="4" placeholder="Texto de apresentação do empreendimento."></textarea></div>
-                <div class="form-group"><label>Tipologias e valores (uma por linha: Nome | Área | Dormitórios | Suítes | Vagas | Preço)</label>
-                    <textarea id="tipologias" rows="5" placeholder="Studio | 26 m² | 1 | 0 | 0 | R$ 260.810&#10;Apartamento | 43 m² | 2 | 1 | 1 | R$ 539.000"></textarea></div>
-                <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
-                    <div class="form-group"><label>Lazer e comodidades (um por linha)</label>
-                        <textarea id="lazer" rows="6" placeholder="Piscina&#10;Academia&#10;Salão de festas"></textarea></div>
-                    <div class="form-group"><label>Informações técnicas (uma por linha: Item: valor)</label>
-                        <textarea id="infoTecnica" rows="6" placeholder="Previsão de entrega: 02/2029&#10;Número de torres: 1&#10;Total de unidades: 267"></textarea></div>
-                </div>
-                <p id="faltasBox" style="font-size:.85rem;margin:10px 0 4px"></p>
-                <button type="submit" class="btn-pub" id="btnPublicar"><i class="fas fa-check-circle"></i> Publicar Imóvel no Portal</button>
-                <button type="button" onclick="salvarRascunho()" style="width:100%;margin-top:10px;padding:12px;background:#64748B;color:#fff;border:none;border-radius:6px;font-weight:bold;cursor:pointer">Salvar como rascunho (não aparece no site)</button>
-            </form>
-        </div>
+const ROT_EST=Object.fromEntries(ESTAGIOS);
+const nivel=i=>{const d=diasDesde(i);return d===null||d>lim()?'bad':d>lim()*2/3?'wa':'ok'};
+const faltam=i=>{const f=[];if(!i.titulo)f.push('título');if(!i.preco)f.push('preço');if(!i.localizacao)f.push('localização');if(!i.area)f.push('área');if(!i.dormitorios)f.push('dormitórios');if(!i.foto&&!(i.fotos||[]).length)f.push('foto');return f};
+const conta=(L,fn)=>{const m={};L.forEach(i=>{const k=fn(i);m[k]=(m[k]||0)+1});return Object.entries(m).sort((a,b)=>b[1]-a[1])};
+const barras=(arr,vazio)=>{const mx=Math.max(1,...arr.map(a=>a[1]));return arr.length?arr.map(([t,v])=>`<div class="bar"><span class="bt" title="${esc(t)}">${esc(t)}</span><span class="bb"><i style="width:${Math.round(v/mx*100)}%"></i></span><b>${v}</b></div>`).join(''):`<p class="dica">${vazio}</p>`};
+const quando=i=>{const d=diasDesde(i);return d===null?'—':d===0?'hoje':d===1?'há 1 dia':`há ${d} dias`};
+const thumb=i=>i.foto?`<img class="thumb" src="${esc(i.foto)}" alt="">`:'<span class="thumb"></span>';
 
-        <!-- ABA 2: CONFIGURAÇÕES -->
-        <div class="tab-content" id="tab-conteudos">
-            <div id="cBanner" style="display:none;background:#FFF8E1;border-left:4px solid var(--gold);padding:12px 15px;margin-bottom:15px;border-radius:6px;font-size:.9rem">
-                <b>Editando conteúdo.</b> <button type="button" onclick="limparConteudoForm()" style="float:right;padding:4px 12px;cursor:pointer">Cancelar edição</button></div>
-            <div class="section-title" id="cTituloForm">Novo conteúdo</div>
-            <div class="form-grid">
-                <div class="form-group"><label>Tipo</label><select id="c_tipo" onchange="ajustarTipoConteudo()"><option value="blog">Blog (Conteúdos para inspirar)</option><option value="noticia">Notícia (Joildo Informa)</option><option value="depoimento">Depoimento de cliente</option></select></div>
-                <div class="form-group"><label>Data</label><input type="date" id="c_data"></div>
-                <div class="form-group" id="g_categoria"><label>Etiqueta (ex: Investimento)</label><input type="text" id="c_categoria"></div>
-                <div class="form-group" id="g_estrelas" style="display:none"><label>Estrelas</label><select id="c_estrelas"><option>5</option><option>4</option><option>3</option></select></div>
-            </div>
-            <div class="form-group" id="g_titulo"><label>Título <button type="button" onclick="iaTitulos()" style="margin-left:8px;padding:3px 10px;font-size:.7rem;cursor:pointer;border:1px solid var(--gold);background:#fff;border-radius:4px">✨ Sugerir títulos</button></label><input type="text" id="c_titulo"></div>
-            <div class="form-grid" style="grid-template-columns:1fr 1fr">
-                <div class="form-group" id="g_imagem"><label>URL da imagem</label><input type="url" id="c_imagem" placeholder="https://..."></div>
-                <div class="form-group" id="g_link"><label>Link do artigo completo (opcional)</label><input type="url" id="c_link" placeholder="https://..."></div>
-                <div class="form-group" id="g_autor" style="display:none"><label>Autor do depoimento</label><input type="text" id="c_autor" placeholder="Ex: Maria S., Compradora"></div>
-            </div>
-            <div class="form-group"><label>Texto <button type="button" onclick="iaTextoConteudo()" style="margin-left:8px;padding:3px 10px;font-size:.7rem;cursor:pointer;border:1px solid var(--gold);background:#fff;border-radius:4px">✨ Escrever / melhorar com IA</button></label><textarea id="c_texto" rows="8"></textarea></div>
-            <button type="button" class="btn-pub" id="btnConteudo" onclick="salvarConteudo()"><i class="fas fa-check-circle"></i> Publicar conteúdo</button>
-            <div class="section-title" style="margin-top:35px">Conteúdos publicados no site</div>
-            <div id="lista-conteudos"></div>
-        </div>
+function renderDash(){
+  const P=pubs(),S=desat(),semFoto=P.filter(i=>!i.foto&&!(i.fotos||[]).length).length,ex=IM.length-reais().length;
+  const inc=P.filter(i=>faltam(i).length).length,rec=P.filter(i=>{const d=diasDesde(i);return d!==null&&d<=30}).length,ac=P.reduce((t,i)=>t+(i.acessos||0),0);
+  const sync=P.map(i=>i.sincronizadoEm||'').sort().pop();
+  $('titulo').textContent=S.length?`${S.length} imóvel(is) precisam de atualização`:'Tudo em dia';
+  $('ts').textContent=`Parado é o imóvel sem atualização há mais de ${lim()} dias ou sem data.${ex?` ${ex} exemplo(s) de demonstração ficam de fora.`:''}${sync?` Última sincronização com os portais: ${fmt(sync)}.`:''} Atualizado às ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}.`;
+  $('cards').innerHTML=[['Publicados',P.length],['Em destaque',P.filter(i=>i.emDestaque).length],['Atualizados em 30 dias',rec],['Parados',S.length,S.length?'bad':''],['Cadastro incompleto',inc,inc?'bad':''],['Sem foto',semFoto,semFoto?'bad':''],['Com plantas',P.filter(i=>(i.plantas||[]).length).length],['Acessos no site',ac]]
+    .map(([t,v,c=''])=>`<div class="card ${c}">${t}<b>${v}</b></div>`).join('');
+  $('stale').innerHTML=S.length?`<table><thead><tr><th></th><th>Imóvel</th><th>Última atualização</th><th>Parado há</th><th>Falta preencher</th><th></th></tr></thead><tbody>${S.map(i=>{const d=dataRef(i),n=diasDesde(i),f=faltam(i);return `<tr><td>${thumb(i)}</td><td><b>${esc(i.titulo)}</b><br><span class="sub">${esc(i.ref)} · ${esc(i.localizacao)}</span></td><td>${d?fmt(d):'<span class="tag t-wa">sem data</span>'}</td><td><span class="tag t-no">${n===null?'—':n+' dias'}</span></td><td>${f.length?f.map(x=>`<span class="tag t-wa">${x}</span>`).join(''):'—'}</td><td class="acoes"><button class="btn ghost sm" onclick="editar(${i.id})">Editar</button><button class="btn sm" onclick="acao(${i.id},'revisar')">Marcar como revisado</button></td></tr>`}).join('')}</tbody></table>`
+    :'<p class="sub" style="color:var(--ok);margin:0">Nenhum imóvel publicado passou do prazo.</p>';
+  $('g-est').innerHTML=barras(conta(P,i=>ROT_EST[i.estagio||'']||'Não informado'),'Nenhum imóvel publicado.');
+  const vd=P.filter(i=>!/alug/i.test(i.transacao||'')).length,al=P.length-vd,pv=P.length?Math.round(vd/P.length*100):0;
+  $('g-fin').innerHTML=P.length?`<div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap"><div class="donut" style="background:conic-gradient(var(--navy) 0 ${pv}%,var(--gold) ${pv}% 100%)"><span>${P.length}</span></div><div class="dica" style="line-height:2"><span class="tag t-ok" style="background:var(--navy);color:#fff">Venda</span> ${vd} (${pv}%)<br><span class="tag" style="background:var(--gold);color:var(--navy)">Aluguel</span> ${al} (${100-pv}%)</div></div>`:'<p class="dica">Nenhum imóvel publicado.</p>';
+  const NM={preco:'preço',precoM2:'valor por m²',estagio:'estágio',area:'área',dormitorios:'dormitórios',vagas:'vagas',tipologias:'tipologias e valores',infoTecnica:'informações técnicas',foto:'foto de capa',fotos:'fotos',plantas:'plantas',lazer:'lazer'};
+  const M=P.filter(i=>(i.historico||[])[0]&&i.historico[0].campos.length).sort((a,b)=>b.historico[0].em.localeCompare(a.historico[0].em)).slice(0,8);
+  $('mudancas').innerHTML=M.length?`<table><thead><tr><th></th><th>Imóvel</th><th>Quando</th><th>O que mudou</th></tr></thead><tbody>${M.map(i=>{const h=i.historico[0],d=Math.floor((Date.now()-new Date(h.em))/DIA);return `<tr><td>${thumb(i)}</td><td><b>${esc(i.titulo)}</b><br><span class="sub">${esc(i.ref)}</span></td><td>${d===0?'hoje':'há '+d+' dia(s)'}</td><td>${h.campos.map(c=>`<span class="tag t-ok">${NM[c]||c}</span>`).join('')}</td></tr>`}).join('')}</tbody></table>`:'<p class="dica">Nenhuma mudança vinda dos portais ainda. Imóveis do AoCubo e da Órulo são conferidos sozinhos a cada 6 horas.</p>';
+  $('g-tip').innerHTML=barras(conta(P,i=>i.tipo||'Não informado').slice(0,8),'Nenhum imóvel publicado.');
+  $('g-top').innerHTML=barras(P.filter(i=>i.acessos>0).sort((a,b)=>b.acessos-a.acessos).slice(0,10).map(i=>[i.titulo,i.acessos]),'Os acessos passam a ser contados a cada visita ao imóvel no site.');
+  const R=[...P].sort((a,b)=>String(dataRef(b)).localeCompare(String(dataRef(a)))).slice(0,8);
+  $('recentes').innerHTML=R.length?`<table><thead><tr><th></th><th>Imóvel</th><th>Preço</th><th>Atualizado</th><th>Origem</th></tr></thead><tbody>${R.map(i=>`<tr><td>${thumb(i)}</td><td><b>${esc(i.titulo)}</b><br><span class="sub">${esc(i.ref)} · ${esc(i.localizacao)}</span></td><td>${esc(i.preco)}</td><td>${quando(i)}</td><td>${i.linkOrigem&&i.sincronizar!==false?`<span class="tag t-ok">Sincroniza${i.sincronizadoEm?' · '+fmt(i.sincronizadoEm):''}</span>`:'<span class="tag t-wa">Manual</span>'}</td></tr>`).join('')}</tbody></table>`
+    :'<p class="dica">Nenhum imóvel publicado ainda.</p>';
+}
 
-        <div class="tab-content" id="tab-ia">
-            <div class="section-title">Preencher o cadastro de um imóvel a partir de um texto</div>
-            <p style="font-size:.85rem;color:#555;margin:10px 0">Cole o texto do Órulo, do WhatsApp da construtora ou de uma tabela. A IA separa os dados e preenche o formulário para você conferir. Ela não inventa o que não estiver no texto.</p>
-            <textarea id="ia_extrair" rows="7" style="width:100%" placeholder="Cole aqui o texto do imóvel..."></textarea>
-            <button type="button" class="btn-pub" style="background:var(--primary);margin-top:10px" onclick="iaExtrair()"><i class="fas fa-wand-magic-sparkles"></i> Preencher formulário com IA</button>
-            <div class="section-title">Pedir um texto (post de blog, legenda, e-mail, resposta a cliente...)</div>
-            <textarea id="ia_pedido" rows="4" style="width:100%;margin-top:10px" placeholder="Ex: Escreva um post explicando as etapas do financiamento imobiliário para quem compra o primeiro imóvel."></textarea>
-            <button type="button" class="btn-pub" style="background:var(--primary);margin-top:10px" onclick="iaLivre()"><i class="fas fa-pen-nib"></i> Gerar texto</button>
-            <textarea id="ia_saida" rows="12" style="width:100%;margin-top:15px" placeholder="O texto gerado aparece aqui. Você pode editar."></textarea>
-            <button type="button" style="margin-top:8px;padding:10px 18px;cursor:pointer" onclick="usarComoPost()">Usar como novo conteúdo do blog</button>
-        </div>
+function renderLista(){
+  const q=$('busca').value.trim().toLowerCase();
+  const L=IM.filter(i=>!q||[i.titulo,i.ref,i.localizacao].some(x=>String(x||'').toLowerCase().includes(q)));
+  $('rows').innerHTML=L.map(i=>{
+    const n=(i.fotos||[]).length||(i.foto?1:0),pl=(i.plantas||[]).length,d=dataRef(i),dd=diasDesde(i),atrasado=dd!==null&&dd>lim()&&i.ativo!==false;
+    return `<tr><td>${i.foto?`<img class="thumb" src="${esc(i.foto)}" alt="">`:'<span class="thumb"></span>'}</td><td><b>${esc(i.titulo)}</b><br><span class="sub">${esc(i.ref)} · ${esc(i.localizacao)}</span></td><td>${esc(i.preco)}</td><td>${n} foto(s)${pl?` · ${pl} planta(s)`:''}</td><td>${d?fmt(d):'<span class="tag t-wa">sem data</span>'}${dd!==null&&i.ativo!==false?` <span class="tag ${nivel(i)==='bad'?'t-no':nivel(i)==='wa'?'t-wa':'t-ok'}">${dd} dias</span>`:''}</td><td>${i.ativo===false?'<span class="tag t-wa">Pausado</span>':'<span class="tag t-ok">Publicado</span>'}${i.emDestaque?'<span class="tag t-ok">Destaque</span>':''}${i.linkOrigem&&i.sincronizar!==false?'<span class="tag t-ok">Sincroniza</span>':''}${i.demo?'<span class="tag t-wa">Exemplo</span>':''}</td><td class="acoes"><button class="btn ghost sm" onclick="editar(${i.id})">Editar</button><button class="btn ghost sm" onclick="acao(${i.id},'destaque')">${i.emDestaque?'Tirar destaque':'Destacar'}</button><button class="btn ghost sm" onclick="acao(${i.id},'ativo')">${i.ativo===false?'Publicar':'Pausar'}</button><button class="btn ghost sm" onclick="acao(${i.id},'dup')">Duplicar</button><button class="btn danger sm" onclick="acao(${i.id},'del')">Excluir</button></td></tr>`;
+  }).join('')||'<tr><td colspan="7" class="sub">Nenhum imóvel com essa busca.</td></tr>';
+}
 
-        <div class="tab-content" id="tab-lista"><div id="lista-imoveis"></div></div>
+async function acao(id,t){
+  const it=IM.find(x=>x.id==id)||{},P=b=>API('/api/imoveis/'+id,{method:'PATCH',body:JSON.stringify(b)});let m='';
+  if(t==='del'){if(!confirm('Excluir este imóvel? Não tem como desfazer.'))return;await API('/api/imoveis/'+id,{method:'DELETE'});m='Imóvel excluído.'}
+  else if(t==='dup'){await API('/api/duplicar-imovel/'+id,{method:'POST'});m='Cópia criada, pausada para você revisar.'}
+  else if(t==='destaque'){await P({emDestaque:!it.emDestaque});m=it.emDestaque?'Destaque removido.':'Imóvel em destaque.'}
+  else if(t==='ativo'){await P({ativo:it.ativo===false});m=it.ativo===false?'Imóvel publicado.':'Imóvel pausado. Saiu do site.'}
+  else if(t==='revisar'){await P({});m='Marcado como revisado hoje.'}
+  aviso(m);await load();
+}
 
-        <div class="tab-content" id="tab-redes">
-            <div class="section-title">Marca, Slogan, Redes Sociais e Contato</div>
-            <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
-                <div class="form-group" style="grid-column: 1/-1;">
-                    <label><i class="fas fa-quote-left" style="color:var(--gold)"></i> Frase de Impacto / Slogan (Abaixo do Nome)</label>
-                    <input type="text" id="cfg_slogan" placeholder="Ex: Ética e dedicação para tornar seus sonhos realidade">
-                </div>
-                <div class="form-group" style="grid-column: 1/-1;">
-                    <label><i class="fas fa-image" style="color:var(--primary)"></i> URL da Logomarca em Imagem (Opcional - Link PNG/SVG)</label>
-                    <input type="url" id="cfg_logoUrl" placeholder="https://seu-site.com/logo.png (Deixe em branco para texto padrão)">
-                </div>
-                <div class="form-group">
-                    <label><i class="fab fa-linkedin" style="color:#0A66C2"></i> LinkedIn Profissional (Joildo Costa)</label>
-                    <input type="url" id="cfg_linkedin" placeholder="https://www.linkedin.com/in/joildo-costa-0154a29b/">
-                </div>
-                <div class="form-group">
-                    <label><i class="fab fa-instagram" style="color:#E4405F"></i> Instagram Oficial</label>
-                    <input type="url" id="cfg_instagram" placeholder="https://www.instagram.com/seu-perfil">
-                </div>
-                <div class="form-group">
-                    <label><i class="fab fa-facebook" style="color:#1877F2"></i> Facebook Oficial</label>
-                    <input type="url" id="cfg_facebook" placeholder="https://www.facebook.com/sua-pagina">
-                </div>
-                <div class="form-group">
-                    <label><i class="fab fa-youtube" style="color:#FF0000"></i> Canal do YouTube</label>
-                    <input type="url" id="cfg_youtube" placeholder="https://www.youtube.com/@seu-canal">
-                </div>
-                <div class="form-group">
-                    <label><i class="fab fa-whatsapp" style="color:#25D366"></i> Telefone WhatsApp (Apenas Números)</label>
-                    <input type="text" id="cfg_whatsapp" placeholder="5511999999999">
-                </div>
-                <div class="form-group">
-                    <label><i class="fas fa-phone-alt" style="color:var(--primary)"></i> Telefone de Exibição</label>
-                    <input type="text" id="cfg_telefone" placeholder="(11) 99999-9999">
-                </div>
-                <div class="form-group">
-                    <label><i class="fas fa-envelope" style="color:var(--gold)"></i> E-mail de Contato</label>
-                    <input type="email" id="cfg_email" placeholder="contato@joildobrokers.com.br">
-                </div>
-                <div class="form-group">
-                    <label><i class="fas fa-id-card" style="color:var(--primary)"></i> Número do CRECI</label>
-                    <input type="text" id="cfg_creci" placeholder="CRECI 245890-F">
-                </div>
-            </div>
-            <div class="form-group" style="margin-top:20px;"><label>Construtoras e incorporadoras parceiras (uma por linha: Nome | URL do logo | Link do site)</label>
-                    <textarea id="cfg_parceiros" rows="6" placeholder="Construtora Exemplo | https://site.com/logo.png | https://site.com&#10;Outra Incorporadora"></textarea>
-                    <small style="color:#64748B">O logo e o link são opcionais. Sem logo, o nome aparece escrito.</small></div>
-                <button type="button" class="btn-pub" style="background: var(--primary);" onclick="salvarConfigRedes()">
-                <i class="fas fa-save"></i> Salvar Configurações no Site
-            </button>
-        </div>
+function ir(v){
+  if(v==='conteudos')loadCN();
+  if(v==='marca')loadMarca();
+  ['dash','lista','form','conteudos','marca'].forEach(s=>$('v-'+s).classList.toggle('hidden',s!==v));
+  document.querySelectorAll('aside .nav').forEach(b=>b.classList.toggle('on',b.dataset.v===v||(v==='form'&&b.dataset.v==='novo')));
+}
+function abrir(it){CUR=it||null;BASE=it?{...it}:{};$('ftitulo').textContent=it?it.titulo:'Novo imóvel';$('url').value='';$('impMsg').textContent='';preencher(BASE);setModo(it?(it.modoCadastro||(it.linkOrigem?(/orulo/i.test(it.linkOrigem)?'orulo':'aocubo'):'manual')):'manual');PASSO=1;SUB='fotos';ir('form');mostra();window.scrollTo(0,0)}
+function editar(id){abrir(IM.find(x=>x.id==id))}
+function preencher(d){
+  CAMPOS.forEach(([k,,x])=>{if(k==='S'||x==='V')return;if(x==='C'){setChk(k,d[k]||[]);return}if(k.startsWith('pv_')){$('f_'+k).value=(d.privado||{})[k.slice(3)]||'';return}const el=$('f_'+k);el.value=x==='P'?(d[k]||[]).map(p=>typeof p==='object'?`${p.nome||''} | ${p.area||''} | ${p.url}`:p).join('\n'):(x==='A'||x==='X')?(d[k]||[]).map(y=>(y&&typeof y==='object')?(y.k+': '+y.v):y).join('\n'):(d[k]??DEF[k]??'');if(x==='A'||x==='P')galeria(k)});
+  $('f_emDestaque').checked=d.emDestaque===true;$('f_ativo').checked=d.ativo!==false;$('f_sincronizar').checked=d.sincronizar!==false;$('f_espelharMidia').checked=d.espelharMidia!==false;TIPS=(d.tipologias||[]).map(t=>({...t}));renderTips();pend();
+}
+function urlsDe(k){const v=$('f_'+k).value;return k==='plantas'?linesPlantas(v).map(p=>typeof p==='object'?p.url:p):lines(v)}
+function galeria(k){
+  const us=k==='plantas'?linesPlantas($('f_plantas').value).map(p=>typeof p==='object'?p:{url:p}):urlsDe(k).map(u=>({url:u}));
+  $('g_'+k).innerHTML=us.slice(0,60).map((p,n)=>`<div class="th"><img src="${esc(p.url)}" alt="" loading="lazy" onerror="this.style.opacity=.2">${k==='plantas'?`<span class="cap">${esc([p.nome,p.area].filter(Boolean).join(' · ')||'sem metragem')}</span>`:''}<button type="button" class="x" data-del="${k}" data-n="${n}" title="Remover" aria-label="Remover">×</button>${k==='fotos'?`<button type="button" class="cp" data-capa="${n}" title="Usar como foto de capa">Capa</button>`:''}</div>`).join('');
+}
+function remover(k,n){
+  const t=$('f_'+k),ls=t.value.split('\n').map(x=>x.trim()).filter(Boolean);
+  const ok=x=>k==='plantas'?linesPlantas(x).length>0:/^https?:\/\//i.test(x);let c=-1;
+  t.value=ls.filter(x=>{if(!ok(x))return true;c++;return c!==n}).join('\n');galeria(k);pend();
+}
+function coleta(){
+  const o={};CAMPOS.forEach(([k,,x])=>{if(k==='S'||x==='V')return;if(x==='C'){o[k]=getChk(k);return}if(k.startsWith('pv_')){(o.privado=o.privado||{})[k.slice(3)]=$('f_'+k).value.trim();return}const v=$('f_'+k).value;o[k]=x==='A'?lines(v):x==='P'?linesPlantas(v):x==='X'?v.split('\n').map(s=>s.trim()).filter(Boolean):v.trim()});
+  o.infoTecnica=(o.infoTecnica||[]).map(l=>{const i=l.indexOf(':');return i<0?{k:l,v:''}:{k:l.slice(0,i).trim(),v:l.slice(i+1).trim()}});o.emDestaque=$('f_emDestaque').checked;o.ativo=$('f_ativo').checked;o.sincronizar=$('f_sincronizar').checked;o.espelharMidia=$('f_espelharMidia').checked;o.tipologias=TIPS.filter(t=>(t.nome||'').trim()).map(t=>({nome:t.nome||'',area:t.area||'',dorm:t.dorm||'',suites:t.suites||'',vagas:t.vagas||'',preco:t.preco||''}));return o;
+}
+function pend(){
+  const d=coleta(),f=[];
+  if(!d.titulo)f.push('título');if(!d.preco)f.push('preço');if(!d.localizacao)f.push('localização');
+  if(!d.area)f.push('área');if(!d.dormitorios)f.push('dormitórios');if(!d.foto&&!d.fotos.length)f.push('foto');
+  const bf=document.querySelector('[data-sub="fotos"]'),bp=document.querySelector('[data-sub="plantas"]');
+  if(bf){bf.textContent=`Fotos do condomínio e apartamento (${d.fotos.length+(d.foto&&!d.fotos.includes(d.foto)?1:0)})`;bp.textContent=`Plantas (${d.plantas.length})`}
+  seoPrev();const p=$('pend');p.textContent=f.length?'Falta preencher: '+f.join(', ')+'.':'Cadastro completo.';p.style.color=f.length?'var(--warn)':'var(--ok)';
+}
+async function salvar(){
+  const d={...BASE,...coleta()};d.modoCadastro=MODO;seoAuto(d);
+  if(!d.titulo){aviso('Falta o título do imóvel.');$('f_titulo').focus();return}
+  const r=CUR?await API('/api/imoveis/'+CUR.id,{method:'PUT',body:JSON.stringify({...d,demo:CUR.demo===true})})
+            :await API('/api/adicionar-imovel',{method:'POST',body:JSON.stringify(d)});
+  if(!r.success){aviso(r.error||'Não consegui salvar. Tente de novo.');return}
+  aviso(d.ativo?`Salvo e publicado no site${r.ref?' (código '+r.ref+')':''}.`:'Salvo como pausado. Não aparece no site.');
+  await load();ir('lista');
+}
+async function importar(id='url'){
+  const url=$(id).value.trim();
+  if(!url){aviso('Cole o link do imóvel primeiro.');return}
+  $('impMsg').textContent='Lendo a página do imóvel...';
+  const r=await API('/api/importar-link',{method:'POST',body:JSON.stringify({url})});
+  if(!r.success){$('impMsg').textContent=r.error||'Não consegui ler esse link.';return}
+  BASE={...BASE,...r.dados,linkOrigem:url,origem:r.fonte,sincronizar:true,modoCadastro:/rulo/i.test(r.fonte)?'orulo':'aocubo'};preencher(BASE);setModo(BASE.modoCadastro);
+  $('impMsg').textContent=`Dados de ${r.fonte} preenchidos. Confira antes de salvar. A atualização automática fica ligada.`+(r.faltando&&r.faltando.length?` Não veio: ${r.faltando.map(k=>NOMES[k]||k).join(', ')}.`:'');
+}
 
-    </div>
+$('sinc').onclick=async()=>{aviso('Consultando AoCubo e Órulo...');const r=await API('/api/sincronizar',{method:'POST'});aviso(r.success?`Pronto: ${r.atualizados} atualizado(s), ${r.pausados} pausado(s), ${r.erros.length} com erro.`:(r.error||'Não consegui sincronizar.'));await load()};
+document.addEventListener('change',async e=>{
+  const inp=e.target;if(!inp.dataset||!inp.dataset.up)return;
+  const alvo=inp.dataset.up,video=alvo==='videoArquivo';
+  let arquivos=[...inp.files].filter(f=>video?f.type.startsWith('video/'):f.type.startsWith('image/'));
+  inp.value='';
+  if(!arquivos.length){aviso('Nenhum arquivo desse tipo na seleção.');return}
+  arquivos.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR',{numeric:true}));
+  const msg=$('up_'+alvo);let ok=0;
+  for(const[n,f]of arquivos.entries()){
+    if(f.size>20*1024*1024){aviso(`${f.name} passa de 20 MB. Para vídeos grandes, use o YouTube.`);continue}
+    msg.textContent=`Enviando ${n+1} de ${arquivos.length}...`;
+    const arquivo=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f)});
+    const r=await API('/api/upload',{method:'POST',body:JSON.stringify({tipo:alvo==='plantas'?'planta':video?'video':'foto',arquivo})});
+    if(!r.success){aviso(r.error||`Não consegui enviar ${f.name}.`);break}
+    if(video)$('f_videoArquivo').value=r.url;
+    else{const t=$('f_'+alvo);t.value=(t.value.trim()?t.value.trim()+'\n':'')+(alvo==='plantas'?'Planta '+(t.value.split('\n').filter(Boolean).length+1)+' |  | ':'')+r.url;galeria(alvo)}
+    ok++;
+  }
+  msg.textContent=ok?`${ok} arquivo(s) enviado(s).`:'';pend();
+});
+let TIPS=[];
+const ITEM_TIPO={blog:'Blog',noticia:'Notícia',depoimento:'Depoimento'};
+async function subirImagem(alvo){
+  const inp=document.querySelector('[data-alvo="'+alvo+'"]');if(!inp||!inp.files[0])return;
+  const f=inp.files[0];inp.value='';
+  if(!f.type.startsWith('image/')){aviso('Escolha um arquivo de imagem.');return}
+  if(f.size>20*1024*1024){aviso('Imagem passa de 20 MB. Reduza e tente de novo.');return}
+  aviso('Enviando imagem...');
+  const arquivo=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f)});
+  const r=await API('/api/upload',{method:'POST',body:JSON.stringify({tipo:'foto',arquivo})});
+  if(!r.success){aviso(r.error||'Não consegui enviar a imagem.');return}
+  $(alvo).value=r.url;aviso('Imagem enviada. Clique em Salvar.');
+}
+const upBtn=(alvo)=>`<div class="linha-up"><label class="btn ghost sm" style="width:auto">Enviar imagem do computador<input type="file" accept="image/*" data-alvo="${alvo}" style="display:none"></label></div>`;
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.dataset&&t.dataset.alvo){subirImagem(t.dataset.alvo);return}
+  if(t.id==='c_tipo')cnMostraCampos();
+});
+const TP_CAMPOS=[['nome','ex.: Apartamento'],['area','ex.: 98 m²'],['dorm','2'],['suites','1'],['vagas','1'],['preco','R$ 890.000']];
+function renderTips(){
+  $('tipos-box').innerHTML=`<div class="tp-row tp-cab"><span>Tipo</span><span>Área</span><span>Dorm.</span><span>Suítes</span><span>Vagas</span><span>A partir de</span><span></span></div>`
+    +TIPS.map((t,k)=>`<div class="tp-row">${TP_CAMPOS.map(([col,ph])=>`<input data-k="${k}" data-c="${col}" value="${esc(t[col]||'')}" placeholder="${ph}" aria-label="${col}">`).join('')}<button type="button" class="btn danger sm" data-rm="${k}">Remover</button></div>`).join('')
+    +`<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:6px"><button type="button" class="btn ghost sm" id="tp-add">Adicionar tipologia</button><span class="dica">Imóveis da Órulo já trazem essas linhas. Para AoCubo e cadastro manual, preencha aqui.</span></div>`;
+}
+document.addEventListener('input',e=>{const k=e.target.dataset&&e.target.dataset.k;if(k===undefined)return;TIPS[+k][e.target.dataset.c]=e.target.value;pend()});
+document.addEventListener('click',e=>{
+  if(e.target.id==='tp-add'){TIPS.push({});renderTips();return}
+  const rm=e.target.dataset&&e.target.dataset.rm;if(rm!==undefined){TIPS.splice(+rm,1);renderTips()}
+});
+$('atualizar').onclick=load;
+$('dias').oninput=renderDash;
+$('busca').oninput=renderLista;
+$('imp').onclick=()=>importar('url');$('imp2').onclick=()=>importar('url2');
+$('txtCp').addEventListener('paste',()=>setTimeout(colarTexto,200));
+async function colarTexto(){
+  const t=$('txtCp').value.trim();if(t.length<80)return;
+  $('impMsg').textContent='Lendo o texto colado...';
+  const r=await API('/api/extrair-texto',{method:'POST',body:JSON.stringify({texto:t})});
+  if(!r.success||!r.dados){$('impMsg').textContent='Não consegui ler o texto colado.';return}
+  const limpo=Object.fromEntries(Object.entries(r.dados).filter(([,v])=>v!==''&&!(Array.isArray(v)&&!v.length)));
+  BASE={...BASE,...limpo};preencher(BASE);
+  $('impMsg').textContent='Campos preenchidos a partir do texto colado. Confira antes de salvar.';
+}
+$('salvar').onclick=salvar;
+$('sair').onclick=()=>{sessionStorage.removeItem('cp_tk');location.reload()};
+['fotos','plantas'].forEach(k=>$('f_'+k).addEventListener('input',()=>galeria(k)));
+$('fImovel').addEventListener('input',pend);
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-v]');if(!b)return;
+  const v=b.dataset.v;
+  if(v==='novo')abrir(null);else{ir(v);if(v==='lista')renderLista()}
+});
+let PASSO=1,SUB='fotos';
+function mostra(){
+  document.querySelectorAll('#fImovel [data-s]').forEach(e=>{const ok=+e.dataset.s===PASSO&&!(PASSO===2&&e.dataset.p&&e.dataset.p!==SUB);e.classList.toggle('hidden',!ok)});
+  document.querySelectorAll('[data-passo]').forEach(b=>b.classList.toggle('on',+b.dataset.passo===PASSO));
+  document.querySelectorAll('[data-sub]').forEach(b=>b.classList.toggle('on',b.dataset.sub===SUB));
+  $('subs').classList.toggle('hidden',PASSO!==2);
+  $('ant').classList.toggle('hidden',PASSO===1);$('prox').classList.toggle('hidden',PASSO===4);
+}
+document.addEventListener('click',e=>{
+  const p=e.target.closest('[data-passo]');if(p){PASSO=+p.dataset.passo;mostra();return}
+  const sb=e.target.closest('[data-sub]');if(sb){SUB=sb.dataset.sub;mostra();return}
+  const dl=e.target.closest('[data-del]');if(dl){remover(dl.dataset.del,+dl.dataset.n);return}
+  const cp=e.target.closest('[data-capa]');if(cp){const u=urlsDe('fotos')[+cp.dataset.capa];if(u){$('f_foto').value=u;pend();aviso('Foto de capa definida.')}}
+});
+$('ant').onclick=()=>{PASSO=Math.max(1,PASSO-1);mostra();window.scrollTo(0,0)};
+$('prox').onclick=()=>{PASSO=Math.min(4,PASSO+1);mostra();window.scrollTo(0,0)};
+mostra();
+let CN=[],CT='blog',CNCUR=null,CFG=null;
+async function loadCN(){const r=await API('/api/admin/conteudos');if(Array.isArray(r))CN=r;renderCN()}
+function renderCN(){
+  document.querySelectorAll('[data-ct]').forEach(b=>b.classList.toggle('on',b.dataset.ct===CT));
+  const L=CN.filter(c=>c.tipo===CT).sort((a,b)=>String(b.data||'').localeCompare(String(a.data||'')));
+  $('cnRows').innerHTML=L.map(c=>{
+    const titulo=c.tipo==='depoimento'?((c.texto||'').slice(0,100)+((c.texto||'').length>100?'…':'')):c.titulo;
+    return `<tr><td>${c.imagem?`<img class="thumb" src="${esc(c.imagem)}" alt="">`:'<span class="thumb"></span>'}</td><td><b>${esc(titulo)}</b></td><td>${esc(c.tipo==='depoimento'?c.autor:c.categoria)||'<span class="sub">—</span>'}</td><td>${c.data?fmt(c.data+'T12:00:00'):'<span class="sub">—</span>'}</td><td><span class="tag ${c.ativo===false?'t-wa':'t-ok'}">${c.ativo===false?'Oculto':'No site'}</span></td><td class="acoes"><button class="btn ghost sm" onclick="cnEditar('${c.id}')">Editar</button><button class="btn ghost sm" onclick="cnAtiva('${c.id}',${c.ativo===false})">${c.ativo===false?'Mostrar':'Ocultar'}</button><button class="btn danger sm" onclick="cnExcluir('${c.id}')">Excluir</button></td></tr>`;
+  }).join('')||`<tr><td colspan="6" class="sub">Nenhum item nesta seção ainda.</td></tr>`;
+}
+function cnForm(c){
+  CNCUR=c||null;
+  const v=c||{tipo:CT,data:new Date().toISOString().slice(0,10),estrelas:5,ativo:true};
+  const box=$('cnForm');
+  box.innerHTML=`<h3 style="font-size:19px;margin-bottom:14px">${c?'Editar':'Novo'} · ${ITEM_TIPO[v.tipo]||'Conteúdo'}</h3>
+  <div class="g">
+    <div class="f"><label for="c_tipo">Seção</label><select id="c_tipo">${Object.entries(ITEM_TIPO).map(([k,n])=>`<option value="${k}" ${k===v.tipo?'selected':''}>${n}</option>`).join('')}</select></div>
+    <div class="f"><label for="c_data">Data</label><input type="date" id="c_data" value="${esc(v.data||'')}"></div>
+    <div class="f" data-tipos="blog noticia"><label for="c_titulo">Título *</label><input id="c_titulo" value="${esc(v.titulo||'')}"></div>
+    <div class="f" data-tipos="blog noticia"><label for="c_categoria">Categoria (ex.: Investimento, Joildo Informa)</label><input id="c_categoria" value="${esc(v.categoria||'')}"></div>
+    <div class="f" data-tipos="blog noticia"><label for="c_link">Link do texto completo (opcional)</label><input id="c_link" value="${esc(v.link||'')}" placeholder="https://..."></div>
+    <div class="f" data-tipos="blog noticia"><label for="c_imagem">Imagem de capa (link)</label><input id="c_imagem" value="${esc(v.imagem||'')}" placeholder="https://...">${upBtn('c_imagem')}</div>
+    <div class="f full" data-tipos="depoimento"><label for="c_autor">Autor (nome e perfil)</label><input id="c_autor" value="${esc(v.autor||'')}" placeholder="Ex.: Carlos M., Investidor"></div>
+    <div class="f" data-tipos="depoimento"><label for="c_estrelas">Avaliação</label><select id="c_estrelas">${[5,4,3,2,1].map(n=>`<option value="${n}" ${+v.estrelas===n?'selected':''}>${n} estrela${n>1?'s':''}</option>`).join('')}</select></div>
+    <div class="f full"><label for="c_texto" id="c_texto_l">Texto</label><textarea id="c_texto" rows="5">${esc(v.texto||'')}</textarea><p class="ajuda" data-tipos="blog noticia">Pode ser um resumo. Se houver link, o card abre o texto completo.</p></div>
+    <div class="f full" style="display:flex;gap:10px;align-items:center"><input type="checkbox" id="c_ativo" style="width:auto" ${v.ativo!==false?'checked':''}><label for="c_ativo" style="margin:0;color:var(--ink)">Mostrar no site</label></div>
+  </div>
+  <div class="barra" style="position:static;background:none;border:0;margin:0;padding:6px 0 0"><button class="btn ghost" id="cnCancel">Cancelar</button><button class="btn" id="cnSave">Salvar</button></div>`;
+  box.classList.remove('hidden');cnMostraCampos();
+  $('cnCancel').onclick=()=>box.classList.add('hidden');
+  $('cnSave').onclick=cnSalvar;
+  box.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function cnMostraCampos(){
+  const t=$('c_tipo').value;
+  document.querySelectorAll('#cnForm [data-tipos]').forEach(e=>e.classList.toggle('campo-hide',!e.dataset.tipos.split(' ').includes(t)));
+  const l=$('c_texto_l');if(l)l.textContent=t==='depoimento'?'Texto do depoimento *':'Texto (opcional)';
+}
+async function cnSalvar(){
+  const tipo=$('c_tipo').value;
+  const body={tipo,titulo:$('c_titulo').value.trim(),categoria:$('c_categoria').value.trim(),link:$('c_link').value.trim(),imagem:$('c_imagem').value.trim(),data:$('c_data').value,texto:$('c_texto').value.trim(),autor:$('c_autor').value.trim(),estrelas:$('c_estrelas').value,ativo:$('c_ativo').checked};
+  if(tipo==='depoimento'?!body.texto:!body.titulo){aviso(tipo==='depoimento'?'Escreva o texto do depoimento.':'Falta o título.');return}
+  const r=CNCUR?await API('/api/conteudos/'+CNCUR.id,{method:'PUT',body:JSON.stringify(body)}):await API('/api/conteudos',{method:'POST',body:JSON.stringify(body)});
+  if(r.success===false){aviso(r.error||'Não consegui salvar. Tente de novo.');return}
+  aviso(body.ativo?'Salvo. Já aparece no site.':'Salvo como oculto.');
+  CT=tipo;$('cnForm').classList.add('hidden');await loadCN();
+}
+function cnEditar(id){const c=CN.find(x=>String(x.id)===String(id));if(!c)return;CT=c.tipo;renderCN();cnForm(c)}
+async function cnAtiva(id,ativar){await API('/api/conteudos/'+id,{method:'PATCH',body:JSON.stringify({ativo:ativar})});aviso(ativar?'Item visível no site.':'Item oculto.');await loadCN()}
+async function cnExcluir(id){if(!confirm('Excluir este item do site? Não tem como desfazer.'))return;await API('/api/conteudos/'+id,{method:'DELETE'});aviso('Item excluído.');await loadCN()}
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-ct]');if(t){CT=t.dataset.ct;$('cnForm').classList.add('hidden');renderCN();return}
+  if(e.target.id==='cnNovo'){cnForm(null);return}
+  if(e.target.id==='mSalvar'||e.target.id==='mSalvar2'){salvarMarca();return}
+});
 
-    <script src="/taxonomia.js"></script>
-    <script>
-        function montarTipos() {
-            const g = TAXONOMIA[document.getElementById('categoria').value] || {};
-            document.getElementById('tipo').innerHTML = Object.keys(g).map(k => `<optgroup label="${k}">${g[k].map(t => `<option>${t}</option>`).join('')}</optgroup>`).join('');
-        }
-        (function () {
-            const c = document.getElementById('categoria');
-            c.innerHTML = Object.keys(TAXONOMIA).map(k => `<option>${k}</option>`).join('');
-            c.onchange = montarTipos; montarTipos();
-        })();
+// ---------- MARCA E QUEM SOMOS ----------
+const MARCA_CAMPOS=[['slogan','Slogan (topo do site)'],['telefone','Telefone'],['whatsapp','WhatsApp (só números, com 55 do Brasil)'],['email','E-mail'],['creci','CRECI'],['linkedin','LinkedIn (link completo)'],['instagram','Instagram (link)'],['facebook','Facebook (link)'],['youtube','YouTube (link)']];
+const QS_CAMPOS=[['titulo','Título da seção'],['subtitulo','Subtítulo'],['nome','Nome do consultor'],['cargo','Cargo'],['p1','Primeiro parágrafo (pode usar <strong>)'],['p2','Segundo parágrafo (pode usar <strong>)'],['linkedin','LinkedIn do consultor (link)']];
+async function loadMarca(){
+  const c=await fetch('/api/config').then(r=>r.json()).catch(()=>null);if(!c)return;CFG=c;const q=c.quemSomos||{};
+  $('mCampos').innerHTML=`<div class="f full"><label for="m_logoUrl">Logo (imagem; deixe vazio para usar o nome)</label><input id="m_logoUrl" value="${esc(c.logoUrl||'')}" placeholder="https://...">${upBtn('m_logoUrl')}</div>`
+    +MARCA_CAMPOS.map(([k,l])=>`<div class="f"><label for="m_${k}">${l}</label><input id="m_${k}" value="${esc(c[k]||'')}"></div>`).join('');
+  $('qCampos').innerHTML=QS_CAMPOS.map(([k,l])=>`<div class="f ${['p1','p2'].includes(k)?'full':''}"><label for="q_${k}">${l}</label>${['p1','p2'].includes(k)?`<textarea id="q_${k}" rows="4">${esc(q[k]||'')}</textarea>`:`<input id="q_${k}" value="${esc(q[k]||'')}">`}</div>`).join('')
+    +`<div class="f full"><label for="q_foto">Foto do consultor (link)</label><input id="q_foto" value="${esc(q.foto||'')}" placeholder="https://...">${upBtn('q_foto')}</div>`;
+}
+async function salvarMarca(){
+  if(!CFG){aviso('Aguarde carregar a página.');return}
+  const c={...CFG,logoUrl:$('m_logoUrl').value.trim()};
+  MARCA_CAMPOS.forEach(([k])=>c[k]=$('m_'+k).value.trim());
+  c.quemSomos={...(CFG.quemSomos||{})};
+  QS_CAMPOS.forEach(([k])=>c.quemSomos[k]=$('q_'+k).value.trim());
+  c.quemSomos.foto=$('q_foto').value.trim();
+  const r=await API('/api/config',{method:'POST',body:JSON.stringify(c)});
+  if(r.success){CFG=c;aviso('Marca e Quem Somos salvos. Atualize o site para ver.')}else aviso('Não consegui salvar. Tente de novo.');
+}
 
-        let TOKEN = sessionStorage.getItem('tk') || '';
-        const H = () => ({'Content-Type':'application/json','x-token':TOKEN});
-        async function fazerLogin() {
-            const res = await fetch('/api/login', {method:'POST', headers:{'Content-Type':'application/json'},
-                body: JSON.stringify({user: document.getElementById('user').value, pass: document.getElementById('pass').value})});
-            const r = await res.json();
-            if(r.success) {
-                TOKEN = r.token; sessionStorage.setItem('tk', TOKEN);
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('panel').style.display = 'block';
-                carregarConfigAdmin();
-                caixaTexto();
-            } else { alert('Acesso negado!'); }
-        }
-
-        const esc = t => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-        const linhas = id => document.getElementById(id).value.split('\n').map(x => x.trim()).filter(Boolean);
-        function switchTab(tab) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === 'tab-' + tab));
-            if (tab === 'lista') carregarLista();
-            if (tab === 'conteudos') carregarConteudos();
-        }
-        async function carregarLista() {
-            const box = document.getElementById('lista-imoveis');
-            const res = await fetch('/api/admin/imoveis', { headers: H() });
-            if (res.status === 401) { sessionStorage.removeItem('tk'); alert('Sessão expirada. Entre de novo.'); return location.reload(); }
-            const d = await res.json(); IMOVEIS = d;
-            const fmt = s => s ? new Date(s).toLocaleDateString('pt-BR') : '-';
-            box.innerHTML = d.length ? `<table class="tabela-imoveis"><tr><th>Ref</th><th>Imóvel</th><th>Publicado</th><th>Atualizado</th><th>Status</th><th>Ações</th></tr>${d.map(i => `
-                <tr><td>${esc(i.ref)}</td><td>${esc(i.titulo)}${i.demo ? ' <em>(exemplo)</em>' : ''}</td><td>${fmt(i.criadoEm)}</td><td>${fmt(i.atualizadoEm || i.criadoEm)}</td>
-                <td>${i.ativo === false ? 'Inativo' : 'Ativo'}${i.emDestaque ? ' | Destaque' : ''}</td>
-                <td><button onclick="editarImovel('${i.id}')" style="background:var(--primary);color:#fff">✏️ Editar</button>
-                <button onclick="acaoImovel('${i.id}', {ativo: ${i.ativo === false}})">${i.ativo === false ? 'Ativar' : 'Desativar'}</button>
-                <button onclick="acaoImovel('${i.id}', {emDestaque: ${!i.emDestaque}})">${i.emDestaque ? 'Tirar destaque' : 'Destacar'}</button>
-                <button onclick="duplicar('${i.id}')">Duplicar</button>
-                <button onclick="excluir('${i.id}')">Excluir</button></td></tr>`).join('')}</table>` : '<p>Nenhum imóvel cadastrado.</p>';
-        }
-        async function acaoImovel(id, corpo) { await fetch('/api/imoveis/' + id, { method: 'PATCH', headers: H(), body: JSON.stringify(corpo) }); carregarLista(); }
-        async function duplicar(id) { const r = await (await fetch('/api/duplicar-imovel/' + id, { method: 'POST', headers: H() })).json(); alert(r.success ? 'Cópia criada como inativa (' + r.ref + '). Ative quando estiver pronta.' : 'Não foi possível duplicar.'); carregarLista(); }
-        async function excluir(id) { if (!confirm('Excluir este imóvel? Esta ação não pode ser desfeita.')) return; await fetch('/api/imoveis/' + id, { method: 'DELETE', headers: H() }); carregarLista(); }
-        async function carregarConfigAdmin() {
-            try {
-                const res = await fetch('/api/config');
-                const config = await res.json();
-                document.getElementById('cfg_slogan').value = config.slogan || '';
-                document.getElementById('cfg_logoUrl').value = config.logoUrl || '';
-                document.getElementById('cfg_linkedin').value = config.linkedin || '';
-                document.getElementById('cfg_instagram').value = config.instagram || '';
-                document.getElementById('cfg_facebook').value = config.facebook || '';
-                document.getElementById('cfg_youtube').value = config.youtube || '';
-                document.getElementById('cfg_whatsapp').value = config.whatsapp || '';
-                document.getElementById('cfg_telefone').value = config.telefone || '';
-                document.getElementById('cfg_email').value = config.email || '';
-                document.getElementById('cfg_creci').value = config.creci || '';
-                document.getElementById('cfg_parceiros').value = (config.parceiros || []).map(p => [p.nome, p.logo || '', p.link || ''].join(' | ')).join('\n');
-            } catch(e) {}
-        }
-
-        async function salvarConfigRedes() {
-            const config = {
-                slogan: document.getElementById('cfg_slogan').value,
-                logoUrl: document.getElementById('cfg_logoUrl').value,
-                linkedin: document.getElementById('cfg_linkedin').value,
-                instagram: document.getElementById('cfg_instagram').value,
-                facebook: document.getElementById('cfg_facebook').value,
-                youtube: document.getElementById('cfg_youtube').value,
-                whatsapp: document.getElementById('cfg_whatsapp').value,
-                telefone: document.getElementById('cfg_telefone').value,
-                email: document.getElementById('cfg_email').value,
-                creci: document.getElementById('cfg_creci').value,
-                parceiros: linhas('cfg_parceiros').map(l => { const p = l.split('|').map(x => x.trim()); return { nome: p[0] || '', logo: p[1] || '', link: p[2] || '' }; }).filter(p => p.nome)
-            };
-
-            const res = await fetch('/api/config', {
-                method: 'POST',
-                headers: H(),
-                body: JSON.stringify(config)
-            });
-            const r = await res.json();
-            if(r.success) alert('✅ Configurações Atualizadas com Sucesso!');
-        }
-
-        const plantaLinha = p => (p && typeof p === 'object') ? ((p.nome ? p.nome + ' | ' : '') + p.url) : String(p);
-        const CAMPOS_OBRIG = [['titulo','Título'],['preco','Preço'],['cidade','Cidade / Bairro / UF'],['area','Área'],['dormitorios','Dormitórios'],['vagas','Vagas'],['construtora','Construtora'],['foto','Foto de capa'],['apresentacao','Apresentação'],['tipologias','Tipologias e valores'],['lazer','Lazer e comodidades'],['infoTecnica','Informações técnicas']];
-        function faltasForm() {
-            const v = id => (document.getElementById(id).value || '').trim();
-            const lst = { tipologias: linhas('tipologias').length, lazer: linhas('lazer').length, infoTecnica: linhas('infoTecnica').length, foto: v('foto') || linhas('fotos').length };
-            return CAMPOS_OBRIG.filter(([id]) => !(id in lst ? lst[id] : v(id))).map(([id, nome]) => ({ id, nome }));
-        }
-        function marcarFaltas() {
-            const f = faltasForm(), ids = new Set(f.map(x => x.id));
-            CAMPOS_OBRIG.forEach(([id]) => { const el = document.getElementById(id); if (el) el.style.outline = ids.has(id) ? '2px solid #B42318' : ''; });
-            const box = document.getElementById('faltasBox');
-            if (box) { box.textContent = f.length ? 'Falta preencher: ' + f.map(x => x.nome).join(', ') + '.' : 'Cadastro completo.'; box.style.color = f.length ? '#9A5B00' : '#067647'; }
-        }
-        document.addEventListener('input', e => { if (e.target.closest && e.target.closest('#tab-imoveis form')) marcarFaltas(); });
-        async function subirArquivos(input, alvo) {
-            const arqs = [...input.files]; input.value = '';
-            if (!arqs.length) return;
-            const el = document.getElementById(alvo); let ok = 0;
-            for (const f of arqs) {
-                if (!f.type.startsWith('image/')) continue;
-                if (f.size > 20 * 1024 * 1024) { alert(f.name + ' passa de 20 MB.'); continue; }
-                const dataUrl = await new Promise((resolve, reject) => { const fr = new FileReader(); fr.onload = () => resolve(fr.result); fr.onerror = reject; fr.readAsDataURL(f); });
-                const resp = await fetch('/api/upload', { method: 'POST', headers: H(), body: JSON.stringify({ tipo: alvo === 'plantas' ? 'planta' : 'foto', arquivo: dataUrl }) });
-                if (resp.status === 401) { sessionStorage.removeItem('tk'); return location.reload(); }
-                const r = await resp.json();
-                if (!r.success) { alert(r.error || 'Não consegui enviar ' + f.name); break; }
-                const nome = f.name.replace(/\.[^.]+$/, '');
-                if (alvo === 'foto') el.value = r.url;
-                else el.value = (el.value.trim() ? el.value.trim() + '\n' : '') + (alvo === 'plantas' ? nome + ' | ' + r.url : r.url);
-                ok++;
-            }
-            marcarFaltas();
-            if (ok) alert(ok + ' arquivo(s) enviado(s).');
-        }
-        function salvarRascunho() { window.RASCUNHO = true; document.getElementById('ativo').checked = false; document.querySelector('#tab-imoveis form').requestSubmit(); }
-        function preencher(d) {
-            const set = (id, v) => { if (v) document.getElementById(id).value = v; };
-            set('titulo', d.titulo); set('preco', d.preco); set('cidade', d.localizacao);
-            set('area', d.area); set('dormitorios', d.dormitorios); set('vagas', d.vagas); set('foto', d.foto);
-            set('apresentacao', d.apresentacao); set('estagio', d.estagio); set('diferencial', d.diferencial); set('proximidade', d.proximidade);
-            if (d.categoria) { document.getElementById('categoria').value = d.categoria; montarTipos(); }
-            if (d.tipo) {
-                const sel = document.getElementById('tipo');
-                if (![...sel.options].some(o => o.value === d.tipo)) sel.insertAdjacentHTML('beforeend', `<option>${esc(d.tipo)}</option>`);
-                sel.value = d.tipo;
-            }
-            if (d.fotos && d.fotos.length) set('fotos', d.fotos.join('\n'));
-            if (d.plantas && d.plantas.length) set('plantas', d.plantas.map(plantaLinha).join('\n'));
-            if (d.tipologias && d.tipologias.length) set('tipologias', d.tipologias.map(t => [t.nome, t.area, t.dorm, t.suites, t.vagas, t.preco].join(' | ')).join('\n'));
-            if (d.lazer && d.lazer.length) set('lazer', d.lazer.join('\n'));
-            if (d.infoTecnica && d.infoTecnica.length) set('infoTecnica', d.infoTecnica.map(x => x.k + ': ' + x.v).join('\n'));
-            set('construtora', d.construtora); set('precoM2', d.precoM2); set('linkOrigem', d.linkOrigem);
-            if (d.transacao) document.getElementById('transacao').value = d.transacao;
-            if (d.destaque) document.getElementById('destaque').value = d.destaque;
-            if (d.emDestaque !== undefined) document.getElementById('emDestaque').value = d.emDestaque ? 'sim' : 'nao';
-            set('youtube', d.youtube); set('tour360', d.tour360);
-            if (d.linkOrigem !== undefined) document.getElementById('sincronizar').checked = d.sincronizar !== false;
-            if (d.ativo !== undefined) document.getElementById('ativo').checked = d.ativo !== false;
-            marcarFaltas();
-        }
-        function caixaTexto() {
-            if (document.getElementById('textoOrulo')) return;
-            const box = document.createElement('div');
-            box.id = 'textoOrulo';
-            box.innerHTML = '<textarea id="txtOrulo" rows="6" style="width:100%;margin-top:10px;padding:10px" placeholder="Abra o imóvel no Órulo logado, aperte Ctrl+A e Ctrl+C, e cole o texto aqui"></textarea>' +
-                '<button type="button" onclick="extrairTexto()" style="margin-top:8px;padding:10px 18px;cursor:pointer">Extrair do texto colado</button>';
-            const st = document.createElement('p'); st.id = 'statusTexto'; st.style.cssText = 'font-size:.85rem;color:#555;margin:8px 0 0';
-        box.appendChild(st);
-        document.getElementById('urlOrulo').insertAdjacentElement('afterend', box);
-        // Colar o texto já preenche a seção sozinho (sem botão)
-        document.getElementById('txtOrulo').addEventListener('paste', () => setTimeout(() => extrairTexto(true), 200));
-        }
-        async function salvarSessao() {
-            const cookie = document.getElementById('cookieOrulo').value.trim();
-            if(!cookie) return alert('Cole o cookie primeiro.');
-            const res = await fetch('/api/orulo-sessao', {method:'POST', headers:H(), body: JSON.stringify({cookie})});
-            const r = await res.json();
-            if(r.success) { document.getElementById('cookieOrulo').value = ''; alert('Sessão salva. Clique em Puxar Dados do Órulo de novo.'); }
-        }
-        async function extrairTexto(silencioso) {
-            const txt = document.getElementById('txtOrulo').value;
-            const st = document.getElementById('statusTexto');
-            if (txt.trim().length < 80) { if (!silencioso) alert('Cole o texto completo da página do imóvel.'); return; }
-            if (st) st.textContent = 'Lendo o texto colado e preenchendo os campos...';
-            const res = await fetch('/api/extrair-texto', {method:'POST', headers:H(), body: JSON.stringify({texto: txt})});
-            if (res.status === 401) { sessionStorage.removeItem('tk'); return location.reload(); }
-            const r = await res.json();
-            const d = r.dados || {};
-            preencher(d);
-            const falta = [];
-            if (!(d.tipologias||[]).length) falta.push('tipologias');
-            if (!(d.lazer||[]).length) falta.push('lazer');
-            if (!(d.infoTecnica||[]).length) falta.push('informações técnicas');
-            if (st) st.textContent = 'Campos preenchidos a partir do texto colado.' + (falta.length ? ' Não encontrei: ' + falta.join(', ') + '. Complete manualmente.' : ' Confira antes de publicar.');
-        }
-        async function minerar() {
-            const url = document.getElementById('urlOrulo').value;
-            if(!url) return alert('Cole a URL do Órulo!');
-            const res = await fetch('/api/importar-link', {method:'POST', headers:H(), body: JSON.stringify({url})});
-            if(res.status === 401) { alert('Sessão expirada. A página vai recarregar, entre de novo.'); sessionStorage.removeItem('tk'); return location.reload(); }
-            const r = await res.json();
-            if(r.success) {
-                if (typeof EDIT_ID !== 'undefined' && EDIT_ID) cancelarEdicao();
-                preencher(r.dados);
-                if(r.precisaTexto) { caixaTexto(); alert('Peguei só parte dos dados. Faltaram: ' + r.faltando.join(', ') + '. Cole o texto da página para completar.' + (r.diag ? '\n\nDados recebidos (para ajuste): ' + r.diag : '')); }
-                else alert('Dados extraídos. Confira antes de publicar.');
-            } else { caixaTexto(); alert(r.error ); }
-        }
-
-        async function salvar(e) {
-            e.preventDefault();
-            const lista = (id) => document.getElementById(id).value.split(/\s+/).map(x => x.trim()).filter(x => /^https?:\/\//i.test(x));
-            const fotos = lista('fotos');
-            const plantas = linhas('plantas').map(l => { const p = l.split('|').map(x => x.trim()); const url = p[p.length - 1]; return /^https?:\/\//i.test(url) ? (p.length > 1 && p[0] ? { nome: p[0], url } : url) : null; }).filter(Boolean);
-            const capa = document.getElementById('foto').value.trim() || fotos[0] || '';
-            const ehRascunho = !!window.RASCUNHO; window.RASCUNHO = false;
-            if(!capa) return alert('Informe a foto de capa ou cole pelo menos um link na galeria de fotos.');
-            if(!fotos.includes(capa)) fotos.unshift(capa);
-            if (!ehRascunho && document.getElementById('ativo').checked) { const falt = faltasForm(); if (falt.length) { marcarFaltas(); return alert('Antes de publicar, preencha: ' + falt.map(x => x.nome).join(', ') + '. Ou salve como rascunho.'); } }
-            const imovel = {
-                fotos: fotos, plantas: plantas,
-                transacao: document.getElementById('transacao').value,
-                categoria: document.getElementById('categoria').value,
-                tipo: document.getElementById('tipo').value,
-                emDestaque: document.getElementById('emDestaque').value === 'sim',
-                apresentacao: document.getElementById('apresentacao').value.trim(),
-                diferencial: document.getElementById('diferencial').value.trim(),
-                proximidade: document.getElementById('proximidade').value.trim(),
-                tipologias: linhas('tipologias').map(l => { const p = l.split('|').map(x => x.trim()); return { nome: p[0] || '', area: p[1] || '', dorm: p[2] || '', suites: p[3] || '', vagas: p[4] || '', preco: p[5] || '' }; }),
-                lazer: linhas('lazer'),
-                infoTecnica: linhas('infoTecnica').map(l => { const k = l.indexOf(':'); return k < 0 ? { k: l, v: '' } : { k: l.slice(0, k).trim(), v: l.slice(k + 1).trim() }; }),
-                titulo: document.getElementById('titulo').value,
-                preco: document.getElementById('preco').value,
-                localizacao: document.getElementById('cidade').value || 'São Paulo - SP',
-                estagio: document.getElementById('estagio').value,
-                destaque: document.getElementById('destaque').value,
-                area: document.getElementById('area').value,
-                dormitorios: document.getElementById('dormitorios').value,
-                vagas: document.getElementById('vagas').value,
-                foto: capa,
-                construtora: document.getElementById('construtora').value.trim(), precoM2: document.getElementById('precoM2').value.trim(), linkOrigem: document.getElementById('linkOrigem').value.trim(), sincronizar: document.getElementById('sincronizar').checked, ativo: document.getElementById('ativo').checked,
-                youtube: document.getElementById('youtube').value,
-                tour360: document.getElementById('tour360').value
-            };
-
-            if (EDIT_ID) { imovel.ref = EDIT_ORIG.ref; imovel.ativo = EDIT_ORIG.ativo !== false; imovel.demo = EDIT_ORIG.demo === true; }
-            const res = await fetch(EDIT_ID ? '/api/imoveis/' + EDIT_ID : '/api/adicionar-imovel', {
-                method: EDIT_ID ? 'PUT' : 'POST',
-                headers: H(),
-                body: JSON.stringify(imovel)
-            });
-            const r = await res.json();
-            if(!r.success) return alert(r.error || 'Não foi possível salvar.');
-            if(r.success) {
-                alert(EDIT_ID ? '✅ Alterações salvas no site!' : '🎉 Imóvel Publicado no Portal! REF: ' + r.ref);
-                e.target.reset(); montarTipos(); EDIT_ID = null; EDIT_ORIG = null; atualizarBanner(); window.scrollTo(0, 0); switchTab('lista');
-            }
-        }
-
-        // ===== EDIÇÃO DE IMÓVEL =====
-        let IMOVEIS = [], EDIT_ID = null, EDIT_ORIG = null;
-        const val = (id, v) => { document.getElementById(id).value = v == null ? '' : v; };
-        function atualizarBanner() {
-            document.getElementById('editBanner').style.display = EDIT_ID ? 'block' : 'none';
-            document.getElementById('editNome').textContent = EDIT_ORIG ? EDIT_ORIG.titulo + ' (' + EDIT_ORIG.ref + ')' : '';
-            document.getElementById('btnPublicar').innerHTML = EDIT_ID ? '<i class="fas fa-save"></i> Salvar alterações' : '<i class="fas fa-check-circle"></i> Publicar Imóvel no Portal';
-        }
-        function cancelarEdicao() { EDIT_ID = null; EDIT_ORIG = null; document.querySelector('#tab-imoveis form').reset(); montarTipos(); atualizarBanner(); }
-        function editarImovel(id) {
-            const i = IMOVEIS.find(x => String(x.id) === String(id)); if (!i) return;
-            EDIT_ID = i.id; EDIT_ORIG = i; switchTab('imoveis');
-            val('transacao', i.transacao || 'Vender Imóvel');
-            val('categoria', i.categoria || 'Residencial'); montarTipos();
-            const sel = document.getElementById('tipo');
-            if (i.tipo && ![...sel.options].some(o => o.value === i.tipo)) sel.insertAdjacentHTML('beforeend', `<option>${esc(i.tipo)}</option>`);
-            val('tipo', i.tipo);
-            val('destaque', i.destaque || 'none'); val('emDestaque', i.emDestaque ? 'sim' : 'nao');
-            val('cidade', i.localizacao); val('titulo', i.titulo); val('preco', i.preco); val('estagio', i.estagio || 'lancamentos');
-            val('area', i.area); val('dormitorios', i.dormitorios); val('vagas', i.vagas);
-            val('foto', i.foto); val('youtube', i.youtube); val('tour360', i.tour360);
-            val('fotos', (i.fotos || []).join('\n')); val('plantas', (i.plantas || []).map(plantaLinha).join('\n'));
-            val('construtora', i.construtora); val('precoM2', i.precoM2); val('linkOrigem', i.linkOrigem);
-            document.getElementById('sincronizar').checked = i.sincronizar !== false; document.getElementById('ativo').checked = i.ativo !== false;
-            marcarFaltas();
-            val('diferencial', i.diferencial); val('proximidade', i.proximidade); val('apresentacao', i.apresentacao);
-            val('tipologias', (i.tipologias || []).map(t => [t.nome, t.area, t.dorm, t.suites, t.vagas, t.preco].join(' | ')).join('\n'));
-            val('lazer', (i.lazer || []).join('\n'));
-            val('infoTecnica', (i.infoTecnica || []).map(x => x.k + ': ' + x.v).join('\n'));
-            atualizarBanner(); window.scrollTo(0, 0);
-        }
-
-        // ===== IA =====
-        async function ia(tarefa, instrucao, dados) {
-            const res = await fetch('/api/ia', { method: 'POST', headers: H(), body: JSON.stringify({ tarefa, instrucao, dados }) });
-            const r = await res.json().catch(() => ({}));
-            if (!r.success) { alert(r.error || 'Erro na IA.'); return null; }
-            return r.texto;
-        }
-        function dadosImovelForm() {
-            return { titulo: titulo.value, preco: preco.value, localizacao: cidade.value, tipo: tipo.value, area: area.value, dormitorios: dormitorios.value, vagas: vagas.value,
-                diferencial: diferencial.value, proximidade: proximidade.value, lazer: linhas('lazer'), tipologias: linhas('tipologias'), infoTecnica: linhas('infoTecnica') };
-        }
-        async function iaApresentacao() {
-            if (!titulo.value) return alert('Preencha pelo menos o título do imóvel.');
-            const t = await ia('apresentacao', apresentacao.value ? 'Texto atual para melhorar: ' + apresentacao.value : '', dadosImovelForm());
-            if (t) apresentacao.value = t;
-        }
-        async function iaExtrair() {
-            const txt = ia_extrair.value.trim(); if (!txt) return alert('Cole o texto primeiro.');
-            const t = await ia('extrair', txt); if (!t) return;
-            let d; try { d = JSON.parse(t.replace(/^```json|```$/g, '').trim()); } catch (e) { return alert('A IA não devolveu dados legíveis. Tente de novo.'); }
-            cancelarEdicao(); switchTab('imoveis');
-            const set = (id, v) => { if (v) val(id, v); };
-            set('titulo', d.titulo); set('preco', d.preco); set('cidade', d.localizacao); set('area', d.area); set('dormitorios', d.dormitorios);
-            set('vagas', d.vagas); set('diferencial', d.diferencial); set('proximidade', d.proximidade); set('apresentacao', d.apresentacao);
-            if (Array.isArray(d.lazer) && d.lazer.length) val('lazer', d.lazer.join('\n'));
-            alert('Formulário preenchido. Confira os dados e acrescente fotos antes de publicar.');
-        }
-        async function iaLivre() {
-            const p = ia_pedido.value.trim(); if (!p) return alert('Descreva o que quer escrever.');
-            const t = await ia('post', p); if (t) ia_saida.value = t;
-        }
-        function usarComoPost() {
-            if (!ia_saida.value.trim()) return alert('Gere um texto primeiro.');
-            limparConteudoForm(); switchTab('conteudos'); val('c_tipo', 'blog'); ajustarTipoConteudo(); val('c_texto', ia_saida.value);
-        }
-        async function iaTitulos() {
-            const base = c_texto.value || c_titulo.value; if (!base) return alert('Escreva o texto ou um tema primeiro.');
-            const t = await ia('titulos', base); if (!t) return;
-            const esc1 = prompt('Sugestões (copie a que preferir):\n\n' + t, t.split('\n')[0]); if (esc1) c_titulo.value = esc1;
-        }
-        async function iaTextoConteudo() {
-            const base = c_texto.value.trim();
-            const t = base ? await ia('revisar', base) : await ia('post', c_titulo.value || ''); if (t) c_texto.value = t;
-        }
-
-        // ===== CONTEÚDOS =====
-        let CONTEUDOS = [], C_EDIT = null;
-        const NOME_TIPO = { blog: 'Blog', noticia: 'Notícia', depoimento: 'Depoimento' };
-        function ajustarTipoConteudo() {
-            const dep = c_tipo.value === 'depoimento';
-            g_estrelas.style.display = g_autor.style.display = dep ? '' : 'none';
-            g_categoria.style.display = g_titulo.style.display = g_imagem.style.display = g_link.style.display = dep ? 'none' : '';
-        }
-        function limparConteudoForm() {
-            C_EDIT = null; ['c_titulo','c_categoria','c_imagem','c_link','c_autor','c_texto'].forEach(i => val(i, ''));
-            val('c_data', new Date().toISOString().slice(0, 10)); val('c_estrelas', '5');
-            cBanner.style.display = 'none'; cTituloForm.textContent = 'Novo conteúdo'; btnConteudo.innerHTML = '<i class="fas fa-check-circle"></i> Publicar conteúdo'; ajustarTipoConteudo();
-        }
-        async function carregarConteudos() {
-            if (!c_data.value) limparConteudoForm();
-            const res = await fetch('/api/admin/conteudos', { headers: H() });
-            if (res.status === 401) { sessionStorage.removeItem('tk'); alert('Sessão expirada. Entre de novo.'); return location.reload(); }
-            CONTEUDOS = await res.json();
-            lista_conteudos.innerHTML = CONTEUDOS.length ? `<table class="tabela-imoveis"><tr><th>Tipo</th><th>Título / Texto</th><th>Data</th><th>Status</th><th>Ações</th></tr>${CONTEUDOS.map(c => `
-                <tr><td>${NOME_TIPO[c.tipo] || c.tipo}</td><td>${esc((c.titulo || c.texto || '').slice(0, 70))}</td><td>${esc(c.data)}</td><td>${c.ativo === false ? 'Oculto' : 'No ar'}</td>
-                <td><button onclick="editarConteudo('${c.id}')" style="background:var(--primary);color:#fff">✏️ Editar</button>
-                <button onclick="toggleConteudo('${c.id}', ${c.ativo === false})">${c.ativo === false ? 'Mostrar' : 'Ocultar'}</button>
-                <button onclick="excluirConteudo('${c.id}')">Excluir</button></td></tr>`).join('')}</table>` : '<p>Nada publicado.</p>';
-        }
-        function editarConteudo(id) {
-            const c = CONTEUDOS.find(x => String(x.id) === String(id)); if (!c) return;
-            C_EDIT = c.id; val('c_tipo', c.tipo); ajustarTipoConteudo();
-            val('c_titulo', c.titulo); val('c_categoria', c.categoria); val('c_data', c.data); val('c_imagem', c.imagem); val('c_link', c.link);
-            val('c_texto', c.texto); val('c_autor', c.autor); val('c_estrelas', c.estrelas || 5);
-            cBanner.style.display = 'block'; cTituloForm.textContent = 'Editando conteúdo'; btnConteudo.innerHTML = '<i class="fas fa-save"></i> Salvar alterações'; window.scrollTo(0, 0);
-        }
-        async function salvarConteudo() {
-            const body = { tipo: c_tipo.value, titulo: c_titulo.value, categoria: c_categoria.value, data: c_data.value, imagem: c_imagem.value, link: c_link.value, texto: c_texto.value, autor: c_autor.value, estrelas: c_estrelas.value, ativo: C_EDIT ? (CONTEUDOS.find(x => x.id === C_EDIT) || {}).ativo !== false : true };
-            const res = await fetch(C_EDIT ? '/api/conteudos/' + C_EDIT : '/api/conteudos', { method: C_EDIT ? 'PUT' : 'POST', headers: H(), body: JSON.stringify(body) });
-            const r = await res.json();
-            if (!r.success) return alert(r.error || 'Não foi possível salvar.');
-            alert('✅ Salvo! Já aparece no site.'); limparConteudoForm(); carregarConteudos();
-        }
-        async function toggleConteudo(id, ativo) { await fetch('/api/conteudos/' + id, { method: 'PATCH', headers: H(), body: JSON.stringify({ ativo }) }); carregarConteudos(); }
-        async function excluirConteudo(id) { if (!confirm('Excluir este conteúdo?')) return; await fetch('/api/conteudos/' + id, { method: 'DELETE', headers: H() }); carregarConteudos(); }
-    </script>
+renderTips();
+// ---------- CAIXAS DE SELEÇÃO (lazer, unidade, proximidades) ----------
+const CAT={
+lazer:['Academia','Brinquedoteca','Churrasqueira','Cinema','Coworking','Espaço Beleza','Espaço Gourmet','Espaço Zen / Yoga','Heliponto','Horta','Jardim','Lavanderia','Lounge','Mini Mercado','Pet Place','Piscina','Piscina Aquecida','Piscina Coberta','Pista de Cooper','Playground','Portaria 24 Horas','Quadra de Tênis','Quadra Poliesportiva','Rooftop','Salão de Festas','Salão de Jogos','Sauna','SPA','Bicicletário','Elevador','Vista Panorâmica'],
+caracteristicasUnidade:['Varanda','Varanda Gourmet','Sacada com Churrasqueira','Suíte Master','Closet','Lavabo','Cozinha Americana','Cozinha Integrada','Área de Serviço','Dependência de Empregada','Ar-condicionado','Água Quente','Aquecimento a Gás','Armários Planejados','Home Office','Jardim Privativo','Terraço','Piso Porcelanato','Vista Panorâmica','Mobiliado'],
+proximidades:['Açougue, Feiras e Supermercados','Padaria','Restaurantes','Escolas Particulares','Escolas Públicas','Faculdade','Farmácia','Hospital','Estação de Metrô','Estação de Trem','Ponto de Ônibus','Parque','Praça','Shopping','Posto de Gasolina','Banco','Academia','Aeroporto']};
+const norm=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+function setChk(k,vals){
+  const marcados=new Set((vals||[]).map(norm)),cat=CAT[k]||[],extras=(vals||[]).filter(v=>!cat.some(c=>norm(c)===norm(v)));
+  $('f_'+k).innerHTML=[...cat,...extras].map(t=>`<label><input type="checkbox" value="${esc(t)}" ${marcados.has(norm(t))?'checked':''}>${esc(t)}</label>`).join('');
+}
+const getChk=k=>[...document.querySelectorAll('#f_'+k+' input:checked')].map(i=>i.value);
+document.addEventListener('click',e=>{
+  const k=e.target.dataset&&e.target.dataset.addchk;if(!k)return;
+  const inp=$('n_'+k),v=inp.value.trim();if(!v)return;
+  const atual=getChk(k);atual.push(v);const todos=[...document.querySelectorAll('#f_'+k+' input')].map(i=>i.value);
+  CAT[k]=[...new Set([...(CAT[k]||[]),...todos])];setChk(k,atual);inp.value='';
+});
+// ---------- FORMAS DE CADASTRO ----------
+let MODO='manual';
+function setModo(m){
+  MODO=m;
+  document.querySelectorAll('[data-modo]').forEach(b=>b.classList.toggle('on',b.dataset.modo===m));
+  $('m-aocubo').classList.toggle('hidden',m!=='aocubo');$('m-orulo').classList.toggle('hidden',m!=='orulo');
+  $('syncUm').classList.toggle('hidden',!(CUR&&CUR.linkOrigem));
+}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-modo]');if(b)setModo(b.dataset.modo)});
+$('syncUm').onclick=async()=>{aviso('Conferindo a origem...');const r=await API('/api/sincronizar/'+CUR.id,{method:'POST'});aviso(r.success?(r.atualizados?'Imóvel atualizado com os dados da origem.':'Nada mudou na origem.'):(r.error||'Não consegui sincronizar.'));await load();const n=IM.find(x=>x.id==CUR.id);if(n){CUR=n;BASE={...n};preencher(BASE);setModo(MODO)}};
+// busca na Órulo
+$('orBuscar').onclick=async()=>{
+  $('orRes').innerHTML='<p class="dica">Consultando a Órulo...</p>';
+  const r=await API('/api/orulo/buscar',{method:'POST',body:JSON.stringify({q:$('or_q').value.trim(),cidade:$('or_cidade').value.trim(),bairro:$('or_bairro').value.trim(),estagio:$('or_estagio').value,precoMax:$('or_preco').value})});
+  if(!r.success){$('orRes').innerHTML=`<p class="dica" style="color:var(--red)">${esc(r.error||'Não consegui buscar.')}</p>`;return}
+  $('orRes').innerHTML=r.itens.length?r.itens.map(x=>`<div class="orc">${x.foto?`<img src="${esc(x.foto)}" alt="" loading="lazy">`:'<span class="ph"></span>'}<div><b>${esc(x.nome)}</b>${esc([x.bairro,x.cidade].filter(Boolean).join(', '))}<br>${esc(ROT_EST[x.estagio]||'')}${x.precoTxt?' · a partir de '+esc(x.precoTxt):''}<br>${x.jaImportado?'<span class="tag t-ok" style="margin-top:6px">Já importado</span>':`<button class="btn sm" style="margin-top:8px" data-orid="${esc(x.id)}">Importar</button>`}</div></div>`).join(''):'<p class="dica">Nenhum empreendimento com esses filtros.</p>';
+};
+document.addEventListener('click',e=>{const id=e.target.dataset&&e.target.dataset.orid;if(!id)return;$('url2').value='https://www.orulo.com.br/buildings/'+id;importar('url2')});
+// ---------- SEO (Google) ----------
+function seoAuto(d,forcar){
+  const tipo=d.tipo||'Imóvel',bairro=String(d.localizacao||'').split(',')[0].trim();
+  if(!d.seoTitulo||forcar)d.seoTitulo=`${tipo} à venda em ${bairro||'São Paulo'} | ${d.titulo||''}`.slice(0,80);
+  if(!d.seoDescricao||forcar)d.seoDescricao=([d.titulo,d.localizacao,d.area,d.dormitorios,d.vagas,d.preco&&'a partir de '+d.preco].filter(Boolean).join(' · ')+'. Consultoria Joildo Brokers.').slice(0,160);
+  if(!d.seoPalavras||forcar)d.seoPalavras=[`${tipo.toLowerCase()} à venda ${bairro}`,`comprar ${tipo.toLowerCase()} ${bairro}`,d.titulo,d.construtora].filter(Boolean).join(', ').slice(0,120);
+}
+function seoPrev(){
+  const t=$('f_seoTitulo').value||$('f_titulo').value||'Título do imóvel',d=$('f_seoDescricao').value||'A descrição aparece aqui.';
+  $('seoPrev').innerHTML=`<div class="gt">${esc(t)}</div><div class="gu">${esc(location.origin)}/imovel/${esc($('f_ref').value||'REF-000000')}</div><div class="gd">${esc(d)}</div><p class="dica" style="margin-top:8px">${t.length}/80 · ${d.length}/160 · ${$('f_seoPalavras').value.length}/120</p>`;
+}
+$('f_seoTitulo').maxLength=80;$('f_seoPalavras').maxLength=120;
+document.addEventListener('click',e=>{if(e.target.id!=='seoGerar')return;const d=coleta();seoAuto(d,true);['seoTitulo','seoDescricao','seoPalavras'].forEach(k=>$('f_'+k).value=d[k]);seoPrev()});
+['seoTitulo','seoDescricao','seoPalavras','titulo','ref'].forEach(k=>$('f_'+k).addEventListener('input',seoPrev));
+seoPrev();
+if(sessionStorage.getItem('cp_tk'))entrar();
+</script>
 </body>
 </html>

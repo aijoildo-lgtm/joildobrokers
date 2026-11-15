@@ -71,7 +71,7 @@ const enviar = (f) => (req, res) => res.sendFile(path.join(__dirname, f));
 app.get('/', enviar('index.html'));
 // o painel antigo (admin) foi substituído pelo Cpainel; o arquivo antigo continua em /admin-antigo
 app.get(['/admin', '/admin.html'], (req, res) => res.redirect('/cpainel'));
-app.get('/admin-antigo', enviar('admin.html'));
+app.get('/admin-antigo', enviar('admin-antigo.html'));
 app.get(['/cpainel', '/cpainel.html'], enviar('cpainel.html'));
 app.get('/style.css', enviar('style.css'));
 app.get('/taxonomia.js', enviar('taxonomia.js'));
