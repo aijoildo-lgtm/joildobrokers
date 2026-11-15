@@ -649,6 +649,90 @@ $('f_seoTitulo').maxLength=80;$('f_seoPalavras').maxLength=120;
 document.addEventListener('click',e=>{if(e.target.id!=='seoGerar')return;const d=coleta();seoAuto(d,true);['seoTitulo','seoDescricao','seoPalavras'].forEach(k=>$('f_'+k).value=d[k]);seoPrev()});
 ['seoTitulo','seoDescricao','seoPalavras','titulo','ref'].forEach(k=>$('f_'+k).addEventListener('input',seoPrev));
 seoPrev();
+
+// ---------- ASSISTENTE DE IA ----------
+const IA_BTN='btn ghost sm';
+async function iaPedir(tarefa,instrucao,dados,btn){
+  const txt0=btn?btn.textContent:'';
+  if(btn){btn.disabled=true;btn.textContent='Pensando…'}
+  try{
+    const r=await API('/api/ia',{method:'POST',body:JSON.stringify({tarefa,instrucao:instrucao||'',dados:dados||{}})});
+    if(!r||r.success===false){aviso((r&&r.error)||'A IA não respondeu. Tente de novo.');return null}
+    return String(r.texto||'').trim();
+  }finally{if(btn){btn.disabled=false;btn.textContent=txt0}}
+}
+// só o que ajuda a IA (sem fotos, links nem dados privativos)
+function dadosIA(){
+  const d=coleta(),o={};
+  ['titulo','construtora','tipo','categoria','transacao','estagio','localizacao','proximidade','preco','precoM2','area','areaTotal','dormitorios','suites','banheiros','vagas','diferencial','lazer','caracteristicasUnidade','proximidades','tipologias','infoTecnica'].forEach(k=>{const v=d[k];if(v&&(!Array.isArray(v)||v.length))o[k]=v});
+  return o;
+}
+function iaLinha(campoId,botoes,idSug){
+  const el=$(campoId);if(!el)return;
+  const f=el.closest('.f');if(!f||f.querySelector('.ia-linha'))return;
+  const div=document.createElement('div');div.className='linha-up ia-linha';
+  div.innerHTML=botoes.map(([t,a])=>`<button type="button" class="${IA_BTN}" data-ia="${a}">${t}</button>`).join('')+'<span class="dica">A IA só usa o que está preenchido. Confira antes de salvar.</span>';
+  const sug=document.createElement('div');sug.className='linha-up';sug.id=idSug||('sug_'+campoId);
+  el.insertAdjacentElement('afterend',div);div.insertAdjacentElement('afterend',sug);
+}
+function iaSugestoes(idSug,lista,alvoId){
+  const box=$(idSug);if(!box)return;box.innerHTML='';
+  lista.forEach(t=>{const b=document.createElement('button');b.type='button';b.className='btn ghost sm';b.style.textAlign='left';b.textContent=t;b.onclick=()=>{$(alvoId).value=t;$(alvoId).dispatchEvent(new Event('input'));box.innerHTML='';aviso('Título aplicado.')};box.appendChild(b)});
+}
+const linhasLimpas=t=>t.split('\n').map(x=>x.replace(/^[\s\-*•\d.)]+/,'').replace(/^["“]|["”]$/g,'').trim()).filter(Boolean).slice(0,6);
+function iaSeoJSON(t){try{const x=t.replace(/```json|```/g,'');return JSON.parse(x.slice(x.indexOf('{'),x.lastIndexOf('}')+1))}catch(e){return null}}
+
+// monta os botões nos campos do imóvel
+iaLinha('f_titulo',[['✨ Sugerir títulos','titulos']],'sug_titulo');
+iaLinha('f_diferencial',[['✨ Sugerir diferencial','diferencial']],'sug_diferencial');
+iaLinha('f_apresentacao',[['✨ Gerar apresentação','apresentacao'],['Revisar o meu texto','revisar']],'sug_apresentacao');
+(function(){const g=$('seoGerar');if(!g)return;const b=document.createElement('button');b.type='button';b.className=IA_BTN;b.dataset.ia='seo';b.textContent='✨ Gerar SEO com IA';g.insertAdjacentElement('afterend',b)})();
+// Divulgação (redes e WhatsApp): painel simples logo abaixo do texto de apresentação
+(function(){const el=$('f_apresentacao');if(!el)return;const f=el.closest('.f');
+  const d=document.createElement('div');d.className='f full';d.setAttribute('data-s',f.getAttribute('data-s')||'3');
+  d.innerHTML='<label for="f_divulgacao">Texto para divulgação (Instagram e WhatsApp) — não é salvo no imóvel</label><div class="linha-up"><button type="button" class="'+IA_BTN+'" data-ia="social">✨ Gerar textos de divulgação</button><button type="button" class="'+IA_BTN+'" data-ia="copiar">Copiar</button></div><textarea id="f_divulgacao" rows="6" style="margin-top:8px"></textarea>';
+  f.insertAdjacentElement('afterend',d)})();
+// resposta a cliente
+(function(){const el=$('f_divulgacao');if(!el)return;const f=el.closest('.f');
+  const d=document.createElement('div');d.className='f full';d.setAttribute('data-s',f.getAttribute('data-s')||'3');
+  d.innerHTML='<label for="f_msgCliente">Responder um cliente sobre este imóvel — cole a mensagem dele</label><textarea id="f_msgCliente" rows="3" placeholder="Ex.: Boa tarde, ainda está disponível? Aceita financiamento?"></textarea><div class="linha-up"><button type="button" class="'+IA_BTN+'" data-ia="resposta">✨ Rascunhar resposta</button><button type="button" class="'+IA_BTN+'" data-ia="copiarResp">Copiar resposta</button></div><textarea id="f_respCliente" rows="5" style="margin-top:8px" placeholder="A resposta aparece aqui para você editar."></textarea>';
+  f.insertAdjacentElement('afterend',d)})();
+
+document.addEventListener('click',async e=>{
+  const b=e.target.closest('[data-ia]');if(!b)return;const a=b.dataset.ia;
+  if(a==='copiar'||a==='copiarResp'){const el=$(a==='copiar'?'f_divulgacao':'f_respCliente');if(!el.value.trim()){aviso('Nada para copiar.');return}try{await navigator.clipboard.writeText(el.value);aviso('Copiado.')}catch(x){el.select();document.execCommand('copy');aviso('Copiado.')}return}
+  if(['titulos','diferencial','apresentacao','revisar','seo','social','resposta'].includes(a)){
+    const d=dadosIA();
+    if(!d.titulo&&!d.localizacao&&a!=='revisar'&&a!=='resposta'){aviso('Preencha antes o título e a localização, ou importe o imóvel.');return}
+    if(a==='titulos'){const t=await iaPedir('titulos','Títulos para o anúncio deste imóvel (nome do empreendimento ou chamada).',d,b);if(t)iaSugestoes('sug_titulo',linhasLimpas(t),'f_titulo');return}
+    if(a==='diferencial'){const t=await iaPedir('diferencial','',d,b);if(t){$('f_diferencial').value=t.split('\n')[0].replace(/["“”]/g,'').slice(0,80);aviso('Diferencial sugerido. Edite se quiser.')}return}
+    if(a==='apresentacao'){const el=$('f_apresentacao');if(el.value.trim()&&!confirm('Já existe um texto. Substituir pelo da IA?'))return;const t=await iaPedir('apresentacao','',d,b);if(t){el.value=t;aviso('Texto gerado. Revise antes de salvar.')}return}
+    if(a==='revisar'){const el=$('f_apresentacao');if(!el.value.trim()){aviso('Escreva ou cole o texto primeiro.');return}const t=await iaPedir('revisar',el.value,d,b);if(t){el.value=t;aviso('Texto revisado.')}return}
+    if(a==='seo'){const t=await iaPedir('seo','',d,b);const j=t&&iaSeoJSON(t);if(!j){if(t)aviso('Não entendi a resposta da IA. Tente de novo.');return}
+      $('f_seoTitulo').value=String(j.seoTitulo||'').slice(0,80);$('f_seoDescricao').value=String(j.seoDescricao||'').slice(0,160);$('f_seoPalavras').value=String(j.seoPalavras||'').slice(0,120);seoPrev();aviso('SEO gerado. Confira a prévia.');return}
+    if(a==='social'){const t=await iaPedir('social','',d,b);if(t)$('f_divulgacao').value=t;return}
+    if(a==='resposta'){const m=$('f_msgCliente').value.trim();if(!m){aviso('Cole a mensagem do cliente.');return}const t=await iaPedir('resposta',m,d,b);if(t)$('f_respCliente').value=t;return}
+  }
+  // ----- Conteúdos (blog / notícias / depoimentos) -----
+  if(a==='cnTitulos'){const t=$('c_texto').value.trim()||$('c_titulo').value.trim();if(!t){aviso('Escreva o tema ou o texto primeiro.');return}const r=await iaPedir('titulos',t,{},b);if(r)iaSugestoes('sug_cn',linhasLimpas(r),'c_titulo');return}
+  if(a==='cnPost'){const tema=($('c_titulo').value.trim()||$('c_texto').value.trim());if(!tema){aviso('Escreva o tema no título ou no texto.');return}const el=$('c_texto');if(el.value.trim().length>200&&!confirm('Substituir o texto atual por um rascunho novo?'))return;const r=await iaPedir('post',tema,{},b);if(r){el.value=r;aviso('Rascunho gerado. Leia e ajuste antes de salvar.')}return}
+  if(a==='cnRevisar'){const el=$('c_texto');if(!el.value.trim()){aviso('Escreva o texto primeiro.');return}const r=await iaPedir('revisar',el.value,{},b);if(r){el.value=r;aviso('Texto revisado.')}return}
+  // ----- Marca / Quem Somos -----
+  if(a==='qsRefinar'){const id=b.dataset.alvo,el=$(id);if(!el||!el.value.trim()){aviso('Escreva ou cole o texto primeiro.');return}const r=await iaPedir('revisar',el.value,{},b);if(r){el.value=r;aviso('Texto revisado. Salve para publicar.')}return}
+  if(a==='slogan'){const base=$('m_slogan').value.trim();const r=await iaPedir('livre',`Sugira 5 slogans curtos (até 60 caracteres) para a consultoria imobiliária Joildo Brokers, em São Paulo.${base?` O atual é: ${base}.`:''} Tom elegante e confiável, sem prometer resultados. Um por linha, sem numeração, sem aspas.`,{},b);if(r)iaSugestoes('sug_slogan',linhasLimpas(r),'m_slogan');return}
+});
+
+// botões de IA em Conteúdos e Marca (os formulários são redesenhados, por isso reaplicamos)
+const _cnForm=cnForm;
+cnForm=function(c){_cnForm(c);
+  const bx=document.querySelector('#cnForm #c_titulo');if(bx){const f=bx.closest('.f');if(!f.querySelector('.ia-linha')){const d=document.createElement('div');d.className='linha-up ia-linha';d.innerHTML='<button type="button" class="'+IA_BTN+'" data-ia="cnTitulos">✨ Sugerir títulos</button><button type="button" class="'+IA_BTN+'" data-ia="cnPost">✨ Escrever rascunho do texto</button>';const s=document.createElement('div');s.className='linha-up';s.id='sug_cn';bx.insertAdjacentElement('afterend',d);d.insertAdjacentElement('afterend',s)}}
+  const tx=document.querySelector('#cnForm #c_texto');if(tx){const f=tx.closest('.f');if(!f.querySelector('.ia-linha')){const d=document.createElement('div');d.className='linha-up ia-linha';d.innerHTML='<button type="button" class="'+IA_BTN+'" data-ia="cnRevisar">✨ Revisar texto (ortografia e clareza)</button><span class="dica">Mantém os fatos; confira o resultado.</span>';tx.insertAdjacentElement('afterend',d)}}
+};
+const _loadMarca=loadMarca;
+loadMarca=async function(){await _loadMarca();
+  const sl=$('m_slogan');if(sl&&!sl.closest('.f').querySelector('.ia-linha')){const d=document.createElement('div');d.className='linha-up ia-linha';d.innerHTML='<button type="button" class="'+IA_BTN+'" data-ia="slogan">✨ Sugerir slogans</button>';const s=document.createElement('div');s.className='linha-up';s.id='sug_slogan';sl.insertAdjacentElement('afterend',d);d.insertAdjacentElement('afterend',s)}
+  ['q_p1','q_p2'].forEach(id=>{const el=$(id);if(el&&!el.closest('.f').querySelector('.ia-linha')){const d=document.createElement('div');d.className='linha-up ia-linha';d.innerHTML='<button type="button" class="'+IA_BTN+'" data-ia="qsRefinar" data-alvo="'+id+'">✨ Revisar este parágrafo</button>';el.insertAdjacentElement('afterend',d)}});
+};
 if(sessionStorage.getItem('cp_tk'))entrar();
 </script>
 </body>

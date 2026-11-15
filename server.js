@@ -268,15 +268,12 @@ function extrairSecao5(t) {
   return { tipologias, lazer, infoTecnica, proximidade: prox };
 }
 async function extrairComIA(texto) {
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) return {};
+  if (!iaProvedor()) return {};
   try {
-    const r = await axios.post('https://api.anthropic.com/v1/messages', {
-      model: IA_MODELO, max_tokens: 1800,
-      system: 'Você extrai dados de imóveis a partir de texto colado de uma página. Responda APENAS um JSON válido, sem crases e sem comentários. Não invente nada: use "" ou [] quando o texto não trouxer a informação.',
-      messages: [{ role: 'user', content: `Retorne um JSON com as chaves: titulo, preco, localizacao, area, dormitorios, vagas, diferencial, proximidade, apresentacao (2 frases), lazer (array de strings), tipologias (array de objetos com nome, area, dorm, suites, vagas, preco), infoTecnica (array de objetos com k e v). Preços no formato "R$ 284.176". Texto:\n${texto}` }]
-    }, { headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' }, timeout: 60000 });
-    const txt = (r.data.content || []).filter(b => b.type === 'text').map(b => b.text).join('').replace(/```json|```/g, '');
+    const txt = (await chamarIA(
+      'Você extrai dados de imóveis a partir de texto colado de uma página. Responda APENAS um JSON válido, sem crases e sem comentários. Não invente nada: use "" ou [] quando o texto não trouxer a informação.',
+      `Retorne um JSON com as chaves: titulo, preco, localizacao, area, dormitorios, vagas, diferencial, proximidade, apresentacao (2 frases), lazer (array de strings), tipologias (array de objetos com nome, area, dorm, suites, vagas, preco), infoTecnica (array de objetos com k e v). Preços no formato "R$ 284.176". Texto:\n${texto}`,
+      1800)).replace(/```json|```/g, '');
     return JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1));
   } catch (e) { console.error('Extração por IA falhou:', e.message); return {}; }
 }
@@ -433,30 +430,69 @@ app.put('/api/conteudos/:id', exigirLogin, ah(async (req, res) => {
 app.patch('/api/conteudos/:id', exigirLogin, ah(async (req, res) => res.json({ success: await cUpd(req.params.id, { ativo: (req.body || {}).ativo === true }) })));
 app.delete('/api/conteudos/:id', exigirLogin, ah(async (req, res) => res.json({ success: await cDel(req.params.id) })));
 
-// ===== ASSISTENTE DE IA (precisa da variável ANTHROPIC_API_KEY no Render) =====
+// ===== ASSISTENTE DE IA =====
+// Funciona com Gemini (GEMINI_API_KEY) ou Claude (ANTHROPIC_API_KEY). Se as duas existirem, usa o Gemini;
+// para forçar um, crie IA_PROVEDOR = claude ou gemini. As chaves ficam SÓ nas variáveis de ambiente do Render.
 const IA_MODELO = process.env.ANTHROPIC_MODEL || 'claude-sonnet-5-5';
+const GEMINI_MODELO = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+const iaProvedor = () => {
+  const p = String(process.env.IA_PROVEDOR || '').toLowerCase();
+  if (p === 'claude' && process.env.ANTHROPIC_API_KEY) return 'claude';
+  if (p === 'gemini' && process.env.GEMINI_API_KEY) return 'gemini';
+  if (process.env.GEMINI_API_KEY) return 'gemini';
+  if (process.env.ANTHROPIC_API_KEY) return 'claude';
+  return '';
+};
+async function chamarIA(system, prompt, maxTokens = 1800) {
+  const prov = iaProvedor();
+  if (!prov) { const e = new Error('IA não configurada'); e.semChave = true; throw e; }
+  if (prov === 'gemini') {
+    const r = await axios.post(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODELO}:generateContent`, {
+      systemInstruction: { parts: [{ text: system }] },
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      generationConfig: { maxOutputTokens: maxTokens * 3, temperature: 0.7 }
+    }, { headers: { 'x-goog-api-key': process.env.GEMINI_API_KEY, 'content-type': 'application/json' }, timeout: 60000 });
+    const partes = (((r.data.candidates || [])[0] || {}).content || {}).parts || [];
+    return partes.map(p => p.text || '').join('').trim();
+  }
+  const r = await axios.post('https://api.anthropic.com/v1/messages',
+    { model: IA_MODELO, max_tokens: maxTokens, system, messages: [{ role: 'user', content: prompt }] },
+    { headers: { 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' }, timeout: 60000 });
+  return (r.data.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
+}
 const IA_SISTEMA = 'Você é o assistente de conteúdo da Joildo Brokers, consultoria imobiliária de alto padrão em São Paulo (CRECI 200298). Escreva em português do Brasil, tom elegante, claro e confiável, sem exageros. REGRA ABSOLUTA: nunca invente preço, metragem, prazo de entrega, nome de construtora, endereço ou qualquer dado que não esteja no que foi informado. Se faltar informação, escreva sem ela. Responda só com o texto pedido, sem comentários antes ou depois.';
+
+// limite simples de uso por hora (protege seu crédito). Mude com IA_LIMITE_HORA.
+const iaUso = { janela: 0, n: 0 };
+function iaDentroDoLimite() {
+  const h = Math.floor(Date.now() / 3600000);
+  if (iaUso.janela !== h) { iaUso.janela = h; iaUso.n = 0; }
+  return ++iaUso.n <= (+process.env.IA_LIMITE_HORA || 120);
+}
+app.get('/api/ia/status', exigirLogin, (req, res) => res.json({ ativa: !!iaProvedor(), provedor: iaProvedor() }));
 app.post('/api/ia', exigirLogin, async (req, res) => {
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) return res.status(503).json({ success: false, error: 'IA não configurada. No Render, adicione a variável ANTHROPIC_API_KEY.' });
+  if (!iaProvedor()) return res.status(503).json({ success: false, error: 'IA não configurada. No Render, adicione GEMINI_API_KEY ou ANTHROPIC_API_KEY em Environment.' });
+  if (!iaDentroDoLimite()) return res.status(429).json({ success: false, error: 'Limite de pedidos por hora atingido. Tente mais tarde.' });
   const { tarefa, dados, instrucao } = req.body || {};
   const ctx = String(JSON.stringify(dados || {})).slice(0, 8000);
-  const ins = String(instrucao || '').slice(0, 4000);
+  const ins = String(instrucao || '').slice(0, 6000);
   const pedidos = {
     apresentacao: `Escreva uma apresentação de 2 a 3 parágrafos curtos para o anúncio deste imóvel, usando SOMENTE estes dados:\n${ctx}\n${ins}`,
     post: `Escreva um texto (300 a 500 palavras, com subtítulos simples) sobre o tema abaixo, útil para quem quer comprar imóvel em São Paulo. Não cite números de mercado que você não possa garantir.\nPedido: ${ins}\nDados de apoio: ${ctx}`,
-    revisar: `Revise e melhore o texto abaixo (correção, clareza e tom profissional), mantendo todos os fatos.\n${ins}`,
-    titulos: `Sugira 5 títulos curtos e atraentes para este conteúdo, um por linha, sem numeração.\n${ins}\n${ctx}`,
+    revisar: `Revise e melhore o texto abaixo (correção, clareza e tom profissional), mantendo todos os fatos. Devolva só o texto revisado.\n${ins}`,
+    titulos: `Sugira 5 títulos curtos e atraentes para este conteúdo, um por linha, sem numeração, sem aspas.\n${ins}\n${ctx}`,
+    diferencial: `Escreva UM diferencial curto (até 60 caracteres) que resuma o que há de mais forte neste imóvel, usando SOMENTE os dados abaixo. Só a frase, sem ponto final.\n${ctx}`,
+    seo: `Gere o SEO do Google para este imóvel, usando SOMENTE os dados abaixo. Responda APENAS um JSON válido, sem crases, com as chaves: seoTitulo (até 80 caracteres), seoDescricao (até 160 caracteres, convidativa, sem inventar nada) e seoPalavras (5 a 8 palavras-chave separadas por vírgula, até 120 caracteres).\n${ctx}`,
+    social: `Escreva dois textos para divulgar este imóvel, usando SOMENTE os dados abaixo. Formato exato:\nINSTAGRAM:\n(legenda de 3 a 5 linhas, com 5 hashtags no final)\nWHATSAPP:\n(mensagem curta e cordial de 3 a 4 linhas, convidando para uma visita)\n${ctx}`,
+    resposta: `Escreva uma resposta cordial e objetiva, em nome do corretor Joildo, para a mensagem de cliente abaixo. Use SOMENTE os dados do imóvel quando citar algo dele; se a pergunta exigir um dado que não está aí, diga que vai confirmar e retornar. Convide para uma conversa ou visita.\nMENSAGEM DO CLIENTE:\n${ins}\nDADOS DO IMÓVEL:\n${ctx}`,
     extrair: `Extraia do texto abaixo os dados do imóvel e responda APENAS um JSON válido, sem crases, com as chaves: titulo, preco, localizacao, area, dormitorios, vagas, diferencial, proximidade, apresentacao (resumo de 2 frases), lazer (array de strings). Use "" (ou []) para o que não estiver no texto. Não invente nada.\nTEXTO:\n${ins}`,
     livre: ins
   };
   const prompt = pedidos[tarefa];
   if (!prompt || !String(prompt).trim()) return res.status(400).json({ success: false, error: 'Pedido inválido.' });
   try {
-    const r = await axios.post('https://api.anthropic.com/v1/messages',
-      { model: IA_MODELO, max_tokens: 1800, system: IA_SISTEMA, messages: [{ role: 'user', content: prompt }] },
-      { headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' }, timeout: 60000 });
-    const texto = (r.data.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
+    const texto = await chamarIA(IA_SISTEMA, prompt, 1800);
+    if (!texto) return res.status(502).json({ success: false, error: 'A IA devolveu uma resposta vazia. Tente de novo.' });
     res.json({ success: true, texto });
   } catch (e) {
     console.error('Erro IA:', e.response ? JSON.stringify(e.response.data) : e.message);
