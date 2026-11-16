@@ -453,6 +453,7 @@ document.addEventListener('change',async e=>{
   msg.textContent=ok?`${ok} arquivo(s) enviado(s).`:'';pend();
 });
 let TIPS=[];
+let PARC=[];
 const ITEM_TIPO={blog:'Blog',noticia:'Notícia',depoimento:'Depoimento'};
 async function subirImagem(alvo){
   const inp=document.querySelector('[data-alvo="'+alvo+'"]');if(!inp||!inp.files[0])return;
@@ -596,12 +597,41 @@ async function loadMarca(){
   $('qCampos').innerHTML=QS_CAMPOS.map(([k,l])=>`<div class="f ${['p1','p2'].includes(k)?'full':''}"><label for="q_${k}">${l}</label>${['p1','p2'].includes(k)?`<textarea id="q_${k}" rows="4">${esc(q[k]||'')}</textarea>`:`<input id="q_${k}" value="${esc(q[k]||'')}">`}</div>`).join('')
     +`<div class="f full"><label for="q_foto">Foto do consultor (link)</label><input id="q_foto" value="${esc(q.foto||'')}" placeholder="https://...">${upBtn('q_foto')}</div>`
     +`<div class="f full"><label for="q_equipe">Outras pessoas da equipe (opcional) — uma por linha: Nome | Cargo | Foto (link) | LinkedIn (link)</label><textarea id="q_equipe" rows="4" placeholder="Ex.: Ana Silva | Corretora Associada | https://... | https://linkedin.com/in/...">${esc(equipeParaTexto(q.equipe))}</textarea><p class="dica">Deixe em branco para mostrar só você. Foto e LinkedIn são opcionais — pode deixar vazio entre as barras (|).</p></div>`;
-  if($('pCampos'))$('pCampos').innerHTML=`<div class="f full"><label for="m_parceiros">Construtoras e incorporadoras parceiras — uma por linha: Nome | Logo (link, opcional) | Site (link, opcional)</label><textarea id="m_parceiros" rows="5" placeholder="Ex.: Construtora Alfa | https://.../logo.png | https://construtoraalfa.com.br">${esc(parceirosParaTexto(c.parceiros))}</textarea><p class="dica">Sem logo, o site mostra só o nome. A seção só aparece no site quando há pelo menos um parceiro preenchido.</p></div>`;
+  PARC=(c.parceiros||[]).filter(p=>p&&(p.nome||p.logo||p.link)).map(p=>({nome:p.nome||'',logo:p.logo||'',link:p.link||''}));
+  renderParc();
 }
 function equipeParaTexto(arr){return (arr||[]).map(p=>[p.nome||'',p.cargo||'',p.foto||'',p.linkedin||''].join(' | ')).join('\n')}
 function textoParaEquipe(t){return String(t||'').split('\n').map(l=>l.split('|').map(x=>x.trim())).filter(p=>p[0]).map(p=>({nome:p[0],cargo:p[1]||'',foto:p[2]||'',linkedin:p[3]||''}))}
-function parceirosParaTexto(arr){return (arr||[]).filter(p=>p&&p.nome).map(p=>[p.nome||'',p.logo||'',p.link||''].join(' | ')).join('\n')}
-function textoParaParceiros(t){return String(t||'').split('\n').map(l=>l.split('|').map(x=>x.trim())).filter(p=>p[0]).map(p=>({nome:p[0],logo:p[1]||'',link:p[2]||''}))}
+function renderParc(){
+  if(!$('pCampos'))return;
+  $('pCampos').innerHTML=`<div class="f full"><p class="dica" style="margin-bottom:10px">Sem logo, o site mostra só o nome. A seção só aparece quando há pelo menos um parceiro preenchido.</p>
+    <div id="parc-linhas"></div>
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:10px"><button type="button" class="btn ghost sm" id="parc-add">Adicionar parceiro</button></div>
+  </div>`;
+  $('parc-linhas').innerHTML=PARC.map((p,k)=>`<div class="linha-up" style="border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;align-items:center">
+      <input data-pk="${k}" data-pc="nome" value="${esc(p.nome)}" placeholder="Nome da construtora/incorporadora" style="min-width:220px;flex:1">
+      <label class="btn ghost sm" style="width:auto">${p.logo?'Trocar logo':'Anexar logo'}<input type="file" accept="image/*" data-parc-up="${k}" style="display:none"></label>
+      ${p.logo?`<img src="${esc(p.logo)}" alt="" style="height:36px;max-width:90px;object-fit:contain;border:1px solid var(--line);border-radius:6px;background:#fff">`:''}
+      <input data-pk="${k}" data-pc="link" value="${esc(p.link)}" placeholder="Site (opcional) https://..." style="min-width:200px;flex:1">
+      <button type="button" class="btn danger sm" data-parc-rm="${k}">Remover</button>
+    </div>`).join('')||'<p class="dica">Nenhum parceiro cadastrado ainda.</p>';
+}
+document.addEventListener('input',e=>{const k=e.target.dataset&&e.target.dataset.pk;if(k===undefined)return;PARC[+k][e.target.dataset.pc]=e.target.value;pend&&pend()});
+document.addEventListener('click',e=>{
+  if(e.target.id==='parc-add'){PARC.push({nome:'',logo:'',link:''});renderParc();return}
+  const rm=e.target.dataset&&e.target.dataset.parcRm;if(rm!==undefined){PARC.splice(+rm,1);renderParc();return}
+});
+document.addEventListener('change',async e=>{
+  const k=e.target.dataset&&e.target.dataset.parcUp;if(k===undefined)return;
+  const f=e.target.files&&e.target.files[0];if(!f)return;
+  if(!f.type.startsWith('image/')){aviso('Escolha um arquivo de imagem.');return}
+  if(f.size>20*1024*1024){aviso('Imagem passa de 20 MB. Reduza e tente de novo.');return}
+  aviso('Enviando logo...');
+  const arquivo=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f)});
+  const r=await API('/api/upload',{method:'POST',body:JSON.stringify({tipo:'foto',arquivo})});
+  if(!r.success){aviso(r.error||'Não consegui enviar a logo.');return}
+  PARC[+k].logo=r.url;renderParc();aviso('Logo enviada. Clique em Salvar para confirmar.');
+});
 async function salvarMarca(){
   if(!CFG){aviso('Aguarde carregar a página.');return}
   const c={...CFG,logoUrl:$('m_logoUrl').value.trim()};
@@ -610,7 +640,7 @@ async function salvarMarca(){
   QS_CAMPOS.forEach(([k])=>c.quemSomos[k]=$('q_'+k).value.trim());
   c.quemSomos.foto=$('q_foto').value.trim();
   c.quemSomos.equipe=textoParaEquipe($('q_equipe')?.value||'');
-  if($('m_parceiros'))c.parceiros=textoParaParceiros($('m_parceiros').value);
+  c.parceiros=PARC.filter(p=>p&&p.nome.trim()).map(p=>({nome:p.nome.trim(),logo:p.logo||'',link:p.link.trim()}));
   const r=await API('/api/config',{method:'POST',body:JSON.stringify(c)});
   if(r.success){CFG=c;aviso('Marca e Quem Somos salvos. Atualize o site para ver.')}else aviso('Não consegui salvar. Tente de novo.');
 }
