@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="/style.css">
     <meta name="description" content="Joildo Brokers: consultoria imobiliária em São Paulo. Lançamentos, imóveis em construção, prontos e usados, com atendimento personalizado.">
     <meta property="og:title" content="Joildo Brokers | Consultoria Imobiliária">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
@@ -92,11 +91,9 @@
     </nav>
 </header>
 
-<!-- HERO CARROSSEL SWIPER -->
+<!-- HERO: rotação própria entre os imóveis em destaque -->
 <div class="hero-section">
-    <div class="swiper mySwiper">
-        <div class="swiper-wrapper" id="hero-slider-wrapper"></div>
-    </div>
+    <div class="hero-rotator" id="hero-slider-wrapper"></div>
 </div>
 
 <!-- BARRA FLUTUANTE DE PESQUISA -->
@@ -529,7 +526,6 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
 </a>
 
 <!-- SCRIPTS -->
-<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="/taxonomia.js"></script>
 <script>
@@ -611,7 +607,7 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
     const COORDS = {'jardins':[-23.5659,-46.6623],'itaim bibi':[-23.5851,-46.6797],'pinheiros':[-23.5670,-46.6919],'vila nova conceicao':[-23.5897,-46.6674],'moema':[-23.6010,-46.6660],'alphaville':[-23.4975,-46.8503],'paraiso':[-23.5750,-46.6475],'tatuape':[-23.5400,-46.5760],'vila mariana':[-23.5890,-46.6340]};
     const FASES = {lancamentos:'Lançamento', construcao:'Em construção', prontos:'Pronto', oportunidades:'Oportunidade'};
     const TARJAS = {exclusivo:['badge-exclusivo','Exclusividade'], desconto:['badge-desconto','20% de desconto'], oportunidade:['badge-oportunidade','Oportunidade'], decorado:['badge-decorado','Decorado'], pronto:['badge-pronto','Pronto para morar']};
-    let mapa = null, camadaMapa = null, heroSwiper = null, galTimer = null;
+    let mapa = null, camadaMapa = null, galTimer = null;
 
     const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const norm = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
@@ -626,15 +622,18 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
         return urlOk(galeria[0]) || FOTO_PADRAO;
     };
 
+    // Rotação do hero feita na mão (sem depender de biblioteca externa), para nunca travar numa tela em branco.
+    let _heroTimer = null;
     function renderHero(lista) {
         const wrap = document.getElementById('hero-slider-wrapper');
+        if (_heroTimer) { clearInterval(_heroTimer); _heroTimer = null; }
         const destaques = lista.slice(0, 20);
         if (!destaques.length) {
-            wrap.innerHTML = `<div class="swiper-slide" style="background-image:url('${FOTO_PADRAO}')"><div class="hero-overlay"></div><div class="hero-content"><h1 class="hero-title">Ética e dedicação para tornar seus sonhos realidade</h1></div></div>`;
+            wrap.innerHTML = `<div class="hero-slide ativo" style="background-image:url('${FOTO_PADRAO}')"><div class="hero-overlay"></div><div class="hero-content"><h1 class="hero-title">Ética e dedicação para tornar seus sonhos realidade</h1></div></div>`;
             return;
         }
-        wrap.innerHTML = destaques.map(i => `
-            <div class="swiper-slide" style="background-image:url('${capa(i)}')">
+        wrap.innerHTML = destaques.map((i, n) => `
+            <div class="hero-slide${n === 0 ? ' ativo' : ''}" style="background-image:url('${capa(i)}')">
                 <div class="hero-overlay"></div>
                 <div class="hero-content">
                     <span class="hero-badge">${esc(FASES[i.estagio] || 'Destaque')}</span>
@@ -644,12 +643,14 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
                     <button class="btn-header-cta" style="border:none;cursor:pointer;padding:14px 28px" onclick="abrirModal('${esc(i.id)}')">Conhecer imóvel</button>
                 </div>
             </div>`).join('');
-        if (typeof Swiper === 'undefined') return;
-        if (heroSwiper) heroSwiper.destroy(true, true);
-        heroSwiper = new Swiper('.mySwiper', {
-            loop: destaques.length > 1, effect: 'fade', fadeEffect: { crossFade: true },
-            speed: 1400, autoplay: { delay: 5500, disableOnInteraction: false }
-        });
+        if (destaques.length < 2) return;
+        let atual = 0;
+        _heroTimer = setInterval(() => {
+            const slides = wrap.children; if (!slides.length) return;
+            slides[atual].classList.remove('ativo');
+            atual = (atual + 1) % slides.length;
+            slides[atual].classList.add('ativo');
+        }, 5500);
     }
 
     function cartao(i) {

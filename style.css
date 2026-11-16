@@ -70,11 +70,11 @@ nav ul li:hover .dropdown { display: block; animation: fadeIn 0.3s ease; }
 }
 .btn-header-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(198, 40, 40, 0.5); }
 
-/* HERO SWIPER */
+/* HERO (rotação própria, sem biblioteca externa) */
 .hero-section { height: 78vh; min-height: 580px; position: relative; overflow: hidden; background: var(--primary); }
-.swiper { width: 100%; height: 100%; }
-.swiper-slide { position: relative; background-size: cover; background-position: center; display: flex; align-items: center; padding: 0 8%; overflow: hidden; }
-.swiper-slide-active { animation: kenBurns 10s ease infinite alternate; }
+.hero-rotator { position: absolute; inset: 0; }
+.hero-slide { position: absolute; inset: 0; background-size: cover; background-position: center; display: flex; align-items: center; padding: 0 8%; overflow: hidden; opacity: 0; transition: opacity 1.2s ease; z-index: 0; }
+.hero-slide.ativo { opacity: 1; z-index: 1; animation: kenBurns 10s ease infinite alternate; }
 @keyframes kenBurns { 0% { transform: scale(1); } 100% { transform: scale(1.08); } }
 
 .hero-overlay { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(10,17,40,0.88) 0%, rgba(10,17,40,0.45) 60%, transparent 100%); z-index: 1; }
