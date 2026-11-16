@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="/style.css">
     <meta name="description" content="Joildo Brokers: consultoria imobiliária em São Paulo. Lançamentos, imóveis em construção, prontos e usados, com atendimento personalizado.">
     <meta property="og:title" content="Joildo Brokers | Consultoria Imobiliária">
+    <link rel="canonical" href="/">
+    <script type="application/ld+json" id="ld-org">{"@context":"https://schema.org","@type":"RealEstateAgent","name":"Joildo Brokers","areaServed":"São Paulo, SP"}</script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
@@ -559,6 +561,16 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
 
             if (configGeral.slogan) {
                 document.getElementById('dyn-slogan').innerText = configGeral.slogan;
+            }
+
+            const ldOrg = document.getElementById('ld-org');
+            if (ldOrg) {
+                const dados = { "@context": "https://schema.org", "@type": "RealEstateAgent", "name": "Joildo Brokers", "areaServed": "São Paulo, SP", "url": location.origin };
+                if (configGeral.telefone) dados.telephone = configGeral.telefone;
+                if (configGeral.email) dados.email = configGeral.email;
+                if (configGeral.creci) dados.identifier = configGeral.creci;
+                if (configGeral.logoUrl) dados.logo = configGeral.logoUrl;
+                ldOrg.textContent = JSON.stringify(dados);
             }
 
             // ── QUEM SOMOS DINÂMICO ──────────────────────────────────────────

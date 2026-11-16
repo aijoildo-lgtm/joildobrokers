@@ -147,6 +147,7 @@ const novaRef = () => `REF-${Math.floor(100000 + Math.random() * 900000)}`;
 
 const escA = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const slug = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 80);
+const precoNumSrv = (v) => { const m = String(v || '').match(/(\d{1,3}(?:\.\d{3})+|\d+)(?:,\d{1,2})?/); return m ? parseInt(m[1].replace(/\./g, ''), 10) : 0; };
 app.get('/imovel/:ref/:slug?', ah(async (req, res) => {
   // imóveis pausados (ainda não publicados) também podem ser abertos por este link direto, para
   // quem está editando revisar como vai ficar; eles não entram no sitemap nem são indexados (noindex).
@@ -158,12 +159,27 @@ app.get('/imovel/:ref/:slug?', ah(async (req, res) => {
     const desc = i.seoDescricao || [i.titulo, i.localizacao, i.area, i.dormitorios, i.vagas, i.preco && `a partir de ${i.preco}`].filter(Boolean).join(' · ');
     const img = i.foto || (i.fotos || [])[0] || '';
     const semIndexar = i.ativo === false ? '<meta name="robots" content="noindex,nofollow">' : '';
-    html = html.replace(/<title>[\s\S]*?<\/title>/, `<title>${escA(titulo)}</title>`)
+    const preco = precoNumSrv(i.preco);
+    // Dados estruturados (schema.org): é o que permite ao Google entender preço, local e fotos
+    // automaticamente, sem adivinhar a partir do texto solto da página.
+    const jsonLd = {
+      '@context': 'https://schema.org', '@type': 'RealEstateListing', name: i.titulo,
+      description: desc, url,
+      image: [i.foto, ...(i.fotos || [])].filter(Boolean).slice(0, 10),
+      address: { '@type': 'PostalAddress', addressLocality: i.localizacao, addressCountry: 'BR' },
+      ...(preco ? { offers: { '@type': 'Offer', price: preco, priceCurrency: 'BRL', availability: i.ativo === false ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock' } } : {})
+    };
+    html = html.replace('<link rel="canonical" href="/">', '')
+      .replace(/<title>[\s\S]*?<\/title>/, `<title>${escA(titulo)}</title>`)
       .replace(/<meta name="description"[^>]*>/, `<meta name="description" content="${escA(desc)}">`)
-      .replace(/<meta property="og:title"[^>]*>/, `<meta property="og:title" content="${escA(titulo)}"><meta property="og:description" content="${escA(desc)}"><meta property="og:url" content="${escA(url)}">${img ? `<meta property="og:image" content="${escA(img)}">` : ''}<link rel="canonical" href="${escA(url)}">${i.seoPalavras ? `<meta name="keywords" content="${escA(i.seoPalavras)}">` : ''}${semIndexar}`);
+      .replace(/<meta property="og:title"[^>]*>/, `<meta property="og:title" content="${escA(titulo)}"><meta property="og:description" content="${escA(desc)}"><meta property="og:url" content="${escA(url)}">${img ? `<meta property="og:image" content="${escA(img)}">` : ''}<link rel="canonical" href="${escA(url)}">${i.seoPalavras ? `<meta name="keywords" content="${escA(i.seoPalavras)}">` : ''}${semIndexar}<script type="application/ld+json">${JSON.stringify(jsonLd)}</script>`);
   }
   res.type('html').send(html);
 }));
+app.get('/robots.txt', (req, res) => {
+  const base = `${req.protocol}://${req.get('host')}`;
+  res.type('text').send(`User-agent: *\nAllow: /\nDisallow: /cpainel\nDisallow: /admin\nDisallow: /api/\nSitemap: ${base}/sitemap.xml`);
+});
 app.get('/sitemap.xml', ah(async (req, res) => {
   const base = `${req.protocol}://${req.get('host')}`;
   const urls = (await getImoveis()).filter(i => i.ativo !== false && i.demo !== true).map(i => `<url><loc>${escA(base + '/imovel/' + i.ref + '/' + slug(i.titulo))}</loc><lastmod>${String(i.atualizadoEm || i.criadoEm || '').slice(0, 10)}</lastmod></url>`);
@@ -487,7 +503,7 @@ app.post('/api/ia', exigirLogin, async (req, res) => {
     revisar: `Revise e melhore o texto abaixo (correção, clareza e tom profissional), mantendo todos os fatos. Devolva só o texto revisado.\n${ins}`,
     titulos: `Sugira 5 títulos curtos e atraentes para este conteúdo, um por linha, sem numeração, sem aspas.\n${ins}\n${ctx}`,
     diferencial: `Escreva UM diferencial curto (até 60 caracteres) que resuma o que há de mais forte neste imóvel, usando SOMENTE os dados abaixo. Só a frase, sem ponto final.\n${ctx}`,
-    seo: `Gere o SEO do Google para este imóvel, usando SOMENTE os dados abaixo. Responda APENAS um JSON válido, sem crases, com as chaves: seoTitulo (até 80 caracteres), seoDescricao (até 160 caracteres, convidativa, sem inventar nada) e seoPalavras (5 a 8 palavras-chave separadas por vírgula, até 120 caracteres).\n${ctx}`,
+    seo: `Gere o SEO do Google para este imóvel, usando SOMENTE os dados abaixo. Responda APENAS um JSON válido, sem crases, com as chaves: seoTitulo (até 60 caracteres, pois o Google corta títulos maiores), seoDescricao (até 160 caracteres, convidativa, sem inventar nada) e seoPalavras (5 a 8 palavras-chave separadas por vírgula, até 120 caracteres).\n${ctx}`,
     social: `Escreva dois textos para divulgar este imóvel, usando SOMENTE os dados abaixo. Formato exato:\nINSTAGRAM:\n(legenda de 3 a 5 linhas, com 5 hashtags no final)\nWHATSAPP:\n(mensagem curta e cordial de 3 a 4 linhas, convidando para uma visita)\n${ctx}`,
     resposta: `Escreva uma resposta cordial e objetiva, em nome do corretor Joildo, para a mensagem de cliente abaixo. Use SOMENTE os dados do imóvel quando citar algo dele; se a pergunta exigir um dado que não está aí, diga que vai confirmar e retornar. Convide para uma conversa ou visita.\nMENSAGEM DO CLIENTE:\n${ins}\nDADOS DO IMÓVEL:\n${ctx}`,
     extrair: `Extraia do texto abaixo os dados do imóvel e responda APENAS um JSON válido, sem crases, com as chaves: titulo, preco, localizacao, area, dormitorios, vagas, diferencial, proximidade, apresentacao (resumo de 2 frases), lazer (array de strings). Use "" (ou []) para o que não estiver no texto. Não invente nada.\nTEXTO:\n${ins}`,

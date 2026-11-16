@@ -684,15 +684,15 @@ document.addEventListener('click',e=>{const id=e.target.dataset&&e.target.datase
 // ---------- SEO (Google) ----------
 function seoAuto(d,forcar){
   const tipo=d.tipo||'Imóvel',bairro=String(d.localizacao||'').split(',')[0].trim();
-  if(!d.seoTitulo||forcar)d.seoTitulo=`${tipo} à venda em ${bairro||'São Paulo'} | ${d.titulo||''}`.slice(0,80);
+  if(!d.seoTitulo||forcar)d.seoTitulo=`${tipo} à venda em ${bairro||'São Paulo'} | ${d.titulo||''}`.slice(0,60);
   if(!d.seoDescricao||forcar)d.seoDescricao=([d.titulo,d.localizacao,d.area,d.dormitorios,d.vagas,d.preco&&'a partir de '+d.preco].filter(Boolean).join(' · ')+'. Consultoria Joildo Brokers.').slice(0,160);
   if(!d.seoPalavras||forcar)d.seoPalavras=[`${tipo.toLowerCase()} à venda ${bairro}`,`comprar ${tipo.toLowerCase()} ${bairro}`,d.titulo,d.construtora].filter(Boolean).join(', ').slice(0,120);
 }
 function seoPrev(){
   const t=$('f_seoTitulo').value||$('f_titulo').value||'Título do imóvel',d=$('f_seoDescricao').value||'A descrição aparece aqui.';
-  $('seoPrev').innerHTML=`<div class="gt">${esc(t)}</div><div class="gu">${esc(location.origin)}/imovel/${esc($('f_ref').value||'REF-000000')}</div><div class="gd">${esc(d)}</div><p class="dica" style="margin-top:8px">${t.length}/80 · ${d.length}/160 · ${$('f_seoPalavras').value.length}/120</p>`;
+  $('seoPrev').innerHTML=`<div class="gt">${esc(t)}</div><div class="gu">${esc(location.origin)}/imovel/${esc($('f_ref').value||'REF-000000')}</div><div class="gd">${esc(d)}</div><p class="dica" style="margin-top:8px">${t.length}/60 · ${d.length}/160 · ${$('f_seoPalavras').value.length}/120</p>`;
 }
-$('f_seoTitulo').maxLength=80;$('f_seoPalavras').maxLength=120;
+$('f_seoTitulo').maxLength=60;$('f_seoPalavras').maxLength=120;
 document.addEventListener('click',e=>{if(e.target.id!=='seoGerar')return;const d=coleta();seoAuto(d,true);['seoTitulo','seoDescricao','seoPalavras'].forEach(k=>$('f_'+k).value=d[k]);seoPrev()});
 ['seoTitulo','seoDescricao','seoPalavras','titulo','ref'].forEach(k=>$('f_'+k).addEventListener('input',seoPrev));
 seoPrev();
@@ -756,7 +756,7 @@ document.addEventListener('click',async e=>{
     if(a==='apresentacao'){const el=$('f_apresentacao');if(el.value.trim()&&!confirm('Já existe um texto. Substituir pelo da IA?'))return;const t=await iaPedir('apresentacao','',d,b);if(t){el.value=t;aviso('Texto gerado. Revise antes de salvar.')}return}
     if(a==='revisar'){const el=$('f_apresentacao');if(!el.value.trim()){aviso('Escreva ou cole o texto primeiro.');return}const t=await iaPedir('revisar',el.value,d,b);if(t){el.value=t;aviso('Texto revisado.')}return}
     if(a==='seo'){const t=await iaPedir('seo','',d,b);const j=t&&iaSeoJSON(t);if(!j){if(t)aviso('Não entendi a resposta da IA. Tente de novo.');return}
-      $('f_seoTitulo').value=String(j.seoTitulo||'').slice(0,80);$('f_seoDescricao').value=String(j.seoDescricao||'').slice(0,160);$('f_seoPalavras').value=String(j.seoPalavras||'').slice(0,120);seoPrev();aviso('SEO gerado. Confira a prévia.');return}
+      $('f_seoTitulo').value=String(j.seoTitulo||'').slice(0,60);$('f_seoDescricao').value=String(j.seoDescricao||'').slice(0,160);$('f_seoPalavras').value=String(j.seoPalavras||'').slice(0,120);seoPrev();aviso('SEO gerado. Confira a prévia.');return}
     if(a==='social'){const t=await iaPedir('social','',d,b);if(t)$('f_divulgacao').value=t;return}
     if(a==='resposta'){const m=$('f_msgCliente').value.trim();if(!m){aviso('Cole a mensagem do cliente.');return}const t=await iaPedir('resposta',m,d,b);if(t)$('f_respCliente').value=t;return}
   }
