@@ -52,6 +52,8 @@
     <a href="#" class="dyn-instagram" target="_blank" title="Instagram"><i class="fab fa-instagram"></i></a>
     <a href="https://www.linkedin.com/in/joildo-costa-0154a29b/" class="dyn-linkedin" target="_blank" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
     <a href="#" class="dyn-youtube" target="_blank" title="YouTube"><i class="fab fa-youtube"></i></a>
+    <a href="#" class="dyn-tiktok" target="_blank" title="TikTok" style="display:none"><i class="fab fa-tiktok"></i></a>
+    <a href="#" class="dyn-google-negocio" target="_blank" title="Avalie-nos no Google" style="display:none"><i class="fab fa-google"></i></a>
     <div class="btn-fav-top" onclick="alert('Portal favoritado com sucesso!')">
         <i class="fas fa-heart"></i> Favoritos
     </div>
@@ -124,7 +126,7 @@
             <label>Dormitórios <select id="search_dorm"><option value="">Qualquer</option><option value="1">1 ou mais</option><option value="2">2 ou mais</option><option value="3">3 ou mais</option><option value="4">4 ou mais</option></select></label>
             <label>Vagas <select id="search_vagas"><option value="">Qualquer</option><option value="1">1 ou mais</option><option value="2">2 ou mais</option><option value="3">3 ou mais</option><option value="4">4 ou mais</option></select></label>
             <label>Área mínima (m²) <input type="number" id="search_area" min="0" placeholder="Ex: 80"></label>
-            <label>Diferencial <select id="search_tarja"><option value="">Qualquer</option><option value="exclusivo">Exclusividade</option><option value="desconto">Desconto</option><option value="oportunidade">Oportunidade</option><option value="decorado">Decorado</option><option value="pronto">Pronto para morar</option></select></label>
+            <label>Diferencial <select id="search_tarja"><option value="">Qualquer</option><option value="exclusivo">Exclusividade</option><option value="desconto">Desconto</option><option value="oportunidade">Oportunidade</option><option value="decorado">Decorado</option><option value="pronto">Pronto para morar</option><option value="mcmv">Minha Casa Minha Vida</option></select></label>
             <button type="button" class="btn-header-cta" style="border:none;cursor:pointer" onclick="filtrarBusca()">Aplicar</button>
             <button type="button" class="link-avancada" style="font-weight:500" onclick="limparAvancada()">Limpar filtros</button>
         </div>
@@ -139,6 +141,16 @@
         <button class="opp-seta esq" onclick="rolarColecao(-1)" aria-label="Anterior"><i class="fas fa-chevron-left"></i></button>
         <div class="opp-track colecao-track" id="colecao-track"></div>
         <button class="opp-seta dir" onclick="rolarColecao(1)" aria-label="Próximo"><i class="fas fa-chevron-right"></i></button>
+    </div>
+</section>
+
+<section class="ins-section reveal" id="mcmv" style="display:none">
+    <div class="ins-head"><h2>Conquiste Seu Imóvel com o Minha Casa Minha Vida</h2>
+        <p>Filtre por faixa, localização e valor e descubra qual subsídio se encaixa no seu perfil</p></div>
+    <div class="opp-wrap">
+        <button class="opp-seta esq" onclick="rolarMcmv(-1)" aria-label="Anterior"><i class="fas fa-chevron-left"></i></button>
+        <div class="opp-track mcmv-track" id="mcmv-track"></div>
+        <button class="opp-seta dir" onclick="rolarMcmv(1)" aria-label="Próximo"><i class="fas fa-chevron-right"></i></button>
     </div>
 </section>
 
@@ -599,6 +611,8 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
             document.querySelectorAll('.dyn-instagram').forEach(el => el.href = configGeral.instagram || '#');
             document.querySelectorAll('.dyn-facebook').forEach(el => el.href = configGeral.facebook || '#');
             document.querySelectorAll('.dyn-youtube').forEach(el => el.href = configGeral.youtube || '#');
+            document.querySelectorAll('.dyn-tiktok').forEach(el => { if (configGeral.tiktok) { el.href = configGeral.tiktok; el.style.display = ''; } });
+            document.querySelectorAll('.dyn-google-negocio').forEach(el => { if (configGeral.googleNegocio) { el.href = configGeral.googleNegocio; el.style.display = ''; } });
             
             const zapNum = configGeral.whatsapp || '5511951377033';
             const zapLink = `https://api.whatsapp.com/send?phone=${zapNum}&text=Olá%20Joildo%20Brokers!%20Vim%20pelo%20site.`;
@@ -618,7 +632,7 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
 
     const COORDS = {'jardins':[-23.5659,-46.6623],'itaim bibi':[-23.5851,-46.6797],'pinheiros':[-23.5670,-46.6919],'vila nova conceicao':[-23.5897,-46.6674],'moema':[-23.6010,-46.6660],'alphaville':[-23.4975,-46.8503],'paraiso':[-23.5750,-46.6475],'tatuape':[-23.5400,-46.5760],'vila mariana':[-23.5890,-46.6340]};
     const FASES = {lancamentos:'Lançamento', construcao:'Em construção', prontos:'Pronto', oportunidades:'Oportunidade'};
-    const TARJAS = {exclusivo:['badge-exclusivo','Exclusividade'], desconto:['badge-desconto','20% de desconto'], oportunidade:['badge-oportunidade','Oportunidade'], decorado:['badge-decorado','Decorado'], pronto:['badge-pronto','Pronto para morar']};
+    const TARJAS = {exclusivo:['badge-exclusivo','Exclusividade'], desconto:['badge-desconto','20% de desconto'], oportunidade:['badge-oportunidade','Oportunidade'], decorado:['badge-decorado','Decorado'], pronto:['badge-pronto','Pronto para morar'], mcmv:['badge-mcmv','Minha Casa Minha Vida']};
     let mapa = null, camadaMapa = null, galTimer = null;
 
     const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1128,8 +1142,16 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
         document.getElementById('colecao-track').innerHTML = l.map(cartaoOpp).join('');
         autoRolar('colecao-track', 4);
     }
+    // "Minha Casa Minha Vida": curadoria manual (botão "+ Minha Casa Minha Vida" no painel), mostra 5 por vez e roda sozinho
+    function renderMcmv() {
+        const l = bancoImoveis.filter(i => i.mcmvVitrine === true), sec = document.getElementById('mcmv');
+        sec.style.display = l.length ? '' : 'none';
+        document.getElementById('mcmv-track').innerHTML = l.map(cartaoOpp).join('');
+        autoRolar('mcmv-track', 5);
+    }
     function rolarOpp(d) { const t = document.getElementById('opp-track'); t.scrollBy({ left: d * t.clientWidth * 0.9, behavior: 'smooth' }); }
     function rolarColecao(d) { const t = document.getElementById('colecao-track'); t.scrollBy({ left: d * t.clientWidth * 0.9, behavior: 'smooth' }); }
+    function rolarMcmv(d) { const t = document.getElementById('mcmv-track'); t.scrollBy({ left: d * t.clientWidth * 0.9, behavior: 'smooth' }); }
     // Gira sozinho só quando há mais imóveis selecionados do que cabem visíveis ao mesmo tempo (3 ou 4, conforme a seção)
     const _autoRolarTimers = {};
     function autoRolar(trackId, porVez) {
@@ -1201,6 +1223,7 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
         renderMercado();
         renderOportunidades();
         renderColecao();
+        renderMcmv();
         renderBairros();
         renderParceiros();
         initScrollReveal();
