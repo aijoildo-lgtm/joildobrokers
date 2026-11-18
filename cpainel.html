@@ -338,7 +338,7 @@ const reais=()=>IM.filter(i=>i.demo!==true);
 const pubs=()=>reais().filter(i=>i.ativo!==false);
 const desat=()=>pubs().filter(i=>{const d=diasDesde(i);return d===null||d>lim()}).sort((a,b)=>(diasDesde(b)??1e9)-(diasDesde(a)??1e9));
 
-function aviso(t){const x=$('aviso');x.textContent=t;x.classList.remove('hidden');clearTimeout(x._t);x._t=setTimeout(()=>x.classList.add('hidden'),3200)}
+function aviso(t){const x=$('aviso');x.textContent=t;x.classList.remove('hidden');clearTimeout(x._t);x._t=setTimeout(()=>x.classList.add('hidden'),t.length>70?9000:3200)}
 async function API(p,o={}){
   const r=await fetch(p,{...o,headers:{'Content-Type':'application/json','x-token':sessionStorage.getItem('cp_tk')||''}});
   if(r.status===401){sessionStorage.removeItem('cp_tk');aviso('Sessão expirada. Entre de novo.');setTimeout(()=>location.reload(),1500);return{success:false}}
@@ -504,7 +504,7 @@ document.addEventListener('change',async e=>{
   for(const[n,f]of arquivos.entries()){
     if(f.size>20*1024*1024){aviso(`${f.name} passa de 20 MB. Para vídeos grandes, use o YouTube.`);continue}
     msg.textContent=`Enviando ${n+1} de ${arquivos.length}...`;
-    const arquivo=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f)});
+    const arquivo=await lerArquivo(f);
     const r=await API('/api/upload',{method:'POST',body:JSON.stringify({tipo:alvo==='plantas'?'planta':video?'video':'foto',arquivo})});
     if(!r.success){aviso(r.error||`Não consegui enviar ${f.name}.`);break}
     if(video)$('f_videoArquivo').value=r.url;
@@ -516,13 +516,30 @@ document.addEventListener('change',async e=>{
 let TIPS=[];
 let PARC=[];
 const ITEM_TIPO={blog:'Blog',noticia:'Notícia',depoimento:'Depoimento'};
+// Lê o arquivo para enviar. Imagens são redimensionadas (até 1600 px) e convertidas em WebP no próprio navegador:
+// fica leve e evita formatos ou tamanhos que a Cloudinary recusa. GIF, SVG e vídeos seguem como estão.
+async function lerArquivo(f){
+  const ler=()=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f)});
+  if(!f.type.startsWith('image/')||f.type==='image/gif'||f.type==='image/svg+xml')return ler();
+  let url='';
+  try{
+    const img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;url=URL.createObjectURL(f);i.src=url});
+    const k=Math.min(1,1600/Math.max(img.naturalWidth,img.naturalHeight));
+    const cv=document.createElement('canvas');cv.width=Math.max(1,Math.round(img.naturalWidth*k));cv.height=Math.max(1,Math.round(img.naturalHeight*k));
+    cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+    const blob=await new Promise(res=>cv.toBlob(res,'image/webp',0.9));
+    if(!blob)return ler();
+    return await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(blob)});
+  }catch(e){return ler()}
+  finally{if(url)URL.revokeObjectURL(url)}
+}
 async function subirImagem(alvo){
   const inp=document.querySelector('[data-alvo="'+alvo+'"]');if(!inp||!inp.files[0])return;
   const f=inp.files[0];inp.value='';
   if(!f.type.startsWith('image/')){aviso('Escolha um arquivo de imagem.');return}
   if(f.size>20*1024*1024){aviso('Imagem passa de 20 MB. Reduza e tente de novo.');return}
   aviso('Enviando imagem...');
-  const arquivo=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f)});
+  const arquivo=await lerArquivo(f);
   const r=await API('/api/upload',{method:'POST',body:JSON.stringify({tipo:'foto',arquivo})});
   if(!r.success){aviso(r.error||'Não consegui enviar a imagem.');return}
   $(alvo).value=r.url;aviso('Imagem enviada. Clique em Salvar.');
@@ -694,7 +711,7 @@ document.addEventListener('change',async e=>{
   if(!f.type.startsWith('image/')){aviso('Escolha um arquivo de imagem.');return}
   if(f.size>20*1024*1024){aviso('Imagem passa de 20 MB. Reduza e tente de novo.');return}
   aviso('Enviando logo...');
-  const arquivo=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f)});
+  const arquivo=await lerArquivo(f);
   const r=await API('/api/upload',{method:'POST',body:JSON.stringify({tipo:'foto',arquivo})});
   if(!r.success){aviso(r.error||'Não consegui enviar a logo.');return}
   PARC[+k].logo=r.url;renderParc();aviso('Logo enviada. Clique em Salvar para confirmar.');
@@ -754,7 +771,7 @@ document.addEventListener('change',async e=>{
   if(!f.type.startsWith('image/')){aviso('Escolha um arquivo de imagem.');return}
   if(f.size>20*1024*1024){aviso('Imagem passa de 20 MB. Reduza e tente de novo.');return}
   aviso('Enviando logo...');
-  const arquivo=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f)});
+  const arquivo=await lerArquivo(f);
   const r=await API('/api/upload',{method:'POST',body:JSON.stringify({tipo:'foto',arquivo})});
   if(!r.success){aviso(r.error||'Não consegui enviar a logo.');return}
   FINBANCOS[+k].logo=r.url;renderFinBancos();aviso('Logo enviada. Clique em Salvar para confirmar.');

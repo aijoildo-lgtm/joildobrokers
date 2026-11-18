@@ -553,7 +553,8 @@ app.post('/api/ia', exigirLogin, async (req, res) => {
 // No Render: CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY e CLOUDINARY_API_SECRET
 app.post('/api/upload', exigirLogin, async (req, res) => {
   const { tipo, arquivo } = req.body || {};
-  const { CLOUDINARY_CLOUD_NAME: cloud, CLOUDINARY_API_KEY: key, CLOUDINARY_API_SECRET: secret } = process.env;
+  // trim(): um espaço copiado junto com a chave muda a assinatura e a Cloudinary recusa tudo sem dizer o motivo
+  const cloud = (process.env.CLOUDINARY_CLOUD_NAME || '').trim(), key = (process.env.CLOUDINARY_API_KEY || '').trim(), secret = (process.env.CLOUDINARY_API_SECRET || '').trim();
   if (!cloud || !key || !secret) return res.status(503).json({ success: false, error: 'Upload não configurado. No Render, defina CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY e CLOUDINARY_API_SECRET.' });
   const m = String(arquivo || '').match(/^data:(image|video)\//);
   if (!m) return res.status(400).json({ success: false, error: 'Envie uma foto ou um vídeo.' });
@@ -567,8 +568,19 @@ app.post('/api/upload', exigirLogin, async (req, res) => {
       { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, maxBodyLength: Infinity, maxContentLength: Infinity, timeout: 120000 });
     res.json({ success: true, url: r.data.secure_url });
   } catch (e) {
-    console.error('Erro no upload:', e.response ? JSON.stringify(e.response.data).slice(0, 300) : e.message);
-    res.status(502).json({ success: false, error: 'O serviço de imagens recusou o arquivo. Confira o tamanho e o formato.' });
+    // Mostra o motivo real que a Cloudinary devolveu (antes a mensagem era sempre a mesma)
+    const status = e.response ? e.response.status : 0;
+    const motivo = (e.response && e.response.data && e.response.data.error && e.response.data.error.message) || e.message || 'sem detalhe';
+    console.error(`Erro no upload (HTTP ${status}):`, motivo);
+    let error;
+    if (!e.response) error = 'Não consegui falar com a Cloudinary (sem conexão ou tempo esgotado). Tente de novo.';
+    else if (/cloud_name/i.test(motivo)) error = 'Nome da conta Cloudinary incorreto: confira CLOUDINARY_CLOUD_NAME no Render, sem espaços.';
+    else if (/signature/i.test(motivo)) error = 'Chave secreta da Cloudinary incorreta: confira CLOUDINARY_API_SECRET no Render, sem espaços.';
+    else if (/api[_ ]key/i.test(motivo)) error = 'Chave de API da Cloudinary incorreta: confira CLOUDINARY_API_KEY no Render, sem espaços.';
+    else if (/file size|too large|maximum/i.test(motivo)) error = 'Arquivo maior que o limite da conta Cloudinary. Reduza a imagem e tente de novo.';
+    else if (/invalid image|unsupported|format/i.test(motivo)) error = 'A Cloudinary não aceitou este formato. Tente JPEG, PNG ou WebP.';
+    else error = 'A Cloudinary recusou o arquivo: ' + motivo;
+    res.status(502).json({ success: false, error });
   }
 });
 
