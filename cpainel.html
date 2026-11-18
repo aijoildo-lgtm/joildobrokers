@@ -670,7 +670,7 @@ function equipeParaTexto(arr){return (arr||[]).map(p=>[p.nome||'',p.cargo||'',p.
 function textoParaEquipe(t){return String(t||'').split('\n').map(l=>l.split('|').map(x=>x.trim())).filter(p=>p[0]).map(p=>({nome:p[0],cargo:p[1]||'',foto:p[2]||'',linkedin:p[3]||''}))}
 function renderParc(){
   if(!$('pCampos'))return;
-  $('pCampos').innerHTML=`<div class="f full"><p class="dica" style="margin-bottom:10px">Anexe a logo do computador ou cole o link. Aparecem 6 por vez; a partir da 7ª cadastrada, as logos deslizam sozinhas. Sem logo, o site mostra só o espaço reservado. O nome é só para você se organizar.</p>
+  $('pCampos').innerHTML=`<div class="f full"><p class="dica" style="margin-bottom:10px">Anexe a logo do computador ou cole o link. As logos ficam em duas fileiras, alternadas: a de cima anda para a esquerda e a de baixo para a direita. Cada fileira desliza quando passa de 6 logos. Sem logo, o site mostra só o espaço reservado. O nome é só para você se organizar.</p>
     <div id="parc-linhas"></div>
     <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:10px"><button type="button" class="btn ghost sm" id="parc-add">Adicionar parceiro</button></div>
   </div>`;

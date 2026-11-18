@@ -259,6 +259,7 @@
     <div class="ins-head"><h2>Construtoras e incorporadoras parceiras</h2>
         <p>Trabalho com empreendimentos das principais construtoras e incorporadoras de São Paulo.</p></div>
     <div class="parc-wrap"><div class="parc-track" id="parc-track"></div></div>
+    <div class="parc-wrap parc-wrap-2"><div class="parc-track" id="parc-track-2"></div></div>
 </section>
 
 <!-- ATENDIMENTO HUMANO & CONCIERGE -->
@@ -1371,40 +1372,59 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
             ${urlOk(p.linkedin) ? `<a href="${urlOk(p.linkedin)}" target="_blank" rel="noopener"><i class="fab fa-linkedin-in"></i> LinkedIn</a>` : ''}
         </div>`).join('');
     }
-    let parcTimer = null, parcResize = null;
+    let parcTimers = [], parcResize = null, parcPausa = false;
+    // Logos enviadas à Cloudinary vêm no tamanho original. Pedimos uma versão de até 400 px, comprimida (WebP/AVIF quando o navegador aceita).
+    const logoOtimizada = u => { const m = String(u).match(/^(https:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\/)(.+)$/i); return m ? `${m[1]}c_limit,w_400,h_200,f_auto,q_auto/${m[2]}` : u; };
     function renderParceiros() {
         const l = (configGeral.parceiros || []).filter(p => p && p.nome), sec = document.getElementById('parceiros');
         sec.style.display = l.length ? '' : 'none';
         if (!l.length) return;
         const vazio = '<svg class="parc-vazio" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 8"/></svg>';
         const item = p => {
-            const tem = urlOk(p.logo);
-            const c = tem ? `<img src="${urlOk(p.logo)}" alt="${esc(p.nome)}" loading="lazy">` : vazio;
-            const t = tem ? ` title="${esc(p.nome)}"` : '';
+            const logo = urlOk(p.logo);
+            const c = logo ? `<img src="${logoOtimizada(logo)}" alt="${esc(p.nome)}" loading="lazy" decoding="async">` : vazio;
+            const t = logo ? ` title="${esc(p.nome)}"` : '';
             return urlOk(p.link) ? `<a class="parc-item" href="${urlOk(p.link)}" target="_blank" rel="noopener"${t}>${c}</a>` : `<div class="parc-item"${t}>${c}</div>`;
         };
-        const t = document.getElementById('parc-track'), w = t.parentElement;
+        // Duas fileiras com as logos alternadas: a de cima anda da direita para a esquerda; a de baixo, no sentido contrário.
+        const fileiras = [
+            { el: document.getElementById('parc-track'), itens: l.filter((_, i) => i % 2 === 0), sentido: -1 },
+            { el: document.getElementById('parc-track-2'), itens: l.filter((_, i) => i % 2 === 1), sentido: 1 }
+        ];
+        const w = fileiras[0].el.parentElement;
         const montar = () => {
-            clearInterval(parcTimer);
+            parcTimers.forEach(clearInterval); parcTimers = [];
             const v = innerWidth <= 620 ? 3 : innerWidth <= 900 ? 4 : 6;
-            const rola = l.length > v && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-            t.style.transition = 'none'; t.style.transform = 'none';
-            t.classList.toggle('rola', rola);
-            t.innerHTML = l.map(item).join('') + (rola ? l.slice(0, v).map(item).join('') : '');
-            if (!rola) return;
-            let i = 0, pausa = false;
-            const passo = () => t.children[0].getBoundingClientRect().width + parseFloat(getComputedStyle(w).getPropertyValue('--gap'));
-            parcTimer = setInterval(() => {
-                if (pausa || document.hidden) return;
-                i++;
-                t.style.transition = 'transform .9s cubic-bezier(.65,0,.35,1)';
-                t.style.transform = `translateX(${-i * passo()}px)`;
-                if (i === l.length) setTimeout(() => { t.style.transition = 'none'; t.style.transform = 'none'; i = 0; }, 950);
-            }, 3200);
-            w.onmouseenter = w.onfocusin = () => { pausa = true; };
-            w.onmouseleave = w.onfocusout = () => { pausa = false; };
+            const reduzir = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            fileiras.forEach(f => {
+                const t = f.el, lista = f.itens, N = lista.length;
+                t.parentElement.style.display = N ? '' : 'none';
+                if (!N) return;
+                const rola = N > v && !reduzir;
+                t.classList.toggle('rola', rola);
+                t.style.transition = 'none'; t.style.transform = 'none';
+                if (!rola) { t.innerHTML = lista.map(item).join(''); return; }
+                // Cópias das pontas deixam o movimento contínuo: quem anda para a esquerda leva cópias do início no fim;
+                // quem anda para a direita leva cópias do fim no início.
+                t.innerHTML = f.sentido < 0
+                    ? lista.map(item).join('') + lista.slice(0, v).map(item).join('')
+                    : lista.slice(N - v).map(item).join('') + lista.map(item).join('');
+                let s = f.sentido < 0 ? 0 : v; // posição atual, em itens, dentro da pista
+                const passo = () => t.children[0].getBoundingClientRect().width + parseFloat(getComputedStyle(w).getPropertyValue('--gap'));
+                const mover = anima => { t.style.transition = anima ? 'transform .9s cubic-bezier(.65,0,.35,1)' : 'none'; t.style.transform = `translateX(${-s * passo()}px)`; };
+                const saltar = pos => { s = pos; mover(false); void t.offsetWidth; }; // salto invisível: a pista repete as mesmas logos
+                mover(false);
+                parcTimers.push(setInterval(() => {
+                    if (parcPausa || document.hidden) return;
+                    if (f.sentido < 0) { if (s === N) saltar(0); s++; }
+                    else { if (s === 0) saltar(N); s--; }
+                    mover(true);
+                }, 3200));
+            });
         };
         montar();
+        sec.onmouseenter = sec.onfocusin = () => { parcPausa = true; };
+        sec.onmouseleave = sec.onfocusout = () => { parcPausa = false; };
         window.removeEventListener('resize', renderParceiros._r);
         renderParceiros._r = () => { clearTimeout(parcResize); parcResize = setTimeout(montar, 250); };
         window.addEventListener('resize', renderParceiros._r);
