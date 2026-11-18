@@ -142,6 +142,7 @@ textarea{resize:vertical}
     <button class="nav" data-v="conteudos">Blog</button>
     <button class="nav sub2" data-v="conteudos">Acompanhe nossas notícias</button>
     <button class="nav" data-v="marca" data-ancora="qCampos">Quem Somos</button>
+    <button class="nav" data-v="marca" data-ancora="aCampos">Foto do Atendimento</button>
     <button class="nav" data-v="marca" data-ancora="pCampos">Construtoras e Incorporadoras</button>
     <button class="nav" data-v="marca" data-ancora="mCampos">Contato</button>
     <a href="/" target="_blank" rel="noopener">Ver o site</a>
@@ -245,6 +246,7 @@ textarea{resize:vertical}
       </div>
       <div class="panel"><h3 style="font-size:19px;margin-bottom:14px">Marca e contatos</h3><div id="mCampos" class="g"></div></div>
       <div class="panel"><h3 style="font-size:19px;margin-bottom:14px">Seção Quem Somos</h3><div id="qCampos" class="g"></div></div>
+      <div class="panel"><h3 style="font-size:19px;margin-bottom:14px">Faixa azul de atendimento</h3><div id="aCampos" class="g"></div></div>
       <div class="panel"><h3 style="font-size:19px;margin-bottom:14px">Construtoras e incorporadoras parceiras</h3><div id="pCampos" class="g"></div></div>
       <div class="barra"><button class="btn" id="mSalvar2">Salvar alterações</button></div>
     </section>
@@ -630,6 +632,7 @@ async function loadMarca(){
   $('qCampos').innerHTML=QS_CAMPOS.map(([k,l])=>`<div class="f ${['p1','p2'].includes(k)?'full':''}"><label for="q_${k}">${l}</label>${['p1','p2'].includes(k)?`<textarea id="q_${k}" rows="4">${esc(q[k]||'')}</textarea>`:`<input id="q_${k}" value="${esc(q[k]||'')}">`}</div>`).join('')
     +`<div class="f full"><label for="q_foto">Foto do consultor (link)</label><input id="q_foto" value="${esc(q.foto||'')}" placeholder="https://...">${upBtn('q_foto')}</div>`
     +`<div class="f full"><label for="q_equipe">Outras pessoas da equipe (opcional) — uma por linha: Nome | Cargo | Foto (link) | LinkedIn (link)</label><textarea id="q_equipe" rows="4" placeholder="Ex.: Ana Silva | Corretora Associada | https://... | https://linkedin.com/in/...">${esc(equipeParaTexto(q.equipe))}</textarea><p class="dica">Deixe em branco para mostrar só você. Foto e LinkedIn são opcionais — pode deixar vazio entre as barras (|).</p></div>`;
+  $('aCampos').innerHTML=`<div class="f full"><label for="a_foto">Foto ao lado do texto "Conte o que procura" (link ou enviar do computador)</label><input id="a_foto" value="${esc(c.atendimentoFoto||'')}" placeholder="https://...">${upBtn('a_foto')}<p class="dica">Aparece no espaço azul à direita. Deixe vazio para não mostrar foto. Sugestão: imagem horizontal, proporção 4:3.</p></div>`;
   PARC=(c.parceiros||[]).filter(p=>p&&(p.nome||p.logo||p.link)).map(p=>({nome:p.nome||'',logo:p.logo||'',link:p.link||''}));
   renderParc();
 }
@@ -637,7 +640,7 @@ function equipeParaTexto(arr){return (arr||[]).map(p=>[p.nome||'',p.cargo||'',p.
 function textoParaEquipe(t){return String(t||'').split('\n').map(l=>l.split('|').map(x=>x.trim())).filter(p=>p[0]).map(p=>({nome:p[0],cargo:p[1]||'',foto:p[2]||'',linkedin:p[3]||''}))}
 function renderParc(){
   if(!$('pCampos'))return;
-  $('pCampos').innerHTML=`<div class="f full"><p class="dica" style="margin-bottom:10px">Sem logo, o site mostra só o espaço reservado, sem texto. O nome é só para você se organizar. A seção só aparece quando há pelo menos um parceiro na lista.</p>
+  $('pCampos').innerHTML=`<div class="f full"><p class="dica" style="margin-bottom:10px">Anexe a logo do computador ou cole o link. Aparecem 6 por vez; a partir da 7ª cadastrada, as logos deslizam sozinhas. Sem logo, o site mostra só o espaço reservado. O nome é só para você se organizar.</p>
     <div id="parc-linhas"></div>
     <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:10px"><button type="button" class="btn ghost sm" id="parc-add">Adicionar parceiro</button></div>
   </div>`;
@@ -674,6 +677,7 @@ async function salvarMarca(){
   QS_CAMPOS.forEach(([k])=>c.quemSomos[k]=$('q_'+k).value.trim());
   c.quemSomos.foto=$('q_foto').value.trim();
   c.quemSomos.equipe=textoParaEquipe($('q_equipe')?.value||'');
+  c.atendimentoFoto=($('a_foto')?$('a_foto').value.trim():'');
   c.parceiros=PARC.filter(p=>p&&p.nome.trim()).map(p=>({nome:p.nome.trim(),logo:p.logo||'',link:p.link.trim()}));
   const r=await API('/api/config',{method:'POST',body:JSON.stringify(c)});
   if(r.success){CFG=c;aviso('Marca e Quem Somos salvos. Atualize o site para ver.')}else aviso('Não consegui salvar. Tente de novo.');

@@ -280,6 +280,7 @@
                 </a>
             </div>
         </div>
+        <div class="concierge-foto" id="concierge-foto" style="display:none"></div>
     </div>
 </section>
 
@@ -1191,6 +1192,7 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
             ${urlOk(p.linkedin) ? `<a href="${urlOk(p.linkedin)}" target="_blank" rel="noopener"><i class="fab fa-linkedin-in"></i> LinkedIn</a>` : ''}
         </div>`).join('');
     }
+    let parcTimer = null, parcResize = null;
     function renderParceiros() {
         const l = (configGeral.parceiros || []).filter(p => p && p.nome), sec = document.getElementById('parceiros');
         sec.style.display = l.length ? '' : 'none';
@@ -1202,12 +1204,37 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
             const t = tem ? ` title="${esc(p.nome)}"` : '';
             return urlOk(p.link) ? `<a class="parc-item" href="${urlOk(p.link)}" target="_blank" rel="noopener"${t}>${c}</a>` : `<div class="parc-item"${t}>${c}</div>`;
         };
-        const anima = l.length > 6 && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         const t = document.getElementById('parc-track'), w = t.parentElement;
-        t.classList.toggle('anima', anima);
-        t.innerHTML = l.map(item).join('') + (anima ? l.map(item).join('') : '');
-        const ajusta = () => w.classList.toggle('corta', anima || t.scrollWidth > w.clientWidth + 2);
-        ajusta(); window.addEventListener('resize', ajusta);
+        const montar = () => {
+            clearInterval(parcTimer);
+            const v = innerWidth <= 620 ? 3 : innerWidth <= 900 ? 4 : 6;
+            const rola = l.length > v && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            t.style.transition = 'none'; t.style.transform = 'none';
+            t.classList.toggle('rola', rola);
+            t.innerHTML = l.map(item).join('') + (rola ? l.slice(0, v).map(item).join('') : '');
+            if (!rola) return;
+            let i = 0, pausa = false;
+            const passo = () => t.children[0].getBoundingClientRect().width + parseFloat(getComputedStyle(w).getPropertyValue('--gap'));
+            parcTimer = setInterval(() => {
+                if (pausa || document.hidden) return;
+                i++;
+                t.style.transition = 'transform .9s cubic-bezier(.65,0,.35,1)';
+                t.style.transform = `translateX(${-i * passo()}px)`;
+                if (i === l.length) setTimeout(() => { t.style.transition = 'none'; t.style.transform = 'none'; i = 0; }, 950);
+            }, 3200);
+            w.onmouseenter = w.onfocusin = () => { pausa = true; };
+            w.onmouseleave = w.onfocusout = () => { pausa = false; };
+        };
+        montar();
+        window.removeEventListener('resize', renderParceiros._r);
+        renderParceiros._r = () => { clearTimeout(parcResize); parcResize = setTimeout(montar, 250); };
+        window.addEventListener('resize', renderParceiros._r);
+    }
+    function renderAtendimentoFoto() {
+        const box = document.getElementById('concierge-foto'), u = urlOk(configGeral.atendimentoFoto);
+        if (!box) return;
+        box.style.display = u ? '' : 'none';
+        if (u) box.innerHTML = `<img src="${u}" alt="Atendimento Joildo Brokers" loading="lazy">`;
     }
 
     async function carregar() {
@@ -1228,6 +1255,7 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
         renderMcmv();
         renderBairros();
         renderParceiros();
+        renderAtendimentoFoto();
         initScrollReveal();
         const mm = location.pathname.match(/^\/imovel\/([^/]+)/);
         if (mm) { const x = bancoImoveis.find(y => String(y.ref || y.id).toLowerCase() === decodeURIComponent(mm[1]).toLowerCase()); if (x) abrirModal(x.id); }
