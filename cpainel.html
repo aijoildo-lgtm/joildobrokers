@@ -34,6 +34,9 @@ aside{background:var(--navy);color:#fff;padding:24px 14px;display:flex;flex-dire
 .logo span{color:var(--gold);font-style:italic}
 aside .nav{background:none;border:0;color:#C9D2E1;text-align:left;padding:10px 12px;border-radius:6px;cursor:pointer;font-weight:600;font-size:13px}
 aside .nav:hover,aside .nav.on{background:rgba(212,175,55,.14);color:#fff}
+aside .nav.sub{padding-left:22px;font-size:12px;opacity:.9}
+aside .nav.sub2{padding:7px 12px 7px 36px;font-size:11.5px;font-weight:500;color:#9AA6BD}
+aside .nav.sub2:hover{color:#fff}
 aside a{color:#C9D2E1;font-size:12px;padding:10px 12px;text-decoration:none}
 aside a:hover{color:var(--gold)}
 aside .sair{margin-top:auto}
@@ -132,9 +135,15 @@ textarea{resize:vertical}
     <div class="logo">Cpainel <span>Joildo</span></div>
     <button class="nav on" data-v="dash">Painel</button>
     <button class="nav" data-v="lista">Imóveis</button>
-    <button class="nav" data-v="novo">Novo imóvel</button>
-    <button class="nav" data-v="conteudos">Conteúdos do site</button>
-    <button class="nav" data-v="marca">Marca e Quem Somos</button>
+    <button class="nav sub" data-v="novo">Novo imóvel</button>
+    <button class="nav sub2" data-v="novo" data-modo="manual">Manual</button>
+    <button class="nav sub2" data-v="novo" data-modo="aocubo">AoCubo</button>
+    <button class="nav sub2" data-v="novo" data-modo="orulo">Órulo</button>
+    <button class="nav" data-v="conteudos">Blog</button>
+    <button class="nav sub2" data-v="conteudos">Acompanhe nossas notícias</button>
+    <button class="nav" data-v="marca" data-ancora="qCampos">Quem Somos</button>
+    <button class="nav" data-v="marca" data-ancora="pCampos">Construtoras e Incorporadoras</button>
+    <button class="nav" data-v="marca" data-ancora="mCampos">Contato</button>
     <a href="/" target="_blank" rel="noopener">Ver o site</a>
     <button class="nav sair" id="sair">Sair</button>
   </aside>
@@ -156,6 +165,7 @@ textarea{resize:vertical}
         <div class="panel"><h3>Por finalidade</h3><div id="g-fin"></div></div>
         <div class="panel"><h3>Por tipo de imóvel</h3><div id="g-tip"></div></div>
         <div class="panel"><h3>Mais acessados no site</h3><div id="g-top"></div></div>
+        <div class="panel"><h3 style="display:flex;justify-content:space-between;align-items:center">Visitas ao site<select id="per-visitas" onchange="renderVisitasSite(this.value)" style="font-size:12px;font-weight:600;border:1px solid var(--line);border-radius:6px;padding:4px 8px"><option value="dia">Por dia</option><option value="semana" selected>Por semana</option><option value="quinzena">Por quinzena</option><option value="mes">Por mês</option><option value="trimestre">Por trimestre</option><option value="semestre">Por semestre</option></select></h3><div id="g-visitas"></div></div>
       </div>
       <div class="panel"><h3 style="font-size:19px;margin-bottom:6px">Mudanças vindas do AoCubo e da Órulo</h3><p class="dica" style="margin-bottom:12px">O que o espelho automático alterou no seu site.</p><div id="mudancas"></div></div>
       <div class="panel"><h3 style="font-size:19px;margin-bottom:14px">Últimas atualizações</h3><div id="recentes"></div></div>
@@ -175,11 +185,6 @@ textarea{resize:vertical}
       <div class="top">
         <div><h2 class="head" id="ftitulo">Novo imóvel</h2><p class="sub">Os campos com * são obrigatórios para o imóvel aparecer no site.</p></div>
         <button class="btn ghost" data-v="lista">Voltar</button>
-      </div>
-      <div class="modos" id="modos" role="tablist" aria-label="Forma de cadastro">
-        <button class="modo on" data-modo="manual"><b>1</b>Manual<small>Preencho tudo, no modelo do Migmidia</small></button>
-        <button class="modo" data-modo="aocubo"><b>2</b>AoCubo<small>Link do imóvel, atualização automática</small></button>
-        <button class="modo" data-modo="orulo"><b>3</b>Órulo<small>Buscar, filtrar e importar</small></button>
       </div>
       <div class="importa hidden" id="m-aocubo">
         <label for="url">Link do imóvel no AoCubo</label>
@@ -253,7 +258,7 @@ textarea{resize:vertical}
 <script>
 const $=id=>document.getElementById(id),DIA=864e5;
 const ESTAGIOS=[['','Não informado'],['lancamentos','Lançamento'],['construcao','Em construção'],['prontos','Pronto'],['usados','Usado']];
-const TARJAS=[['none','Nenhuma'],['exclusivo','Exclusividade'],['desconto','Desconto'],['oportunidade','Oportunidade'],['decorado','Decorado'],['pronto','Pronto para morar']];
+const TARJAS=[['none','Nenhuma'],['exclusivo','Exclusividade'],['desconto','Desconto'],['oportunidade','Oportunidade'],['decorado','Decorado'],['pronto','Pronto para morar'],['mcmv','Minha Casa Minha Vida']];
 const DEF={transacao:'Vender Imóvel',categoria:'Residencial',destaque:'none',visibilidade:'bairro'};
 const NOMES={titulo:'título',preco:'preço',area:'área',dormitorios:'dormitórios',foto:'foto'};
 const SIMNAO=['Não','Sim'];
@@ -309,7 +314,30 @@ async function API(p,o={}){
   if(r.status===401){sessionStorage.removeItem('cp_tk');aviso('Sessão expirada. Entre de novo.');setTimeout(()=>location.reload(),1500);return{success:false}}
   return r.json().catch(()=>({success:false}));
 }
-async function load(){const r=await API('/api/admin/imoveis');if(Array.isArray(r)){IM=r;renderDash();renderLista()}}
+let VISITAS_SITE={};
+function agregarVisitas(mapa,periodo){
+  const dias=Object.entries(mapa).map(([d,n])=>({dt:new Date(d+'T12:00:00'),n})).sort((a,b)=>a.dt-b.dt);
+  if(!dias.length)return[];
+  const chave={
+    dia:d=>d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}),
+    semana:d=>{const x=new Date(d);const diaSem=(x.getDay()+6)%7;x.setDate(x.getDate()-diaSem);return 'sem '+x.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})},
+    quinzena:d=>{const q=d.getDate()<=15?1:2;return q+'ª quinz. '+d.toLocaleDateString('pt-BR',{month:'2-digit',year:'2-digit'})},
+    mes:d=>d.toLocaleDateString('pt-BR',{month:'short',year:'2-digit'}),
+    trimestre:d=>'T'+(Math.floor(d.getMonth()/3)+1)+'/'+String(d.getFullYear()).slice(2),
+    semestre:d=>(d.getMonth()<6?'1º':'2º')+' sem. '+String(d.getFullYear()).slice(2)
+  }[periodo];
+  const LIMITE={dia:14,semana:8,quinzena:6,mes:6,trimestre:4,semestre:4}[periodo];
+  const grupos=new Map();
+  dias.forEach(({dt,n})=>{const k=chave(dt);grupos.set(k,(grupos.get(k)||0)+n)});
+  return[...grupos.entries()].slice(-LIMITE);
+}
+function renderVisitasSite(periodo){
+  const dados=agregarVisitas(VISITAS_SITE,periodo||$('per-visitas').value);
+  $('g-visitas').innerHTML=barras(dados,'Ainda sem visitas registradas. Os números aparecem assim que alguém acessar o site.');
+}
+async function load(){const r=await API('/api/admin/imoveis');if(Array.isArray(r)){IM=r;renderDash();renderLista()}
+  try{VISITAS_SITE=await API('/api/stats/visitas-site')||{};renderVisitasSite('semana')}catch(e){}
+}
 async function entrar(){
   $('login').classList.add('hidden');$('app').classList.remove('hidden');
   $('tipos').innerHTML=[...new Set(Object.values(window.TAXONOMIA||{}).flatMap(c=>Object.values(c).flat()))].map(t=>`<option value="${esc(t)}">`).join('');
@@ -362,7 +390,7 @@ function renderLista(){
   const L=IM.filter(i=>!q||[i.titulo,i.ref,i.localizacao].some(x=>String(x||'').toLowerCase().includes(q)));
   $('rows').innerHTML=L.map(i=>{
     const n=(i.fotos||[]).length||(i.foto?1:0),pl=(i.plantas||[]).length,d=dataRef(i),dd=diasDesde(i),atrasado=dd!==null&&dd>lim()&&i.ativo!==false;
-    return `<tr><td>${i.foto?`<img class="thumb" src="${esc(i.foto)}" alt="">`:'<span class="thumb"></span>'}</td><td><b>${esc(i.titulo)}</b><br><span class="sub">${esc(i.ref)} · ${esc(i.localizacao)}</span></td><td>${esc(i.preco)}</td><td>${n} foto(s)${pl?` · ${pl} planta(s)`:''}</td><td>${d?fmt(d):'<span class="tag t-wa">sem data</span>'}${dd!==null&&i.ativo!==false?` <span class="tag ${nivel(i)==='bad'?'t-no':nivel(i)==='wa'?'t-wa':'t-ok'}">${dd} dias</span>`:''}</td><td>${i.ativo===false?'<span class="tag t-wa">Pausado</span>':'<span class="tag t-ok">Publicado</span>'}${i.emDestaque?'<span class="tag t-ok">Destaque</span>':''}${i.linkOrigem&&i.sincronizar!==false?'<span class="tag t-ok">Sincroniza</span>':''}${i.demo?'<span class="tag t-wa">Exemplo</span>':''}</td><td class="acoes"><a class="btn ghost sm" href="/imovel/${encodeURIComponent(i.ref)}" target="_blank" rel="noopener">Visualizar</a><button class="btn ghost sm" onclick="editar(${i.id})">Editar</button><button class="btn ghost sm" onclick="acao(${i.id},'destaque')">${i.emDestaque?'Tirar destaque':'Destacar'}</button><button class="btn ghost sm" onclick="acao(${i.id},'colecao')" title="Aparece na seção 'Nossa Coleção Exclusiva' da home">${i.colecaoExclusiva?'Tirar da Coleção':'+ Coleção Exclusiva'}</button><button class="btn ghost sm" onclick="acao(${i.id},'oppVitrine')" title="Aparece na seção 'Oportunidades de venda' da home">${i.oportunidadeVenda?'Tirar da vitrine Opp.':'+ Vitrine Oportunidade'}</button><button class="btn ghost sm" onclick="acao(${i.id},'ativo')">${i.ativo===false?'Publicar':'Pausar'}</button><button class="btn ghost sm" onclick="acao(${i.id},'dup')">Duplicar</button><button class="btn danger sm" onclick="acao(${i.id},'del')">Excluir</button></td></tr>`;
+    return `<tr><td>${i.foto?`<img class="thumb" src="${esc(i.foto)}" alt="">`:'<span class="thumb"></span>'}</td><td><b>${esc(i.titulo)}</b><br><span class="sub">${esc(i.ref)} · ${esc(i.localizacao)}</span></td><td>${esc(i.preco)}</td><td>${n} foto(s)${pl?` · ${pl} planta(s)`:''}</td><td>${d?fmt(d):'<span class="tag t-wa">sem data</span>'}${dd!==null&&i.ativo!==false?` <span class="tag ${nivel(i)==='bad'?'t-no':nivel(i)==='wa'?'t-wa':'t-ok'}">${dd} dias</span>`:''}</td><td>${i.ativo===false?'<span class="tag t-wa">Pausado</span>':'<span class="tag t-ok">Publicado</span>'}${i.emDestaque?'<span class="tag t-ok">Destaque</span>':''}${i.linkOrigem&&i.sincronizar!==false?'<span class="tag t-ok">Sincroniza</span>':''}${i.demo?'<span class="tag t-wa">Exemplo</span>':''}</td><td class="acoes"><a class="btn ghost sm" href="/imovel/${encodeURIComponent(i.ref)}" target="_blank" rel="noopener">Visualizar</a><button class="btn ghost sm" onclick="editar(${i.id})">Editar</button><button class="btn ghost sm" onclick="acao(${i.id},'destaque')">${i.emDestaque?'Tirar destaque':'Destacar'}</button><button class="btn ghost sm" onclick="acao(${i.id},'colecao')" title="Aparece na seção 'Nossa Coleção Exclusiva' da home">${i.colecaoExclusiva?'Tirar da Coleção':'+ Coleção Exclusiva'}</button><button class="btn ghost sm" onclick="acao(${i.id},'oppVitrine')" title="Aparece na seção 'Oportunidades de venda' da home">${i.oportunidadeVenda?'Tirar da vitrine Opp.':'+ Vitrine Oportunidade'}</button><button class="btn ghost sm" onclick="acao(${i.id},'mcmv')" title="Aparece na seção 'Minha Casa Minha Vida' da home">${i.mcmvVitrine?'Tirar do MCMV':'+ Minha Casa Minha Vida'}</button><button class="btn ghost sm" onclick="acao(${i.id},'ativo')">${i.ativo===false?'Publicar':'Pausar'}</button><button class="btn ghost sm" onclick="acao(${i.id},'dup')">Duplicar</button><button class="btn danger sm" onclick="acao(${i.id},'del')">Excluir</button></td></tr>`;
   }).join('')||'<tr><td colspan="7" class="sub">Nenhum imóvel com essa busca.</td></tr>';
 }
 
@@ -373,6 +401,7 @@ async function acao(id,t){
   else if(t==='destaque'){await P({emDestaque:!it.emDestaque});m=it.emDestaque?'Destaque removido.':'Imóvel em destaque.'}
   else if(t==='colecao'){await P({colecaoExclusiva:!it.colecaoExclusiva});m=it.colecaoExclusiva?'Removido da Coleção Exclusiva.':'Adicionado à Coleção Exclusiva da home.'}
   else if(t==='oppVitrine'){await P({oportunidadeVenda:!it.oportunidadeVenda});m=it.oportunidadeVenda?'Removido da vitrine de Oportunidades.':'Adicionado à vitrine de Oportunidades da home.'}
+  else if(t==='mcmv'){await P({mcmvVitrine:!it.mcmvVitrine});m=it.mcmvVitrine?'Removido da seção Minha Casa Minha Vida.':'Adicionado à seção Minha Casa Minha Vida da home.'}
   else if(t==='ativo'){await P({ativo:it.ativo===false});m=it.ativo===false?'Imóvel publicado.':'Imóvel pausado. Saiu do site.'}
   else if(t==='revisar'){await P({});m='Marcado como revisado hoje.'}
   aviso(m);await load();
@@ -512,7 +541,11 @@ $('fImovel').addEventListener('input',pend);
 document.addEventListener('click',e=>{
   const b=e.target.closest('[data-v]');if(!b)return;
   const v=b.dataset.v;
-  if(v==='novo')abrir(null);else{ir(v);if(v==='lista')renderLista()}
+  if(v==='novo'){abrir(null);if(b.dataset.modo)setModo(b.dataset.modo)}
+  else{
+    ir(v);if(v==='lista')renderLista();
+    if(b.dataset.ancora)setTimeout(()=>{const alvo=$(b.dataset.ancora);if(alvo)alvo.scrollIntoView({behavior:'smooth',block:'start'})},60);
+  }
 });
 let PASSO=1,SUB='fotos';
 function mostra(){
@@ -588,7 +621,7 @@ document.addEventListener('click',e=>{
 });
 
 // ---------- MARCA E QUEM SOMOS ----------
-const MARCA_CAMPOS=[['slogan','Slogan (topo do site)'],['telefone','Telefone'],['whatsapp','WhatsApp (só números, com 55 do Brasil)'],['email','E-mail'],['creci','CRECI'],['linkedin','LinkedIn (link completo)'],['instagram','Instagram (link)'],['facebook','Facebook (link)'],['youtube','YouTube (link)']];
+const MARCA_CAMPOS=[['slogan','Slogan (topo do site)'],['telefone','Telefone'],['whatsapp','WhatsApp (só números, com 55 do Brasil)'],['email','E-mail'],['creci','CRECI'],['linkedin','LinkedIn (link completo)'],['instagram','Instagram (link)'],['facebook','Facebook (link)'],['youtube','YouTube (link)'],['tiktok','TikTok (link, opcional)'],['googleNegocio','Google Meu Negócio (link do seu perfil, opcional)']];
 const QS_CAMPOS=[['titulo','Título da seção'],['subtitulo','Subtítulo'],['nome','Nome do consultor'],['cargo','Cargo'],['p1','Primeiro parágrafo (pode usar <strong>)'],['p2','Segundo parágrafo (pode usar <strong>)'],['linkedin','LinkedIn do consultor (link)']];
 async function loadMarca(){
   const c=await fetch('/api/config').then(r=>r.json()).catch(()=>null);if(!c)return;CFG=c;const q=c.quemSomos||{};
@@ -611,6 +644,7 @@ function renderParc(){
   $('parc-linhas').innerHTML=PARC.map((p,k)=>`<div class="linha-up" style="border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;align-items:center">
       <input data-pk="${k}" data-pc="nome" value="${esc(p.nome)}" placeholder="Nome da construtora/incorporadora" style="min-width:220px;flex:1">
       <label class="btn ghost sm" style="width:auto">${p.logo?'Trocar logo':'Anexar logo'}<input type="file" accept="image/*" data-parc-up="${k}" style="display:none"></label>
+      <input data-pk="${k}" data-pc="logo" value="${esc(p.logo)}" placeholder="ou cole o link da logo https://..." style="min-width:200px;flex:1">
       ${p.logo?`<img src="${esc(p.logo)}" alt="" style="height:36px;max-width:90px;object-fit:contain;border:1px solid var(--line);border-radius:6px;background:#fff">`:''}
       <input data-pk="${k}" data-pc="link" value="${esc(p.link)}" placeholder="Site (opcional) https://..." style="min-width:200px;flex:1">
       <button type="button" class="btn danger sm" data-parc-rm="${k}">Remover</button>

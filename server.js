@@ -205,6 +205,7 @@ app.patch('/api/imoveis/:id', exigirLogin, ah(async (req, res) => {
   if ('emDestaque' in b) set.emDestaque = b.emDestaque === true;
   if ('colecaoExclusiva' in b) set.colecaoExclusiva = b.colecaoExclusiva === true;
   if ('oportunidadeVenda' in b) set.oportunidadeVenda = b.oportunidadeVenda === true;
+  if ('mcmvVitrine' in b) set.mcmvVitrine = b.mcmvVitrine === true;
   res.json({ success: await updImovel(req.params.id, set) });
 }));
 app.put('/api/imoveis/:id', exigirLogin, ah(async (req, res) => {
@@ -388,6 +389,7 @@ app.post('/api/orulo/buscar', exigirLogin, async (req, res) => {
 
 // ===== CONTEÚDOS (blog, notícias e depoimentos editáveis pelo painel) =====
 const CONTEUDOS_FILE = path.join(__dirname, 'conteudos.json');
+const VISITAS_FILE = path.join(__dirname, 'visitas-site.json');
 const U = (id) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=700&q=80`;
 const CONTEUDOS_PADRAO = [
   { id: 1800000000001, tipo: 'blog', titulo: 'Como escolher o apartamento ideal na planta', categoria: 'Investimento', data: '2026-11-12', imagem: U('photo-1484154218962-a197022b5858') },
@@ -633,6 +635,29 @@ async function gravarVisitas() {
     else { const l = lerJson(DATA_FILE, []); lote.forEach(([id, n]) => { const x = l.find(i => String(i.id) === id); if (x) x.acessos = (x.acessos || 0) + n; }); gravarJson(DATA_FILE, l); }
   } catch (e) { console.error('Erro gravando acessos:', e.message); lote.forEach(([id, n]) => visitasPend.set(id, (visitasPend.get(id) || 0) + n)); }
 }
+
+// ===== VISITAS DO SITE (total por dia, para o gráfico do dashboard) =====
+// Conta 1 visita por visitante por dia (qualquer página: home, imóvel, blog). Guarda só a contagem
+// por dia (ex.: "2026-11-17": 42), nunca dados pessoais do visitante.
+const diaHoje = () => new Date().toISOString().slice(0, 10);
+const siteVistos = new Map(); // "ip|dia" -> true, limpa sozinho
+app.post('/api/visita-site', async (req, res) => {
+  const dia = diaHoje(), quem = `${req.ip}|${dia}`;
+  res.json({ success: true }); // responde logo; grava em segundo plano
+  if (siteVistos.has(quem)) return;
+  siteVistos.set(quem, true);
+  try {
+    if (db) await db.collection('visitas_site').updateOne({ _id: dia }, { $inc: { n: 1 } }, { upsert: true });
+    else { const m = lerJson(VISITAS_FILE, {}); m[dia] = (m[dia] || 0) + 1; gravarJson(VISITAS_FILE, m); }
+  } catch (e) { console.error('Erro gravando visita do site:', e.message); }
+});
+app.get('/api/stats/visitas-site', exigirLogin, ah(async (req, res) => {
+  let mapa = {};
+  if (db) { const docs = await db.collection('visitas_site').find({}).toArray(); docs.forEach(d => mapa[d._id] = d.n); }
+  else mapa = lerJson(VISITAS_FILE, {});
+  res.json(mapa);
+}));
+setInterval(() => { const hoje = diaHoje(); for (const k of siteVistos.keys()) if (!k.endsWith('|' + hoje)) siteVistos.delete(k); }, 3600e3).unref();
 setInterval(gravarVisitas, 60e3).unref();
 process.on('SIGTERM', () => gravarVisitas().finally(() => process.exit(0)));
 

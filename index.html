@@ -144,15 +144,7 @@
     </div>
 </section>
 
-<section class="ins-section reveal" id="mcmv" style="display:none">
-    <div class="ins-head"><h2>Conquiste Seu Imóvel com o Minha Casa Minha Vida</h2>
-        <p>Filtre por faixa, localização e valor e descubra qual subsídio se encaixa no seu perfil</p></div>
-    <div class="opp-wrap">
-        <button class="opp-seta esq" onclick="rolarMcmv(-1)" aria-label="Anterior"><i class="fas fa-chevron-left"></i></button>
-        <div class="opp-track mcmv-track" id="mcmv-track"></div>
-        <button class="opp-seta dir" onclick="rolarMcmv(1)" aria-label="Próximo"><i class="fas fa-chevron-right"></i></button>
-    </div>
-</section>
+
 
 <div class="filter-nav">
     <button class="filter-btn active" onclick="filtrarEstagio('todos')">Todos os Imóveis</button>
@@ -237,6 +229,12 @@
     <p>Filtre por estágio, localização, valor e muito mais</p>
 </div>
 <div class="grid reveal" id="vitrine"></div>
+
+<section class="ins-section reveal" id="mcmv" style="display:none">
+    <div class="ins-head"><h2>Conquiste Seu Imóvel com o Minha Casa Minha Vida</h2>
+        <p>Filtre por faixa, localização e valor e descubra qual subsídio se encaixa no seu perfil</p></div>
+    <div class="grid" id="mcmv-grid"></div>
+</section>
 
 <!-- MAPA DOS IMÓVEIS PUBLICADOS: só o mapa, sem painel lateral -->
 <style>
@@ -1146,12 +1144,10 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
     function renderMcmv() {
         const l = bancoImoveis.filter(i => i.mcmvVitrine === true), sec = document.getElementById('mcmv');
         sec.style.display = l.length ? '' : 'none';
-        document.getElementById('mcmv-track').innerHTML = l.map(cartaoOpp).join('');
-        autoRolar('mcmv-track', 5);
+        document.getElementById('mcmv-grid').innerHTML = l.slice(0, 8).map(cartao).join('');
     }
     function rolarOpp(d) { const t = document.getElementById('opp-track'); t.scrollBy({ left: d * t.clientWidth * 0.9, behavior: 'smooth' }); }
     function rolarColecao(d) { const t = document.getElementById('colecao-track'); t.scrollBy({ left: d * t.clientWidth * 0.9, behavior: 'smooth' }); }
-    function rolarMcmv(d) { const t = document.getElementById('mcmv-track'); t.scrollBy({ left: d * t.clientWidth * 0.9, behavior: 'smooth' }); }
     // Gira sozinho só quando há mais imóveis selecionados do que cabem visíveis ao mesmo tempo (3 ou 4, conforme a seção)
     const _autoRolarTimers = {};
     function autoRolar(trackId, porVez) {
@@ -1210,6 +1206,7 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
     }
 
     async function carregar() {
+        try { fetch('/api/visita-site', { method: 'POST', keepalive: true }).catch(() => {}); } catch (e) {}
         await carregarConfig();
         try {
             const res = await fetch('/api/imoveis');
