@@ -546,7 +546,7 @@ a.parc-item:hover { box-shadow: 0 8px 20px rgba(10,17,40,.14); }
 #colecao { --colv: 4; }
 @media (max-width: 1000px) { #colecao { --colv: 2; } }
 @media (max-width: 620px) { #colecao { --colv: 1; } }
-#colecao .colecao-faixa { overflow: hidden; padding: 4px 0; }
+#colecao .colecao-faixa { overflow: hidden; padding: 4px 0; width: 100%; max-width: var(--wrap); margin-left: auto; margin-right: auto; box-sizing: border-box; }
 #colecao .colecao-faixa + .colecao-faixa { margin-top: 12px; }
 #colecao .colecao-linha { display: grid; grid-template-columns: repeat(var(--colv), 1fr); gap: var(--espaco); }
 #colecao .colecao-linha.rola { display: flex; justify-content: flex-start; }
