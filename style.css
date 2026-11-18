@@ -543,6 +543,9 @@ a.parc-item:hover { box-shadow: 0 8px 20px rgba(10,17,40,.14); }
 @media (max-width: 1000px) { .colecao-track .opp-card { flex-basis: calc((100% - var(--espaco)) / 2); } }
 @media (max-width: 620px) { .colecao-track .opp-card { flex-basis: 86%; } }
 
+/* Parceiros: 6 logos por linha ocupando toda a largura (também quando ainda há poucas) */
+.parc-track:not(.rola) .parc-item { flex: 0 0 calc((100% - (var(--vis) - 1) * var(--gap)) / var(--vis)); }
+
 /* Carrosséis: setas dentro da largura padrão */
 .opp-seta.esq { left: 6px; } .opp-seta.dir { right: 6px; }
 

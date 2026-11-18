@@ -1373,6 +1373,8 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
         </div>`).join('');
     }
     let parcTimers = [], parcResize = null, parcPausa = false;
+    // Tempo das trocas das logos (em ms): cada logo fica parada PARC_PAUSA e a transição dura PARC_TRANSICAO.
+    const PARC_PAUSA = 3500, PARC_TRANSICAO = 800;
     // Logos enviadas à Cloudinary vêm no tamanho original. Pedimos uma versão de até 400 px, comprimida (WebP/AVIF quando o navegador aceita).
     const logoOtimizada = u => { const m = String(u).match(/^(https:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\/)(.+)$/i); return m ? `${m[1]}c_limit,w_400,h_200,f_auto,q_auto/${m[2]}` : u; };
     function renderParceiros() {
@@ -1394,16 +1396,17 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
         const w = fileiras[0].el.parentElement;
         const montar = () => {
             parcTimers.forEach(clearInterval); parcTimers = [];
-            const v = innerWidth <= 620 ? 3 : innerWidth <= 900 ? 4 : 6;
+            const v = innerWidth <= 620 ? 3 : innerWidth <= 900 ? 4 : 6; // mesmo número de --vis do CSS
             const reduzir = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            // Com mais de 2 × v parceiros, as duas fileiras entram juntas no modo dinâmico (cada uma com pelo menos v logos)
+            const dinamico = !reduzir && l.length > 2 * v;
             fileiras.forEach(f => {
                 const t = f.el, lista = f.itens, N = lista.length;
                 t.parentElement.style.display = N ? '' : 'none';
                 if (!N) return;
-                const rola = N > v && !reduzir;
-                t.classList.toggle('rola', rola);
+                t.classList.toggle('rola', dinamico);
                 t.style.transition = 'none'; t.style.transform = 'none';
-                if (!rola) { t.innerHTML = lista.map(item).join(''); return; }
+                if (!dinamico) { t.innerHTML = lista.map(item).join(''); return; }
                 // Cópias das pontas deixam o movimento contínuo: quem anda para a esquerda leva cópias do início no fim;
                 // quem anda para a direita leva cópias do fim no início.
                 t.innerHTML = f.sentido < 0
@@ -1411,7 +1414,7 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
                     : lista.slice(N - v).map(item).join('') + lista.map(item).join('');
                 let s = f.sentido < 0 ? 0 : v; // posição atual, em itens, dentro da pista
                 const passo = () => t.children[0].getBoundingClientRect().width + parseFloat(getComputedStyle(w).getPropertyValue('--gap'));
-                const mover = anima => { t.style.transition = anima ? 'transform .9s cubic-bezier(.65,0,.35,1)' : 'none'; t.style.transform = `translateX(${-s * passo()}px)`; };
+                const mover = anima => { t.style.transition = anima ? `transform ${PARC_TRANSICAO}ms cubic-bezier(.65,0,.35,1)` : 'none'; t.style.transform = `translateX(${-s * passo()}px)`; };
                 const saltar = pos => { s = pos; mover(false); void t.offsetWidth; }; // salto invisível: a pista repete as mesmas logos
                 mover(false);
                 parcTimers.push(setInterval(() => {
@@ -1419,7 +1422,7 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
                     if (f.sentido < 0) { if (s === N) saltar(0); s++; }
                     else { if (s === 0) saltar(N); s--; }
                     mover(true);
-                }, 3200));
+                }, PARC_PAUSA + PARC_TRANSICAO));
             });
         };
         montar();
