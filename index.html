@@ -173,7 +173,7 @@
         <h2 id="qs-titulo">Quem Somos | Joildo Brokers</h2>
         <p id="qs-subtitulo">Expertise em consultoria estratégica de ativos imobiliários de alto padrão e alta liquidez</p>
     </div>
-    <div style="max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1.5fr; gap: 50px; align-items: center;">
+    <div style="max-width: var(--wrap); margin: 0 auto; display: grid; grid-template-columns: 1fr 1.5fr; gap: 50px; align-items: center;">
         <div style="position: relative;">
             <div id="qs-foto-bg" style="width: 100%; height: 420px; border-radius: 20px; background-size: cover; background-position: center; background-image: url('https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=800&q=80'); box-shadow: var(--shadow-premium); border: 2px solid var(--gold);"></div>
             <div style="position: absolute; bottom: -20px; right: -20px; background: var(--primary); color: white; padding: 20px 30px; border-radius: 16px; border: 1px solid var(--gold);">
@@ -242,7 +242,7 @@
 .mapa-head{display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;margin-bottom:16px}
 .mapa-head h2{font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--primary);margin:0}
 .mapa-head p{color:var(--text-muted);font-size:.9rem;margin:0}
-.mapa-section #map{height:560px;width:100%;margin:0;border-radius:16px;box-shadow:var(--shadow-premium);border:1px solid #E2E8F0}
+.mapa-section #map{height:560px;width:100%;max-width:var(--wrap);margin:0 auto;border-radius:16px;box-shadow:var(--shadow-premium);border:1px solid #E2E8F0}
 .mapa-nota{font-size:.78rem;color:var(--text-muted);margin-top:10px}
 .pin-preco span{display:block;transform:translate(-50%,-50%);background:var(--primary);color:#fff;font-weight:700;font-size:12px;padding:6px 11px;border-radius:999px;border:2px solid var(--gold);box-shadow:0 6px 16px rgba(10,17,40,.3);white-space:nowrap;cursor:pointer}
 .pin-preco span:hover{background:var(--primary-light)}
@@ -353,7 +353,7 @@
         <h2>Depoimentos de Clientes & Investidores</h2>
         <p>A opinião de quem já realizou negócios com nossa consultoria</p>
     </div>
-    <div class="blog-grid" id="grid-depoimentos" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+    <div class="blog-grid dep-grid" id="grid-depoimentos">
         <div class="info-block" style="border-top: 4px solid var(--gold);">
             <div style="color: var(--gold); margin-bottom: 10px;">
                 <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
