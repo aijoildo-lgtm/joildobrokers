@@ -36,7 +36,15 @@ const DEFAULT_FIN = {
   botao: 'Fale com um consultor'
 };
 
+const DEFAULT_RAIOX = {
+  ativo: true, estagios: ['lancamentos', 'construcao', 'prontos', 'usados'],
+  titulo: 'Raio-X do preço', metodo: 'media', comparar: 'bairro', mesmoTipo: false, minimo: 3, tolerancia: 3,
+  referencias: '', rotuloM2: 'm² deste imóvel', rotuloFaixa: 'Faixa típica dos semelhantes',
+  rodape: 'Comparação feita com os imóveis anunciados em nosso site. O valor por m² é calculado pelo preço e pela área informados em cada anúncio.'
+};
+
 const DEFAULT_CONFIG = {
+  raiox: DEFAULT_RAIOX,
   financiamento: DEFAULT_FIN,
   logoUrl: '', slogan: 'Ética e dedicação para tornar seus sonhos realidade',
   linkedin: 'https://www.linkedin.com/in/joildo-costa-0154a29b/',
