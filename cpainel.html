@@ -141,6 +141,7 @@ textarea{resize:vertical}
     <button class="nav sub2" data-v="novo" data-modo="orulo">Órulo</button>
     <button class="nav" data-v="conteudos">Blog</button>
     <button class="nav sub2" data-v="conteudos">Acompanhe nossas notícias</button>
+    <button class="nav" data-v="financ">Financiamento</button>
     <button class="nav" data-v="marca" data-ancora="qCampos">Quem Somos</button>
     <button class="nav" data-v="marca" data-ancora="aCampos">Foto do Atendimento</button>
     <button class="nav" data-v="marca" data-ancora="pCampos">Construtoras e Incorporadoras</button>
@@ -237,6 +238,19 @@ textarea{resize:vertical}
       </div>
       <div class="panel hidden" id="cnForm"></div>
       <div class="panel" style="overflow:auto;padding:6px 14px"><table><thead><tr><th></th><th>Título ou depoimento</th><th>Categoria / autor</th><th>Data</th><th>No site</th><th></th></tr></thead><tbody id="cnRows"></tbody></table></div>
+    </section>
+
+    <section id="v-financ" class="hidden">
+      <div class="top">
+        <div><h2 class="head">Simulador de financiamento</h2><p class="sub">Aparece no final da página dos imóveis prontos e usados. Tudo que você muda aqui vale para todos os imóveis ao atualizar o site.</p></div>
+        <button class="btn" id="fSalvar">Salvar alterações</button>
+      </div>
+      <div class="panel"><h3 style="font-size:19px;margin-bottom:14px">Onde aparece</h3><div id="fExibe" class="g"></div></div>
+      <div class="panel"><h3 style="font-size:19px;margin-bottom:6px">Bancos e taxas</h3><p class="dica" style="margin-bottom:14px">Atualize as taxas quando o mercado mudar. O banco de menor taxa ganha o selo "Menor taxa" e já vem selecionado. Logo é opcional.</p><div id="fBancosTxt" class="g"></div><div id="fBancos"></div><div class="linha-up"><button type="button" class="btn ghost sm" id="fBancoAdd">Adicionar banco</button></div></div>
+      <div class="panel"><h3 style="font-size:19px;margin-bottom:14px">Valores do simulador</h3><div id="fValores" class="g"></div></div>
+      <div class="panel"><h3 style="font-size:19px;margin-bottom:6px">Custos de compra e renda</h3><p class="dica" style="margin-bottom:14px">Percentuais sobre o valor do imóvel. Servem para calcular "Para começar, separe cerca de" e a renda familiar sugerida.</p><div id="fCustos" class="g"></div></div>
+      <div class="panel"><h3 style="font-size:19px;margin-bottom:14px">Textos</h3><div id="fTextos" class="g"></div></div>
+      <div class="barra"><button class="btn" id="fSalvar2">Salvar alterações</button></div>
     </section>
 
     <section id="v-marca" class="hidden">
@@ -412,7 +426,8 @@ async function acao(id,t){
 function ir(v){
   if(v==='conteudos')loadCN();
   if(v==='marca')loadMarca();
-  ['dash','lista','form','conteudos','marca'].forEach(s=>$('v-'+s).classList.toggle('hidden',s!==v));
+  if(v==='financ')loadFinanc();
+  ['dash','lista','form','conteudos','marca','financ'].forEach(s=>$('v-'+s).classList.toggle('hidden',s!==v));
   document.querySelectorAll('aside .nav').forEach(b=>b.classList.toggle('on',b.dataset.v===v||(v==='form'&&b.dataset.v==='novo')));
 }
 function abrir(it){CUR=it||null;BASE=it?{...it}:{};$('ftitulo').textContent=it?it.titulo:'Novo imóvel';$('url').value='';$('impMsg').textContent='';preencher(BASE);setModo(it?(it.modoCadastro||(it.linkOrigem?(/orulo/i.test(it.linkOrigem)?'orulo':'aocubo'):'manual')):'manual');PASSO=1;SUB='fotos';ir('form');mostra();window.scrollTo(0,0)}
@@ -681,6 +696,79 @@ async function salvarMarca(){
   c.parceiros=PARC.filter(p=>p&&p.nome.trim()).map(p=>({nome:p.nome.trim(),logo:p.logo||'',link:p.link.trim()}));
   const r=await API('/api/config',{method:'POST',body:JSON.stringify(c)});
   if(r.success){CFG=c;aviso('Marca e Quem Somos salvos. Atualize o site para ver.')}else aviso('Não consegui salvar. Tente de novo.');
+}
+
+// ---------- FINANCIAMENTO (simulador da página do imóvel) ----------
+const FIN_DEF={ativo:true,estagios:['prontos','usados'],titulo:'Simule o financiamento',texto:'Ajuste entrada, prazo e juros e veja a parcela na hora. Um consultor compara as condições dos bancos para você.',fonteRotulo:'Taxa média ao ano por banco',referencia:'SFH · out/2026',fonte:'Fonte: Banco Central',bancos:[{nome:'Banco do Brasil',taxa:'10,56',logo:''},{nome:'Bradesco',taxa:'11,78',logo:''},{nome:'Itaú',taxa:'11,86',logo:''},{nome:'Santander',taxa:'11,86',logo:''}],entradaPadrao:40,entradaMin:20,entradaMax:80,prazoPadrao:35,prazoMin:5,prazoMax:35,jurosMin:6,jurosMax:16,itbi:3,escritura:1.28,registro:0.771,comprometimento:30,notaFgts:'Pode usar o FGTS na entrada. Tabela SAC: a parcela começa maior e diminui todo mês.',aviso:'Valores estimados, sujeitos à análise de crédito e às condições de cada banco.',botao:'Fale com um consultor'};
+const FIN_VALORES=[['entradaPadrao','Entrada inicial (%)'],['entradaMin','Entrada mínima (%)'],['entradaMax','Entrada máxima (%)'],['prazoPadrao','Prazo inicial (anos)'],['prazoMin','Prazo mínimo (anos)'],['prazoMax','Prazo máximo (anos)'],['jurosMin','Juros mínimo da barra (% ao ano)'],['jurosMax','Juros máximo da barra (% ao ano)']];
+const FIN_CUSTOS=[['itbi','ITBI (% do imóvel)'],['escritura','Escritura (% do imóvel)'],['registro','Registro (% do imóvel)'],['comprometimento','Parcela máxima sobre a renda (%)']];
+const FIN_TEXTOS=[['titulo','Título da seção'],['botao','Texto do botão (abre o WhatsApp)'],['texto','Texto de apoio','T'],['notaFgts','Nota abaixo dos controles','T'],['aviso','Aviso de valores estimados','T']];
+let FIN=null,FINBANCOS=[];
+const finN=v=>{const n=parseFloat(String(v==null?'':v).replace(',','.'));return isFinite(n)?n:NaN};
+async function loadFinanc(){
+  const c=await fetch('/api/config').then(r=>r.json()).catch(()=>null);if(!c)return;CFG=c;
+  FIN={...FIN_DEF,...(c.financiamento||{})};
+  FINBANCOS=(FIN.bancos||[]).map(b=>({nome:b.nome||'',taxa:String(b.taxa||''),logo:b.logo||''}));
+  $('fExibe').innerHTML=`<div class="f full"><label style="display:flex;gap:8px;align-items:center;margin:0 0 6px;color:var(--ink);font-size:13px"><input type="checkbox" id="fin_ativo" style="width:auto" ${FIN.ativo!==false?'checked':''}>Mostrar o simulador no site</label></div>
+    <div class="f full"><label>Mostrar nos imóveis com estágio</label><div class="chk">${ESTAGIOS.filter(e=>e[0]).map(([v,t])=>`<label><input type="checkbox" name="fin_est" value="${v}" ${(FIN.estagios||[]).includes(v)?'checked':''}>${t}</label>`).join('')}</div><p class="ajuda">Por padrão só Pronto e Usado. Imóveis em construção e lançamento ficam sem o simulador.</p></div>`;
+  $('fBancosTxt').innerHTML=[['fonteRotulo','Título da faixa de taxas'],['referencia','Referência (ex.: SFH · out/2026)'],['fonte','Fonte (ex.: Fonte: Banco Central)']].map(([k,l])=>`<div class="f"><label for="fin_${k}">${l}</label><input id="fin_${k}" value="${esc(FIN[k]||'')}"></div>`).join('');
+  $('fValores').innerHTML=FIN_VALORES.map(([k,l])=>`<div class="f"><label for="fin_${k}">${l}</label><input id="fin_${k}" inputmode="decimal" value="${esc(FIN[k])}"></div>`).join('');
+  $('fCustos').innerHTML=FIN_CUSTOS.map(([k,l])=>`<div class="f"><label for="fin_${k}">${l}</label><input id="fin_${k}" inputmode="decimal" value="${esc(FIN[k])}"></div>`).join('');
+  $('fTextos').innerHTML=FIN_TEXTOS.map(([k,l,x])=>`<div class="f ${x?'full':''}"><label for="fin_${k}">${l}</label>${x?`<textarea id="fin_${k}" rows="2">${esc(FIN[k]||'')}</textarea>`:`<input id="fin_${k}" value="${esc(FIN[k]||'')}">`}</div>`).join('');
+  renderFinBancos();
+}
+function renderFinBancos(){
+  $('fBancos').innerHTML=FINBANCOS.map((b,k)=>`<div class="linha-up" style="border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px">
+    <input data-fk="${k}" data-fc="nome" value="${esc(b.nome)}" placeholder="Nome do banco" style="min-width:170px;flex:1" aria-label="Nome do banco">
+    <input data-fk="${k}" data-fc="taxa" value="${esc(b.taxa)}" inputmode="decimal" placeholder="Taxa % a.a. (ex.: 10,56)" style="max-width:190px" aria-label="Taxa ao ano">
+    <label class="btn ghost sm" style="width:auto">${b.logo?'Trocar logo':'Anexar logo'}<input type="file" accept="image/*" data-fin-up="${k}" style="display:none"></label>
+    <input data-fk="${k}" data-fc="logo" value="${esc(b.logo)}" placeholder="ou cole o link da logo" style="min-width:170px;flex:1" aria-label="Link da logo">
+    ${b.logo?`<img src="${esc(b.logo)}" alt="" style="height:34px;max-width:80px;object-fit:contain;border:1px solid var(--line);border-radius:6px;background:#fff">`:''}
+    <button type="button" class="btn danger sm" data-fin-rm="${k}">Remover</button></div>`).join('')||'<p class="dica">Nenhum banco cadastrado. O simulador funciona só com os controles.</p>';
+  $('fBancoAdd').classList.toggle('hidden',FINBANCOS.length>=6);
+}
+document.addEventListener('input',e=>{const k=e.target.dataset&&e.target.dataset.fk;if(k===undefined)return;FINBANCOS[+k][e.target.dataset.fc]=e.target.value});
+document.addEventListener('click',e=>{
+  if(e.target.id==='fBancoAdd'){if(FINBANCOS.length<6){FINBANCOS.push({nome:'',taxa:'',logo:''});renderFinBancos()}return}
+  const rm=e.target.dataset&&e.target.dataset.finRm;if(rm!==undefined){FINBANCOS.splice(+rm,1);renderFinBancos();return}
+  if(e.target.id==='fSalvar'||e.target.id==='fSalvar2')salvarFinanc();
+});
+document.addEventListener('change',async e=>{
+  const k=e.target.dataset&&e.target.dataset.finUp;if(k===undefined)return;
+  const f=e.target.files&&e.target.files[0];if(!f)return;
+  if(!f.type.startsWith('image/')){aviso('Escolha um arquivo de imagem.');return}
+  if(f.size>20*1024*1024){aviso('Imagem passa de 20 MB. Reduza e tente de novo.');return}
+  aviso('Enviando logo...');
+  const arquivo=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f)});
+  const r=await API('/api/upload',{method:'POST',body:JSON.stringify({tipo:'foto',arquivo})});
+  if(!r.success){aviso(r.error||'Não consegui enviar a logo.');return}
+  FINBANCOS[+k].logo=r.url;renderFinBancos();aviso('Logo enviada. Clique em Salvar para confirmar.');
+});
+async function salvarFinanc(){
+  if(!CFG||!FIN){aviso('Aguarde carregar a página.');return}
+  const f={...FIN};
+  f.ativo=$('fin_ativo').checked;
+  f.estagios=[...document.querySelectorAll('input[name="fin_est"]:checked')].map(i=>i.value);
+  ['fonteRotulo','referencia','fonte'].forEach(k=>f[k]=$('fin_'+k).value.trim());
+  FIN_TEXTOS.forEach(([k])=>f[k]=$('fin_'+k).value.trim());
+  for(const [k,l] of [...FIN_VALORES,...FIN_CUSTOS]){const n=finN($('fin_'+k).value);if(isNaN(n)||n<0){aviso(`Confira o campo "${l}": use só números.`);return}f[k]=n}
+  if(f.entradaMin>=f.entradaMax||f.entradaMax>95||f.entradaMin<0){aviso('Entrada: o mínimo precisa ser menor que o máximo (máximo até 95%).');return}
+  if(f.prazoMin<1||f.prazoMin>=f.prazoMax||f.prazoMax>50){aviso('Prazo: o mínimo precisa ser menor que o máximo (máximo até 50 anos).');return}
+  if(f.jurosMin>=f.jurosMax){aviso('Juros: o mínimo precisa ser menor que o máximo.');return}
+  if(f.comprometimento<=0||f.comprometimento>100){aviso('Parcela máxima sobre a renda deve ficar entre 1 e 100.');return}
+  f.entradaPadrao=Math.min(f.entradaMax,Math.max(f.entradaMin,f.entradaPadrao));
+  f.prazoPadrao=Math.min(f.prazoMax,Math.max(f.prazoMin,f.prazoPadrao));
+  const bancos=[];
+  for(const b of FINBANCOS){
+    if(!b.nome.trim()&&!String(b.taxa).trim())continue;
+    const t=finN(b.taxa);
+    if(!b.nome.trim()||isNaN(t)||t<=0||t>60){aviso(`Confira o banco "${b.nome||'sem nome'}": informe o nome e a taxa ao ano (ex.: 10,56).`);return}
+    bancos.push({nome:b.nome.trim(),taxa:String(b.taxa).trim().replace('.',','),logo:(b.logo||'').trim()});
+  }
+  f.bancos=bancos;
+  const c={...CFG,financiamento:f};
+  const r=await API('/api/config',{method:'POST',body:JSON.stringify(c)});
+  if(r.success){CFG=c;FIN=f;aviso('Simulador salvo. Atualize a página do imóvel para ver.')}else aviso('Não consegui salvar. Tente de novo.');
 }
 
 renderTips();

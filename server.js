@@ -20,7 +20,24 @@ const ADMIN_USER = process.env.ADMIN_USER || 'adm';
 const ADMIN_PASS = process.env.ADMIN_PASS || '1234';
 if (!process.env.ADMIN_PASS) console.warn('⚠️  Defina ADMIN_USER e ADMIN_PASS nas variáveis de ambiente.');
 
+const DEFAULT_FIN = {
+  ativo: true, estagios: ['prontos', 'usados'],
+  titulo: 'Simule o financiamento',
+  texto: 'Ajuste entrada, prazo e juros e veja a parcela na hora. Um consultor compara as condições dos bancos para você.',
+  fonteRotulo: 'Taxa média ao ano por banco', referencia: 'SFH · out/2026', fonte: 'Fonte: Banco Central',
+  bancos: [
+    { nome: 'Banco do Brasil', taxa: '10,56', logo: '' }, { nome: 'Bradesco', taxa: '11,78', logo: '' },
+    { nome: 'Itaú', taxa: '11,86', logo: '' }, { nome: 'Santander', taxa: '11,86', logo: '' }
+  ],
+  entradaPadrao: 40, entradaMin: 20, entradaMax: 80, prazoPadrao: 35, prazoMin: 5, prazoMax: 35, jurosMin: 6, jurosMax: 16,
+  itbi: 3, escritura: 1.28, registro: 0.771, comprometimento: 30,
+  notaFgts: 'Pode usar o FGTS na entrada. Tabela SAC: a parcela começa maior e diminui todo mês.',
+  aviso: 'Valores estimados, sujeitos à análise de crédito e às condições de cada banco.',
+  botao: 'Fale com um consultor'
+};
+
 const DEFAULT_CONFIG = {
+  financiamento: DEFAULT_FIN,
   logoUrl: '', slogan: 'Ética e dedicação para tornar seus sonhos realidade',
   linkedin: 'https://www.linkedin.com/in/joildo-costa-0154a29b/',
   instagram: '', facebook: '', youtube: '',
