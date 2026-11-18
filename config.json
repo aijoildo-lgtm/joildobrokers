@@ -11,42 +11,32 @@
   "creci": "CRECI 200298",
   "parceiros": [
     {
-      "nome": "Construtora Alfa",
+      "nome": "Eztec",
       "logo": "",
       "link": ""
     },
     {
-      "nome": "Incorporadora Beta",
+      "nome": "Econ",
       "logo": "",
       "link": ""
     },
     {
-      "nome": "Construtora Gama",
+      "nome": "Lavvi",
       "logo": "",
       "link": ""
     },
     {
-      "nome": "Incorporadora Delta",
+      "nome": "Cyrela",
       "logo": "",
       "link": ""
     },
     {
-      "nome": "Construtora Épsilon",
+      "nome": "Mitre",
       "logo": "",
       "link": ""
     },
     {
-      "nome": "Incorporadora Zeta",
-      "logo": "",
-      "link": ""
-    },
-    {
-      "nome": "Construtora Eta",
-      "logo": "",
-      "link": ""
-    },
-    {
-      "nome": "Incorporadora Theta",
+      "nome": "Diálogo Engenharia",
       "logo": "",
       "link": ""
     }

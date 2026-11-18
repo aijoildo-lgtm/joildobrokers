@@ -1195,14 +1195,19 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
         const l = (configGeral.parceiros || []).filter(p => p && p.nome), sec = document.getElementById('parceiros');
         sec.style.display = l.length ? '' : 'none';
         if (!l.length) return;
+        const vazio = '<svg class="parc-vazio" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 8"/></svg>';
         const item = p => {
-            const c = urlOk(p.logo) ? `<img src="${urlOk(p.logo)}" alt="${esc(p.nome)}" loading="lazy">` : `<span class="parc-nome">${esc(p.nome)}</span>`;
-            return urlOk(p.link) ? `<a class="parc-item" href="${urlOk(p.link)}" target="_blank" rel="noopener" title="${esc(p.nome)}">${c}</a>` : `<div class="parc-item" title="${esc(p.nome)}">${c}</div>`;
+            const tem = urlOk(p.logo);
+            const c = tem ? `<img src="${urlOk(p.logo)}" alt="${esc(p.nome)}" loading="lazy">` : vazio;
+            const t = tem ? ` title="${esc(p.nome)}"` : '';
+            return urlOk(p.link) ? `<a class="parc-item" href="${urlOk(p.link)}" target="_blank" rel="noopener"${t}>${c}</a>` : `<div class="parc-item"${t}>${c}</div>`;
         };
         const anima = l.length > 6 && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        const t = document.getElementById('parc-track');
+        const t = document.getElementById('parc-track'), w = t.parentElement;
         t.classList.toggle('anima', anima);
         t.innerHTML = l.map(item).join('') + (anima ? l.map(item).join('') : '');
+        const ajusta = () => w.classList.toggle('corta', anima || t.scrollWidth > w.clientWidth + 2);
+        ajusta(); window.addEventListener('resize', ajusta);
     }
 
     async function carregar() {

@@ -637,7 +637,7 @@ function equipeParaTexto(arr){return (arr||[]).map(p=>[p.nome||'',p.cargo||'',p.
 function textoParaEquipe(t){return String(t||'').split('\n').map(l=>l.split('|').map(x=>x.trim())).filter(p=>p[0]).map(p=>({nome:p[0],cargo:p[1]||'',foto:p[2]||'',linkedin:p[3]||''}))}
 function renderParc(){
   if(!$('pCampos'))return;
-  $('pCampos').innerHTML=`<div class="f full"><p class="dica" style="margin-bottom:10px">Sem logo, o site mostra só o nome. A seção só aparece quando há pelo menos um parceiro preenchido.</p>
+  $('pCampos').innerHTML=`<div class="f full"><p class="dica" style="margin-bottom:10px">Sem logo, o site mostra só o espaço reservado, sem texto. O nome é só para você se organizar. A seção só aparece quando há pelo menos um parceiro na lista.</p>
     <div id="parc-linhas"></div>
     <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:10px"><button type="button" class="btn ghost sm" id="parc-add">Adicionar parceiro</button></div>
   </div>`;
