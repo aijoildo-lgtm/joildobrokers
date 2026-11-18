@@ -131,6 +131,11 @@ nav ul li:hover .dropdown { display: block; animation: fadeIn 0.3s ease; }
 .badge-decorado { background: #6A1B9A; }
 .badge-pronto { background: #198754; }
 .badge-mcmv { background: #0D6EFD; }
+.badge-financ { background: #0F766E; }
+.badge-obra { background: #B45309; }
+.badge-urgente { background: #C2410C; }
+.badge-uso { background: #475569; }
+.badge-his { background: #334155; }
 
 .ref-tag { position: absolute; bottom: 10px; right: 10px; background: rgba(10,17,40,0.85); backdrop-filter: blur(4px); color: var(--white); padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; z-index: 10; border: 1px solid rgba(255,255,255,0.2); }
 .card-body { padding: 20px; }
