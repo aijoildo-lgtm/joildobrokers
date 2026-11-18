@@ -489,31 +489,73 @@ a.parc-item:hover { box-shadow: 0 8px 20px rgba(10,17,40,.14); }
 @media (max-width: 520px) { .rx-m2 { font-size: 2rem; } }
 
 /* ===== LARGURA E ESPAÇAMENTO PADRÃO DO SITE =====
-   Todas as seções usam a mesma largura máxima (--wrap) e as mesmas margens laterais (--edge).
-   Para mudar a largura do site inteiro, altere apenas os dois valores abaixo. */
-:root { --wrap: 1240px; --edge: clamp(16px, 4vw, 48px); }
+   Três medidas controlam o layout inteiro. Ao mudar uma delas, todas as seções acompanham:
+   --wrap   : largura do conteúdo em telas grandes (1240px)
+   --edge   : margem lateral em telas menores
+   --espaco : espaço entre quadrados, cards e colunas (24px) */
+:root { --wrap: 1240px; --edge: clamp(16px, 4vw, 48px); --espaco: 24px; }
+
+/* Seções: mesmas margens laterais e verticais */
 .ins-section, .blog-section, .concierge-section {
     padding-left: var(--edge); padding-right: var(--edge);
     padding-top: 80px; padding-bottom: 80px;
 }
 @media (max-width: 620px) { .ins-section, .blog-section, .concierge-section { padding-top: 56px; padding-bottom: 56px; } }
-.ins-head, .section-header, .opp-wrap, .ins-grid, .bx-grid, .mercado-grid, .blog-grid, .grid, .parc-wrap, .concierge-container {
+
+/* Todo bloco de conteúdo tem a mesma largura: começa e termina na mesma linha em todas as seções */
+.ins-head, .section-header, .opp-wrap, .ins-grid, .bx-grid, .mercado-grid, .blog-grid, .parc-wrap, .concierge-container, #mcmv-grid {
     width: 100%; max-width: var(--wrap); margin-left: auto; margin-right: auto; box-sizing: border-box;
 }
 .section-header { padding: 0; }
-.grid { padding: 0; }
-.mercado-grid { grid-template-columns: repeat(4, 1fr); }
-@media (max-width: 1000px) { .mercado-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 620px) { .mercado-grid { grid-template-columns: 1fr; } }
-/* setas dos carrosséis ficam dentro da largura padrão, não para fora */
-.opp-seta.esq { left: 6px; } .opp-seta.dir { right: 6px; }
-/* barra de filtros: centralizada, com as mesmas margens das seções */
-.filter-nav { padding-left: var(--edge); padding-right: var(--edge); }
-/* depoimentos: 3 por linha; com 2 ficam centralizados; com 3 ocupam toda a largura */
-.dep-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 30px; }
-.dep-grid > * { flex: 0 1 calc((100% - 60px) / 3); min-width: 0; }
-@media (max-width: 900px) { .dep-grid > * { flex-basis: calc((100% - 30px) / 2); } }
+#mcmv-grid { padding: 0; }
+.parc-wrap { --gap: var(--espaco); }
+
+/* Grades: 4 colunas em tela grande, 2 em tablet, 1 em celular. O mesmo espaço (--espaco) em todas */
+.bx-grid, .mercado-grid, .ins-grid, .ins-grid.quatro, #mcmv-grid { gap: var(--espaco); }
+.bx-grid, .mercado-grid, .ins-grid.quatro, #mcmv-grid { grid-template-columns: repeat(4, 1fr); }
+.ins-grid { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 1000px) {
+    .bx-grid, .mercado-grid, .ins-grid, .ins-grid.quatro, #mcmv-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 620px) {
+    .bx-grid, .mercado-grid, .ins-grid, .ins-grid.quatro, #mcmv-grid { grid-template-columns: 1fr; }
+}
+
+/* Portfólio (vitrine): mesma largura do restante, fora das seções */
+#vitrine {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--espaco);
+    width: 100%; max-width: calc(var(--wrap) + 2 * var(--edge)); box-sizing: border-box;
+    margin: 0 auto; padding: 10px var(--edge) 60px;
+}
+@media (max-width: 1000px) { #vitrine { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 620px) { #vitrine { grid-template-columns: 1fr; } }
+
+/* Depoimentos: 3 por linha; com 2, ficam centralizados; com 3, ocupam toda a largura */
+.dep-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--espaco); }
+.dep-grid > * { flex: 0 1 calc((100% - 2 * var(--espaco)) / 3); min-width: 0; }
+@media (max-width: 1000px) { .dep-grid > * { flex-basis: calc((100% - var(--espaco)) / 2); } }
 @media (max-width: 620px) { .dep-grid > * { flex-basis: 100%; } }
-/* mapa */
+
+/* Coleção exclusiva: 4 cartões por linha, mesmo espaço e mesma largura das outras seções */
+.colecao-track .opp-card { flex: 0 0 calc((100% - 3 * var(--espaco)) / 4); aspect-ratio: 3 / 4; }
+.colecao-track .opp-info h3 { font-size: 1.3rem; }
+.colecao-track .opp-tag, .colecao-track .opp-dif { font-size: .72rem; }
+@media (max-width: 1000px) { .colecao-track .opp-card { flex-basis: calc((100% - var(--espaco)) / 2); } }
+@media (max-width: 620px) { .colecao-track .opp-card { flex-basis: 86%; } }
+
+/* Carrosséis: setas dentro da largura padrão */
+.opp-seta.esq { left: 6px; } .opp-seta.dir { right: 6px; }
+
+/* Barra de filtros com as mesmas margens das seções */
+.filter-nav { padding-left: var(--edge); padding-right: var(--edge); }
+
+/* Formulário de contato: 2 colunas em tela grande, 1 no celular (evita estourar a tela) */
+.ct-form { grid-template-columns: 1fr 1fr !important; }
+@media (max-width: 620px) { .ct-form { grid-template-columns: 1fr !important; } }
+
+/* Barra flutuante "Fale com o consultor": rótulos somem antes de estourar a tela em tablet */
+@media (max-width: 900px) { .jb-bar-brand, .jb-btn span { display: none; } .jb-btn { padding: 10px; border-radius: 50%; } .jb-bar { padding: 8px; gap: 6px; } }
+
+/* Mapa */
 section.mapa-section #map { max-width: var(--wrap); margin-left: auto; margin-right: auto; }
 section.mapa-section .mapa-nota { max-width: var(--wrap); margin-left: auto; margin-right: auto; }
