@@ -137,11 +137,8 @@
 <section class="ins-section reveal" id="colecao" style="display:none">
     <div class="ins-head"><h2>Nossa Coleção Exclusiva</h2>
         <p>Selecione o imóvel dos seus sonhos com curadoria personalizada</p></div>
-    <div class="opp-wrap">
-        <button class="opp-seta esq" onclick="rolarColecao(-1)" aria-label="Anterior"><i class="fas fa-chevron-left"></i></button>
-        <div class="opp-track colecao-track" id="colecao-track"></div>
-        <button class="opp-seta dir" onclick="rolarColecao(1)" aria-label="Próximo"><i class="fas fa-chevron-right"></i></button>
-    </div>
+    <div class="colecao-faixa"><div class="colecao-linha" id="colecao-track"></div></div>
+<div class="colecao-faixa"><div class="colecao-linha" id="colecao-track-2"></div></div>
 </section>
 
 
@@ -1314,12 +1311,61 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
         document.getElementById('opp-track').innerHTML = l.map(cartaoOpp).join('');
         autoRolar('opp-track', 3);
     }
-    // "Nossa Coleção Exclusiva": curadoria manual (botão "+ Coleção Exclusiva" no painel), mostra 4 por vez e roda sozinho
+    // "Nossa Coleção Exclusiva": todos os imóveis do site, em 2 linhas de 4, girando sozinhos quando passam de 8.
+// Para voltar à curadoria (só os marcados com "+ Coleção Exclusiva" no painel), troque para true.
+    let colTimers = [], colResize = null, colPausa = false;
     function renderColecao() {
-        const l = bancoImoveis.filter(i => i.colecaoExclusiva === true), sec = document.getElementById('colecao');
+        const COLECAO_SO_MARCADOS = false;
+        const l = bancoImoveis.filter(i => !COLECAO_SO_MARCADOS || i.colecaoExclusiva === true), sec = document.getElementById('colecao');
         sec.style.display = l.length ? '' : 'none';
-        document.getElementById('colecao-track').innerHTML = l.map(cartaoOpp).join('');
-        autoRolar('colecao-track', 4);
+        if (!l.length) return;
+        const linhas = [document.getElementById('colecao-track'), document.getElementById('colecao-track-2')];
+        const faixas = linhas.map(t => t.parentElement);
+        const itensLinhas = [l.filter((_, i) => i % 2 === 0), l.filter((_, i) => i % 2 === 1)];
+        const sentidos = [-1, 1]; // a de cima anda para a esquerda; a de baixo, para a direita
+        const montar = () => {
+            colTimers.forEach(clearInterval); colTimers = [];
+            const v = parseInt(getComputedStyle(sec).getPropertyValue('--colv')) || 4; // mesmo número de colunas do CSS
+            const movel = innerWidth <= 620;
+            // Celular: uma lista só, em coluna, na ordem original
+            faixas[1].style.display = movel ? 'none' : '';
+            if (movel) { linhas[0].classList.remove('rola'); linhas[0].style.transform = 'none'; linhas[0].innerHTML = l.map(cartaoOpp).join(''); return; }
+            const reduzir = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            // Com mais de 2 × v imóveis, as duas linhas entram no modo dinâmico juntas
+            const dinamico = !reduzir && l.length > 2 * v;
+            linhas.forEach((t, n) => {
+                const lista = itensLinhas[n], N = lista.length;
+                t.classList.toggle('rola', dinamico);
+                t.style.transition = 'none'; t.style.transform = 'none';
+                if (!dinamico) {
+                    // Cada linha sempre tem v espaços: o que faltar vira espaço reservado vazio
+                    t.innerHTML = lista.map(cartaoOpp).join('') + '<div class="colecao-vago" aria-hidden="true"></div>'.repeat(Math.max(0, v - N));
+                    return;
+                }
+                const sent = sentidos[n];
+                // Cópias das pontas deixam o movimento contínuo, como nas construtoras
+                t.innerHTML = sent < 0
+                    ? lista.map(cartaoOpp).join('') + lista.slice(0, v).map(cartaoOpp).join('')
+                    : lista.slice(N - v).map(cartaoOpp).join('') + lista.map(cartaoOpp).join('');
+                let s = sent < 0 ? 0 : v;
+                const passo = () => t.children[0].getBoundingClientRect().width + parseFloat(getComputedStyle(t).columnGap);
+                const mover = anima => { t.style.transition = anima ? `transform ${PARC_TRANSICAO}ms cubic-bezier(.65,0,.35,1)` : 'none'; t.style.transform = `translateX(${-s * passo()}px)`; };
+                const saltar = pos => { s = pos; mover(false); void t.offsetWidth; };
+                mover(false);
+                colTimers.push(setInterval(() => {
+                    if (colPausa || document.hidden) return;
+                    if (sent < 0) { if (s === N) saltar(0); s++; }
+                    else { if (s === 0) saltar(N); s--; }
+                    mover(true);
+                }, PARC_PAUSA + PARC_TRANSICAO));
+            });
+        };
+        montar();
+        sec.onmouseenter = sec.onfocusin = () => { colPausa = true; };
+        sec.onmouseleave = sec.onfocusout = () => { colPausa = false; };
+        window.removeEventListener('resize', renderColecao._r);
+        renderColecao._r = () => { clearTimeout(colResize); colResize = setTimeout(montar, 250); };
+        window.addEventListener('resize', renderColecao._r);
     }
     // "Minha Casa Minha Vida": curadoria manual (botão "+ Minha Casa Minha Vida" no painel), mostra 5 por vez e roda sozinho
     function renderMcmv() {
@@ -1406,7 +1452,13 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
                 if (!N) return;
                 t.classList.toggle('rola', dinamico);
                 t.style.transition = 'none'; t.style.transform = 'none';
-                if (!dinamico) { t.innerHTML = lista.map(item).join(''); return; }
+                if (!dinamico) {
+                    // Cada linha sempre tem v espaços (6 no computador): o que faltar vira espaço reservado vazio
+                    t.style.flexWrap = N > v ? 'wrap' : '';
+                    t.innerHTML = lista.map(item).join('') + '<div class="parc-item parc-vago" aria-hidden="true"></div>'.repeat(Math.max(0, v - N));
+                    return;
+                }
+                t.style.flexWrap = '';
                 // Cópias das pontas deixam o movimento contínuo: quem anda para a esquerda leva cópias do início no fim;
                 // quem anda para a direita leva cópias do fim no início.
                 t.innerHTML = f.sentido < 0
