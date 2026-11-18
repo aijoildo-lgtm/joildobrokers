@@ -256,8 +256,7 @@ nav ul li:hover .dropdown { display: block; animation: fadeIn 0.3s ease; }
 /* BLOG E NOTÍCIAS */
 .ins-section { background: #FBF8F1; padding: 80px 6%; }
 .ins-section.ins-claro { background: var(--white); }
-.ins-head { max-width: 1450px; margin: 0 auto 32px; }
-#mcmv .ins-head { text-align: center; }
+.ins-head { max-width: 1450px; margin: 0 auto 32px; text-align: center; }
 .ins-head h2 { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--primary); font-weight: 700; }
 .ins-head p { color: var(--text-muted); margin-top: 8px; max-width: 620px; line-height: 1.6; }
 .ins-grid { max-width: 1300px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
