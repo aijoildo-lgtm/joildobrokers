@@ -105,6 +105,8 @@ textarea{resize:vertical}
 .chk{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:4px 14px;border:1px solid var(--line);border-radius:6px;padding:10px 12px;background:#fff}
 .chk label{display:flex;gap:8px;align-items:center;margin:0;font-weight:500;color:var(--ink);font-size:13px;cursor:pointer}
 .chk input{width:auto}
+.grupo-menu{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#94A3B8;margin:18px 10px 6px}
+aside .nav{margin-bottom:2px}
 .cad-row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 0;border-bottom:1px solid var(--line)}
 .orcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-top:12px}
 .orc{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff;font-size:12px}
@@ -133,25 +135,28 @@ textarea{resize:vertical}
 
 <div id="app" class="hidden">
   <aside>
-    <div class="logo">Cpainel <span>Joildo</span></div>
-    <button class="nav on" data-v="dash">Painel</button>
-    <button class="nav" data-v="lista">Imóveis</button>
-<button class="nav sub" data-v="cadastros">Cadastros de clientes</button>
-    <button class="nav sub" data-v="novo">Novo imóvel</button>
-    <button class="nav sub2" data-v="novo" data-modo="manual">Manual</button>
-    <button class="nav sub2" data-v="novo" data-modo="aocubo">AoCubo</button>
-    <button class="nav sub2" data-v="novo" data-modo="orulo">Órulo</button>
-    <button class="nav" data-v="conteudos" data-bloco="blog">Blog</button>
-    <button class="nav sub2" data-v="conteudos" data-bloco="noticia">Acompanhe nossas notícias</button>
-    <button class="nav" data-v="financ">Financiamento</button>
-    <button class="nav" data-v="raiox">Raio-X do preço</button>
-    <button class="nav" data-v="marca" data-ancora="qCampos">Quem Somos</button>
-    <button class="nav" data-v="marca" data-ancora="aCampos">Foto do Atendimento</button>
-    <button class="nav" data-v="marca" data-ancora="pCampos">Construtoras e Incorporadoras</button>
-    <button class="nav" data-v="marca" data-ancora="mCampos">Contato</button>
-    <a href="/" target="_blank" rel="noopener">Ver o site</a>
-    <button class="nav sair" id="sair">Sair</button>
-  </aside>
+<div class="logo">Cpainel <span>Joildo</span></div>
+<button class="nav on" data-v="dash">Painel</button>
+<div class="grupo-menu">Imóveis</div>
+<button class="nav" data-v="lista">Imóveis</button>
+<button class="nav" data-v="novo">Novo imóvel</button>
+<button class="nav sub" data-v="novo" data-modo="manual">Manual</button>
+<button class="nav sub" data-v="novo" data-modo="aocubo">AoCubo</button>
+<button class="nav sub" data-v="novo" data-modo="orulo">Órulo</button>
+<button class="nav" data-v="cadastros">Cadastros de clientes</button>
+<div class="grupo-menu">Páginas do site</div>
+<button class="nav" data-v="marca" data-ancora="qCampos">Quem Somos</button>
+<button class="nav" data-v="marca" data-ancora="aCampos">Faixa azul de atendimento</button>
+<button class="nav" data-v="marca" data-ancora="pCampos">Construtoras parceiras</button>
+<button class="nav" data-v="marca" data-ancora="mCampos">Contato</button>
+<button class="nav" data-v="conteudos" data-bloco="blog">Blog</button>
+<button class="nav" data-v="conteudos" data-bloco="noticia">Notícias</button>
+<button class="nav" data-v="financ">Financiamento</button>
+<button class="nav" data-v="raiox">Raio-X do preço</button>
+<div class="grupo-menu">Conta</div>
+<a href="/" target="_blank" rel="noopener">Ver o site</a>
+<button class="nav sair" id="sair">Sair</button>
+</aside>
   <main>
     <section id="v-dash">
       <div class="top">
@@ -447,7 +452,7 @@ async function acao(id,t){
 }
 
 // Cada item do menu abre só a sua página (Quem Somos, Contato, Foto, Construtoras; Blog ou Notícias)
-const MARCA_BLOCOS={qCampos:'Quem Somos',aCampos:'Foto do Atendimento',pCampos:'Construtoras e Incorporadoras',mCampos:'Contato'};
+const MARCA_BLOCOS={qCampos:'Quem Somos',aCampos:'Faixa azul de atendimento',pCampos:'Construtoras parceiras',mCampos:'Contato'};
 function mostraMarca(bloco){
   const sel=MARCA_BLOCOS[bloco]?bloco:'qCampos';
   const vm=$('v-marca');
