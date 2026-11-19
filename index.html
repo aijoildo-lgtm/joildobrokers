@@ -718,6 +718,29 @@ const tarjasDo = i => { const l = Array.isArray(i.destaques) ? i.destaques : (i.
         }, 5500);
     }
 
+    // Fotos no cartão: passa para o lado (dedo no celular, setas no computador) sem abrir o imóvel. Até 8 fotos por cartão.
+    function carrosselFotos(i, srcCapa) {
+        const fotos = [...new Set([srcCapa, ...(Array.isArray(i.fotos) ? i.fotos : []).map(urlOk)].filter(Boolean))].slice(0, 8);
+        const slides = fotos.map((u, k) => `<img class="card-foto" src="${u}" alt="${esc(i.titulo)} - foto ${k + 1}" ${k ? 'loading="lazy"' : ''} draggable="false" onerror="this.style.visibility='hidden'">`).join('');
+        if (fotos.length < 2) return `<div class="card-fotos">${slides}</div>`;
+        return `<div class="card-fotos">${slides}</div>
+            <button type="button" class="card-seta esq" aria-label="Foto anterior" onclick="rolarFotos(event,this,-1)"><i class="fas fa-chevron-left"></i></button>
+            <button type="button" class="card-seta dir" aria-label="Próxima foto" onclick="rolarFotos(event,this,1)"><i class="fas fa-chevron-right"></i></button>
+            <span class="card-contador">1/${fotos.length}</span>`;
+    }
+    function rolarFotos(ev, btn, dir) {
+        ev.stopPropagation();
+        const t = btn.parentElement.querySelector('.card-fotos'), n = t.children.length;
+        const atual = Math.round(t.scrollLeft / t.clientWidth), prox = (atual + dir + n) % n; // dá a volta no fim
+        t.scrollTo({ left: prox * t.clientWidth, behavior: 'smooth' });
+    }
+    document.addEventListener('scroll', e => {
+        const t = e.target;
+        if (!t || !t.classList || !t.classList.contains('card-fotos')) return;
+        const ct = t.parentElement.querySelector('.card-contador');
+        if (ct) ct.textContent = (Math.round(t.scrollLeft / t.clientWidth) + 1) + '/' + t.children.length;
+    }, true);
+
     function cartao(i) {
                 const specs = [i.area, i.dormitorios, i.vagas].filter(Boolean).map(esc).join(' &nbsp;|&nbsp; ');
         // Detecta se a foto principal veio do campo "foto" (stand/principal) ou da galeria
@@ -728,7 +751,7 @@ const tarjasDo = i => { const l = Array.isArray(i.destaques) ? i.destaques : (i.
                 <div class="card-img-wrap">
                     <div class="tarjas">${tarjasDo(i).map(k => `<span class="badge ${TARJAS[k][0]}">${TARJAS[k][1]}</span>`).join('')}</div>
                     ${temFotoPrincipal ? '' : '<span class="badge" style="background:#64748B;top:auto;bottom:10px;font-size:.65rem">Sem foto principal definida</span>'}
-                    <div class="card-img" style="background-image:url('${srcCapa}')"></div>
+                    ${carrosselFotos(i, srcCapa)}
                 </div>
                 <div class="card-body">
                     <h3>${esc(i.titulo)}</h3>

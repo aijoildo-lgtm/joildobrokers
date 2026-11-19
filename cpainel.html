@@ -434,9 +434,61 @@ function renderLista(){
   const L=IM.filter(i=>!q||[i.titulo,i.ref,i.localizacao].some(x=>String(x||'').toLowerCase().includes(q)));
   $('rows').innerHTML=L.map(i=>{
     const n=(i.fotos||[]).length||(i.foto?1:0),pl=(i.plantas||[]).length,d=dataRef(i),dd=diasDesde(i),atrasado=dd!==null&&dd>lim()&&i.ativo!==false;
-    return `<tr><td>${i.foto?`<img class="thumb" src="${esc(i.foto)}" alt="">`:'<span class="thumb"></span>'}</td><td><b>${esc(i.titulo)}</b><br><span class="sub">${esc(i.ref)} · ${esc(i.localizacao)}</span></td><td>${esc(i.preco)}</td><td>${n} foto(s)${pl?` · ${pl} planta(s)`:''}</td><td>${d?fmt(d):'<span class="tag t-wa">sem data</span>'}${dd!==null&&i.ativo!==false?` <span class="tag ${nivel(i)==='bad'?'t-no':nivel(i)==='wa'?'t-wa':'t-ok'}">${dd} dias</span>`:''}</td><td>${i.ativo===false?'<span class="tag t-wa">Pausado</span>':'<span class="tag t-ok">Publicado</span>'}${i.emDestaque?'<span class="tag t-ok">Destaque</span>':''}${i.linkOrigem&&i.sincronizar!==false?'<span class="tag t-ok">Sincroniza</span>':''}${i.demo?'<span class="tag t-wa">Exemplo</span>':''}</td><td class="acoes"><a class="btn ghost sm" href="/imovel/${encodeURIComponent(i.ref)}" target="_blank" rel="noopener">Visualizar</a><button class="btn ghost sm" onclick="editar(${i.id})">Editar</button><button class="btn ghost sm" onclick="acao(${i.id},'destaque')">${i.emDestaque?'Tirar destaque':'Destacar'}</button><button class="btn ghost sm" onclick="acao(${i.id},'colecao')" title="Aparece na seção 'Nossa Coleção Exclusiva' da home">${i.colecaoExclusiva?'Tirar da Coleção':'+ Coleção Exclusiva'}</button><button class="btn ghost sm" onclick="acao(${i.id},'oppVitrine')" title="Aparece na seção 'Oportunidades de venda' da home">${i.oportunidadeVenda?'Tirar da vitrine Opp.':'+ Vitrine Oportunidade'}</button><button class="btn ghost sm" onclick="acao(${i.id},'mcmv')" title="Aparece na seção 'Minha Casa Minha Vida' da home">${i.mcmvVitrine?'Tirar do MCMV':'+ Minha Casa Minha Vida'}</button><button class="btn ghost sm" onclick="acao(${i.id},'ativo')">${i.ativo===false?'Publicar':'Pausar'}</button><button class="btn ghost sm" onclick="acao(${i.id},'dup')">Duplicar</button><button class="btn danger sm" onclick="acao(${i.id},'del')">Excluir</button></td></tr>`;
+    return `<tr><td>${i.foto?`<img class="thumb" src="${esc(i.foto)}" alt="">`:'<span class="thumb"></span>'}</td><td><b>${esc(i.titulo)}</b><br><span class="sub">${esc(i.ref)} · ${esc(i.localizacao)}</span></td><td>${esc(i.preco)}</td><td>${n} foto(s)${pl?` · ${pl} planta(s)`:''}</td><td>${d?fmt(d):'<span class="tag t-wa">sem data</span>'}${dd!==null&&i.ativo!==false?` <span class="tag ${nivel(i)==='bad'?'t-no':nivel(i)==='wa'?'t-wa':'t-ok'}">${dd} dias</span>`:''}</td><td>${i.ativo===false?'<span class="tag t-wa">Pausado</span>':'<span class="tag t-ok">Publicado</span>'}${i.emDestaque?'<span class="tag t-ok">Destaque</span>':''}${i.linkOrigem&&i.sincronizar!==false?'<span class="tag t-ok">Sincroniza</span>':''}${i.demo?'<span class="tag t-wa">Exemplo</span>':''}</td><td class="acoes"><a class="btn ghost sm" href="/imovel/${encodeURIComponent(i.ref)}" target="_blank" rel="noopener">Visualizar</a><button class="btn ghost sm" onclick="editar(${i.id})">Editar</button><button class="btn ghost sm" onclick="acao(${i.id},'destaque')">${i.emDestaque?'Tirar destaque':'Destacar'}</button><button class="btn ghost sm" onclick="acao(${i.id},'colecao')" title="Aparece na seção 'Nossa Coleção Exclusiva' da home">${i.colecaoExclusiva?'Tirar da Coleção':'+ Coleção Exclusiva'}</button><button class="btn ghost sm" onclick="acao(${i.id},'oppVitrine')" title="Aparece na seção 'Oportunidades de venda' da home">${i.oportunidadeVenda?'Tirar da vitrine Opp.':'+ Vitrine Oportunidade'}</button><button class="btn ghost sm" onclick="acao(${i.id},'mcmv')" title="Aparece na seção 'Minha Casa Minha Vida' da home">${i.mcmvVitrine?'Tirar do MCMV':'+ Minha Casa Minha Vida'}</button><button class="btn ghost sm" onclick="acao(${i.id},'ativo')">${i.ativo===false?'Publicar':'Pausar'}</button><button class="btn ghost sm" onclick="instagram(${i.id})" title="Legenda pronta e fotos para postar no Instagram">Instagram</button><button class="btn ghost sm" onclick="acao(${i.id},'dup')">Duplicar</button><button class="btn danger sm" onclick="acao(${i.id},'del')">Excluir</button></td></tr>`;
   }).join('')||'<tr><td colspan="7" class="sub">Nenhum imóvel com essa busca.</td></tr>';
 }
+
+// ===== INSTAGRAM: legenda pronta + fotos no formato do feed (4:5) para postar pelo app =====
+async function instagram(id){
+  const i=IM.find(x=>x.id==id); if(!i) return;
+  if(!CFG) CFG=await fetch('/api/config').then(r=>r.json()).catch(()=>({}));
+  const sem=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]/g,'').toLowerCase();
+  const bairro=String(i.localizacao||'').split(',')[0].trim();
+  const link=location.origin+'/imovel/'+encodeURIComponent(i.ref);
+  const info=[i.tipo,i.area,i.dormitorios,i.vagas].filter(Boolean).join(' · ');
+  const fase={lancamentos:'lancamentoimobiliario',construcao:'imoveisemconstrucao',prontos:'imovelpronto',usados:'imoveisusados',oportunidades:'oportunidadeimobiliaria'}[i.estagio];
+  const tags=['imoveis','imoveissp','corretordeimoveis',fase,sem(bairro)&&('imoveis'+sem(bairro)),'joildobrokers'].filter(Boolean).map(t=>'#'+t).join(' ');
+  const legenda=[
+    '✨ '+(i.titulo||''),
+    bairro?'📍 '+i.localizacao:'',
+    info?'📐 '+info:'',
+    i.preco?'💰 '+i.preco:'',
+    '',
+    'Quer receber a apresentação completa e as condições? Chame no WhatsApp'+(CFG.telefone?' '+CFG.telefone:'')+' ou acesse o link na bio.',
+    link,
+    '',
+    CFG.creci?CFG.creci+' · Joildo Brokers':'Joildo Brokers',
+    '',
+    tags
+  ].filter((l,k,a)=>l!==''||a[k-1]!=='').join('\n');
+  const ig=u=>String(u).replace(/(res\.cloudinary\.com\/[^/]+\/image\/upload\/)/,'$1c_fill,ar_4:5,w_1080,f_jpg/');
+  const fotos=[...new Set([i.foto,...(i.fotos||[])].filter(Boolean))].slice(0,10).map(ig);
+  window.IG_FOTOS=fotos;
+  let m=document.getElementById('igModal'); if(m) m.remove();
+  m=document.createElement('div'); m.id='igModal';
+  m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  m.onclick=e=>{if(e.target===m)m.remove()};
+  m.innerHTML=`<div style="background:#fff;color:#111;border-radius:14px;max-width:760px;width:100%;max-height:92vh;overflow:auto;padding:20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><h3 style="margin:0">Postar no Instagram</h3><button class="btn ghost sm" onclick="document.getElementById('igModal').remove()">Fechar</button></div>
+    <label style="font-weight:600;font-size:13px">Legenda (pode editar)</label>
+    <textarea id="igLegenda" style="width:100%;height:220px;margin:6px 0 8px;padding:10px;border:1px solid #ccc;border-radius:8px;font:inherit;color:#111;background:#fff">${esc(legenda)}</textarea>
+    <button class="btn sm" onclick="igCopiar()">Copiar legenda</button>
+    <div style="margin:18px 0 8px;font-weight:600;font-size:13px">Fotos no formato do feed (${fotos.length}${fotos.length===10?', máximo do carrossel':''})</div>
+    ${fotos.length?`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px">${fotos.map((u,k)=>`<div><img src="${esc(u)}" alt="" style="width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:8px;display:block"><button class="btn ghost sm" style="width:100%;margin-top:4px" onclick="igBaixar(${k})">Baixar ${k+1}</button></div>`).join('')}</div><button class="btn sm" style="margin-top:12px" onclick="igBaixarTodas()">Baixar todas</button>`:'<p class="sub">Este imóvel ainda não tem fotos.</p>'}
+    <p class="sub" style="margin-top:14px">Depois: abra o Instagram, toque em + e escolha as fotos na ordem, cole a legenda e publique. No Instagram o link da legenda não é clicável, por isso a legenda manda para o link na bio.</p>
+  </div>`;
+  document.body.appendChild(m);
+}
+function igCopiar(){
+  const t=document.getElementById('igLegenda'); t.select();
+  (navigator.clipboard?navigator.clipboard.writeText(t.value):Promise.reject()).catch(()=>document.execCommand('copy')).then(()=>aviso('Legenda copiada.'));
+}
+async function igBaixar(k){
+  const u=window.IG_FOTOS[k];
+  try{const b=await(await fetch(u)).blob();const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='foto-'+(k+1)+'.jpg';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
+  catch(e){window.open(u,'_blank')} // se o servidor da foto não permitir baixar direto, abre a foto para salvar
+}
+async function igBaixarTodas(){for(let k=0;k<window.IG_FOTOS.length;k++){await igBaixar(k);await new Promise(r=>setTimeout(r,400))}}
 
 async function acao(id,t){
   const it=IM.find(x=>x.id==id)||{},P=b=>API('/api/imoveis/'+id,{method:'PATCH',body:JSON.stringify(b)});let m='';
