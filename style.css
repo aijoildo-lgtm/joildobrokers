@@ -561,6 +561,34 @@ a.parc-item:hover { box-shadow: 0 8px 20px rgba(10,17,40,.14); }
 .tarjas { position: absolute; top: 14px; left: 0; z-index: 10; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
 .tarjas .badge { position: static; }
 
+/* Imóveis Usados: uma linha de 4 (2 em tablet, 1 em celular); com mais de 4, gira sozinha */
+#usados { --colv: 4; }
+@media (max-width: 1000px) { #usados { --colv: 2; } }
+@media (max-width: 620px) { #usados { --colv: 1; } }
+.usados-faixa { overflow: hidden; padding: 4px 0; width: 100%; max-width: var(--wrap); margin: 0 auto; box-sizing: border-box; }
+.usados-linha { display: grid; grid-template-columns: repeat(var(--colv), 1fr); gap: var(--espaco); }
+.usados-linha.rola { display: flex; }
+.usados-linha.rola .usados-item, .usados-linha.rola .usados-vago { flex: 0 0 calc((100% - (var(--colv) - 1) * var(--espaco)) / var(--colv)); }
+.usados-item { min-width: 0; }
+.usados-vago { aspect-ratio: 3 / 4; border: 1px dashed #D5C98F; border-radius: 18px; background: rgba(212,175,55,.06); }
+@media (max-width: 620px) { .usados-vago { display: none; } }
+
+/* Cadastre seu imóvel */
+.cad-wrap { width: 100%; max-width: var(--wrap); margin: 0 auto; display: grid; grid-template-columns: 1fr 1.3fr; gap: 40px; align-items: start; }
+.cad-passos { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 18px; }
+.cad-passos li { background: #fff; border: 1px solid #E2E8F0; border-radius: 12px; padding: 18px 20px; }
+.cad-passos strong { display: block; font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--primary); margin-bottom: 6px; }
+.cad-form { background: #fff; border: 1px solid #E2E8F0; border-radius: 14px; padding: 26px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.cad-form input, .cad-form textarea { width: 100%; padding: 11px 12px; border: 1px solid #CBD5E1; border-radius: 8px; font: inherit; box-sizing: border-box; }
+.cad-form .full, .cad-form textarea { grid-column: 1 / -1; }
+.cad-aceite { grid-column: 1 / -1; font-size: .85rem; color: var(--text-muted); display: flex; gap: 8px; align-items: flex-start; }
+.cad-aceite input { width: auto; margin-top: 3px; }
+.btn-cad { display: inline-block; padding: 10px 18px; border-radius: 999px; background: var(--primary); color: #fff; text-decoration: none; font-weight: 700; border: 0; cursor: pointer; }
+.cad-form .btn-cad { grid-column: 1 / -1; justify-self: start; }
+#cadMsg { grid-column: 1 / -1; margin: 0; font-size: .9rem; }
+@media (max-width: 900px) { .cad-wrap { grid-template-columns: 1fr; } }
+@media (max-width: 620px) { .cad-form { grid-template-columns: 1fr; } }
+
 /* Carrosséis: setas dentro da largura padrão */
 .opp-seta.esq { left: 6px; } .opp-seta.dir { right: 6px; }
 

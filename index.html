@@ -78,6 +78,7 @@
                     <a href="#" onclick="filtrarEstagio('construcao');return false"><i class="fas fa-hard-hat"></i> Em construção</a>
                     <a href="#" onclick="filtrarEstagio('prontos');return false"><i class="fas fa-key"></i> Prontos para morar</a>
                     <a href="#" onclick="filtrarEstagio('usados');return false"><i class="fas fa-handshake"></i> Usados</a>
+<a href="#cadastre" onclick="document.getElementById('cadastre').scrollIntoView({behavior:'smooth'});return false"><i class="fas fa-file-signature"></i> Cadastre seu imóvel</a>
                 </div></li>
             <li><a href="#oportunidades">Oportunidades</a></li>
             <li><a href="#bairros">Bairros</a></li>
@@ -231,6 +232,48 @@
     <div class="ins-head"><h2>Conquiste Seu Imóvel com o Minha Casa Minha Vida</h2>
         <p>Filtre por faixa, localização e valor e descubra qual subsídio se encaixa no seu perfil</p></div>
     <div class="grid" id="mcmv-grid"></div>
+</section>
+
+<!-- IMÓVEIS USADOS: uma linha com 4 visíveis; se houver mais, gira sozinha (sai pela esquerda, entra pela direita) -->
+<section class="ins-section reveal" id="usados" style="display:none">
+    <div class="ins-head"><h2>Imóveis Usados</h2>
+    <p>Escolha o seu com respaldo profissional do início ao fim</p></div>
+    <div class="usados-faixa"><div class="usados-linha" id="usados-track"></div></div>
+</section>
+
+<!-- CADASTRE SEU IMÓVEL: o cliente baixa o modelo de autorização, preenche e envia; só publicamos depois de receber o documento assinado -->
+<section class="ins-section reveal" id="cadastre">
+    <div class="ins-head"><h2>Cadastre seu imóvel</h2>
+    <p>Venda com respaldo profissional do início ao fim</p></div>
+    <div class="cad-wrap">
+        <ol class="cad-passos">
+            <li><strong>1. Baixe o modelo de autorização</strong>
+                <a id="cadModelo" class="btn-cad" href="#" target="_blank" rel="noopener" style="display:none">Baixar modelo</a></li>
+            <li><strong>2. Preencha o formulário</strong>
+                Com os dados do imóvel e os links das fotos e do vídeo ou tour virtual.</li>
+            <li><strong>3. Envie o documento assinado</strong>
+                Pelo WhatsApp. O imóvel só é publicado depois que a autorização for recebida e as informações revisadas.</li>
+        </ol>
+        <form class="cad-form" id="cadForm" onsubmit="enviarCadastro(event)">
+            <input name="nome" placeholder="Seu nome completo" required>
+            <input name="telefone" placeholder="WhatsApp com DDD" required>
+            <input name="email" type="email" placeholder="E-mail">
+            <input name="tipo" placeholder="Tipo (apartamento, casa, cobertura...)">
+            <input name="titulo" placeholder="Nome ou descrição do imóvel" required>
+            <input name="bairro" placeholder="Bairro" required>
+            <input name="cidade" placeholder="Cidade" value="São Paulo">
+            <input name="preco" placeholder="Valor pedido (ex.: R$ 1.200.000)" required>
+            <input name="area" placeholder="Área (ex.: 98m²)">
+            <input name="dormitorios" placeholder="Dormitórios (ex.: 3 Dormitórios)">
+            <input name="vagas" placeholder="Vagas (ex.: 2 vagas)">
+            <textarea name="descricao" rows="3" placeholder="Descreva o imóvel"></textarea>
+            <input class="full" name="fotos" placeholder="Link das fotos (Google Drive, Dropbox ou similar)">
+            <input class="full" name="video" placeholder="Link do vídeo ou tour virtual (opcional)">
+            <label class="cad-aceite"><input type="checkbox" required> Entendo que o imóvel só será publicado após o recebimento da autorização assinada.</label>
+            <button type="submit" class="btn-cad">Enviar cadastro</button>
+            <p id="cadMsg" role="status"></p>
+        </form>
+    </div>
 </section>
 
 <!-- MAPA DOS IMÓVEIS PUBLICADOS: só o mapa, sem painel lateral -->
@@ -1369,7 +1412,69 @@ const tarjasDo = i => { const l = Array.isArray(i.destaques) ? i.destaques : (i.
         window.addEventListener('resize', renderColecao._r);
     }
     // "Minha Casa Minha Vida": curadoria manual (botão "+ Minha Casa Minha Vida" no painel), mostra 5 por vez e roda sozinho
-    function renderMcmv() {
+    // IMÓVEIS USADOS: uma linha; com mais de 4 imóveis gira sozinha, como as outras seções
+let usTimers = [], usResize = null, usPausa = false;
+function renderUsados() {
+    const l = bancoImoveis.filter(i => i.estagio === 'usados'), sec = document.getElementById('usados');
+    sec.style.display = l.length ? '' : 'none';
+    if (!l.length) return;
+    const track = document.getElementById('usados-track');
+    const montar = () => {
+        usTimers.forEach(clearInterval); usTimers = [];
+        const v = parseInt(getComputedStyle(sec).getPropertyValue('--colv')) || 4;
+        if (innerWidth <= 620) { track.classList.remove('rola'); track.style.transform = 'none'; track.innerHTML = l.map(i => `<div class="usados-item">${cartao(i)}</div>`).join(''); return; }
+        const reduzir = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const dinamico = !reduzir && l.length > v;
+        track.classList.toggle('rola', dinamico);
+        track.style.transition = 'none'; track.style.transform = 'none';
+        if (!dinamico) {
+            track.innerHTML = l.map(i => `<div class="usados-item">${cartao(i)}</div>`).join('') + '<div class="usados-vago" aria-hidden="true"></div>'.repeat(Math.max(0, v - l.length));
+            return;
+        }
+        const N = l.length;
+        // cópias do início no fim: a fila nunca para de girar e não aparece um vazio
+        track.innerHTML = l.concat(l.slice(0, v)).map(i => `<div class="usados-item">${cartao(i)}</div>`).join('');
+        let s = 0;
+        const passo = () => track.children[0].getBoundingClientRect().width + parseFloat(getComputedStyle(track).columnGap);
+        const mover = anima => { track.style.transition = anima ? `transform ${PARC_TRANSICAO}ms cubic-bezier(.65,0,.35,1)` : 'none'; track.style.transform = `translateX(${-s * passo()}px)`; };
+        const saltar = pos => { s = pos; mover(false); void track.offsetWidth; };
+        mover(false);
+        usTimers.push(setInterval(() => {
+            if (usPausa || document.hidden) return;
+            if (s === N) saltar(0);
+            s++; mover(true);
+        }, PARC_PAUSA + PARC_TRANSICAO));
+    };
+    montar();
+    sec.onmouseenter = sec.onfocusin = () => { usPausa = true; };
+    sec.onmouseleave = sec.onfocusout = () => { usPausa = false; };
+    window.removeEventListener('resize', renderUsados._r);
+    renderUsados._r = () => { clearTimeout(usResize); usResize = setTimeout(montar, 250); };
+    window.addEventListener('resize', renderUsados._r);
+}
+// CADASTRE SEU IMÓVEL: link do modelo de autorização (vem do painel) e envio do formulário
+function renderCadastro() {
+    const a = document.getElementById('cadModelo');
+    if (a) { if (configGeral.autorizacaoModelo) { a.href = configGeral.autorizacaoModelo; a.style.display = ''; } else { a.style.display = 'none'; } }
+}
+function enviarCadastro(e) {
+    e.preventDefault();
+    const f = e.target, msg = document.getElementById('cadMsg'), btn = f.querySelector('button[type=submit]');
+    const dados = Object.fromEntries(new FormData(f).entries());
+    btn.disabled = true; msg.textContent = 'Enviando…';
+    fetch('/api/cadastro-cliente', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) })
+        .then(r => r.json())
+        .then(r => {
+            if (!r.success) throw new Error(r.error || 'Não foi possível enviar agora. Tente de novo.');
+            const texto = encodeURIComponent(`Olá! Cadastrei o imóvel ${r.ref} no site. Segue o documento de autorização assinado.`);
+            const zap = `https://api.whatsapp.com/send?phone=${configGeral.whatsapp || ''}&text=${texto}`;
+            msg.innerHTML = `Recebemos seu cadastro (${esc(r.ref)}). Para publicar, envie o documento assinado: <a href="${zap}" target="_blank" rel="noopener">enviar pelo WhatsApp</a>.`;
+            f.reset();
+        })
+        .catch(err => { msg.textContent = err.message; })
+        .finally(() => { btn.disabled = false; });
+}
+function renderMcmv() {
         const l = bancoImoveis.filter(i => i.mcmvVitrine === true), sec = document.getElementById('mcmv');
         sec.style.display = l.length ? '' : 'none';
         document.getElementById('mcmv-grid').innerHTML = l.slice(0, 8).map(cartao).join('');
@@ -1508,6 +1613,8 @@ const tarjasDo = i => { const l = Array.isArray(i.destaques) ? i.destaques : (i.
         renderOportunidades();
         renderColecao();
         renderMcmv();
+    renderUsados();
+    renderCadastro();
         renderBairros();
         renderParceiros();
         renderAtendimentoFoto();

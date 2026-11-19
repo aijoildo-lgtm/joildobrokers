@@ -46,7 +46,7 @@ const DEFAULT_RAIOX = {
 const DEFAULT_CONFIG = {
   raiox: DEFAULT_RAIOX,
   financiamento: DEFAULT_FIN,
-  logoUrl: '', slogan: 'Ética e dedicação para tornar seus sonhos realidade',
+  logoUrl: '', autorizacaoModelo: '', slogan: 'Ética e dedicação para tornar seus sonhos realidade',
   linkedin: 'https://www.linkedin.com/in/joildo-costa-0154a29b/',
   instagram: '', facebook: '', youtube: '',
   whatsapp: '5511951377033', telefone: '(11) 95137-7033',
@@ -222,6 +222,28 @@ app.get('/api/admin/imoveis', exigirLogin, ah(async (req, res) => res.json(await
 app.get('/api/config', ah(async (req, res) => res.json(await getConfig())));
 app.post('/api/config', exigirLogin, ah(async (req, res) => { await saveConfig(req.body); res.json({ success: true, message: 'Configurações atualizadas!' }); }));
 
+// CADASTRE SEU IMÓVEL (público): fica pendente. Só é publicado depois da autorização assinada e da revisão no painel.
+app.post('/api/cadastro-cliente', ah(async (req, res) => {
+  const b = req.body || {};
+  const nome = s2(b.nome, 120).trim(), tel = s2(b.telefone, 40).trim(), email = s2(b.email, 120).trim();
+  const titulo = s2(b.titulo, 200).trim(), bairro = s2(b.bairro, 120).trim(), preco = s2(b.preco, 60).trim();
+  if (!nome || !tel || !titulo || !bairro || !preco) return res.status(400).json({ success: false, error: 'Preencha nome, WhatsApp, nome do imóvel, bairro e valor.' });
+  const cidade = s2(b.cidade, 80).trim() || 'São Paulo';
+  const links = s2(b.fotos, 3000).split(/\s+/).filter(u => /^https?:\/\//i.test(u)).slice(0, 30);
+  const video = s2(b.video, 500).trim();
+  const i = limpar({
+    titulo, localizacao: `${bairro}, ${cidade} - SP`, preco, tipo: s2(b.tipo, 60), area: s2(b.area, 40),
+    dormitorios: s2(b.dormitorios, 40), vagas: s2(b.vagas, 40), apresentacao: s2(b.descricao, 4000), fotos: links
+  });
+  if (/youtu/i.test(video)) i.youtube = video.slice(0, 500); else if (video) i.tour360 = video.slice(0, 500);
+  const agora = new Date().toISOString();
+  i.id = Date.now(); i.ref = novaRef(); i.estagio = 'usados'; i.transacao = 'Vender Imóvel'; i.categoria = 'Residencial';
+  i.origem = 'cliente'; i.pendente = true; i.autorizacaoRecebida = false; i.ativo = false; i.criadoEm = agora; i.atualizadoEm = agora;
+  i.privado = { proprietario: nome, corretor: '', exclusividade: 'Não', autorizacao: 'Não', averbado: '', escriturado: '', placa: '', chave: '', ondeChave: '',
+    obs: `WhatsApp: ${tel}${email ? ` · E-mail: ${email}` : ''}${b.fotos ? `\nFotos informadas: ${s2(b.fotos, 500)}` : ''}` };
+  await addImovel(i);
+  res.json({ success: true, ref: i.ref });
+}));
 app.post('/api/adicionar-imovel', exigirLogin, ah(async (req, res) => {
   const i = limpar(req.body || {}), agora = new Date().toISOString();
   i.id = Date.now(); i.ref = i.ref || novaRef(); i.criadoEm = agora; i.atualizadoEm = agora;
@@ -235,6 +257,16 @@ app.patch('/api/imoveis/:id', exigirLogin, ah(async (req, res) => {
   if ('colecaoExclusiva' in b) set.colecaoExclusiva = b.colecaoExclusiva === true;
   if ('oportunidadeVenda' in b) set.oportunidadeVenda = b.oportunidadeVenda === true;
   if ('mcmvVitrine' in b) set.mcmvVitrine = b.mcmvVitrine === true;
+  if ('autorizacaoRecebida' in b) set.autorizacaoRecebida = b.autorizacaoRecebida === true;
+  if (b.ativo === true) {
+    const atual = (await getImoveis()).find(x => String(x.id) === String(req.params.id));
+    if (atual && atual.origem === 'cliente') {
+      const midia = (atual.fotos || []).length || atual.youtube || atual.tour360;
+      if (atual.autorizacaoRecebida !== true || !midia)
+        return res.status(400).json({ success: false, error: 'Para publicar: confirme a autorização assinada recebida e tenha ao menos fotos, vídeo ou tour.' });
+    }
+    set.pendente = false;
+  }
   res.json({ success: await updImovel(req.params.id, set) });
 }));
 app.put('/api/imoveis/:id', exigirLogin, ah(async (req, res) => {

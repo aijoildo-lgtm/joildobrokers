@@ -105,6 +105,7 @@ textarea{resize:vertical}
 .chk{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:4px 14px;border:1px solid var(--line);border-radius:6px;padding:10px 12px;background:#fff}
 .chk label{display:flex;gap:8px;align-items:center;margin:0;font-weight:500;color:var(--ink);font-size:13px;cursor:pointer}
 .chk input{width:auto}
+.cad-row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 0;border-bottom:1px solid var(--line)}
 .orcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-top:12px}
 .orc{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff;font-size:12px}
 .orc img,.orc .ph{width:100%;height:110px;object-fit:cover;background:var(--line);display:block}
@@ -135,6 +136,7 @@ textarea{resize:vertical}
     <div class="logo">Cpainel <span>Joildo</span></div>
     <button class="nav on" data-v="dash">Painel</button>
     <button class="nav" data-v="lista">Imóveis</button>
+<button class="nav sub" data-v="cadastros">Cadastros de clientes</button>
     <button class="nav sub" data-v="novo">Novo imóvel</button>
     <button class="nav sub2" data-v="novo" data-modo="manual">Manual</button>
     <button class="nav sub2" data-v="novo" data-modo="aocubo">AoCubo</button>
@@ -254,7 +256,14 @@ textarea{resize:vertical}
       <div class="barra"><button class="btn" id="fSalvar2">Salvar alterações</button></div>
     </section>
 
-    <section id="v-raiox" class="hidden">
+    <section id="v-cadastros" class="hidden">
+<div class="top"><div><h2 class="head">Cadastros de clientes</h2><p class="sub">Imóveis enviados pelo site pelo botão "Cadastre seu imóvel". Só são publicados depois de receber a autorização assinada e ter fotos, vídeo ou tour.</p></div></div>
+<div class="panel"><h3 style="font-size:19px;margin-bottom:8px">Modelo de autorização</h3><p class="dica" style="margin-bottom:10px">Suba o modelo no Google Drive (ou similar) e cole o link aqui. Ele aparece para o cliente no site.</p>
+<div class="f"><label for="autModelo">Link do modelo (PDF)</label><input id="autModelo" placeholder="https://..."></div>
+<button class="btn" id="autSalvar">Salvar modelo</button></div>
+<div class="panel"><h3 style="font-size:19px;margin-bottom:10px">Cadastros</h3><div id="cadList"></div></div>
+</section>
+<section id="v-raiox" class="hidden">
       <div class="top">
         <div><h2 class="head">Raio-X do preço</h2><p class="sub">Compara o valor do m² de cada imóvel com os outros anunciados no seu site e mostra na página do imóvel se o preço está abaixo, em linha ou acima.</p></div>
         <button class="btn" id="rSalvar">Salvar alterações</button>
@@ -451,12 +460,33 @@ function ir(v,bloco){
   if(v==='marca')loadMarca();
   if(v==='financ')loadFinanc();
   if(v==='raiox')loadRaiox();
-  ['dash','lista','form','conteudos','marca','financ','raiox'].forEach(s=>$('v-'+s).classList.toggle('hidden',s!==v));
+  if(v==='cadastros')loadCadastros();
+  ['dash','lista','form','conteudos','marca','financ','raiox','cadastros'].forEach(s=>$('v-'+s).classList.toggle('hidden',s!==v));
   document.querySelectorAll('aside .nav').forEach(b=>b.classList.toggle('on',b.dataset.v===v||(v==='form'&&b.dataset.v==='novo')));
   if(v==='marca')mostraMarca(bloco);
   if(v==='conteudos')document.querySelectorAll('aside .nav[data-bloco]').forEach(b=>b.classList.toggle('on',b.dataset.bloco===CT));
 }
 function abrir(it){CUR=it||null;BASE=it?{...it}:{};$('ftitulo').textContent=it?it.titulo:'Novo imóvel';$('url').value='';$('impMsg').textContent='';preencher(BASE);setModo(it?(it.modoCadastro||(it.linkOrigem?(/orulo/i.test(it.linkOrigem)?'orulo':'aocubo'):'manual')):'manual');PASSO=1;SUB='fotos';ir('form');mostra();window.scrollTo(0,0)}
+// CADASTROS DE CLIENTES: autorização, publicação e modelo de autorização
+async function loadCadastros(){
+  const r=await API('/api/admin/imoveis'); if(Array.isArray(r)) IM=r;
+  const cfg=await API('/api/config'); if(cfg&&typeof cfg==='object'){ CFG=cfg; $('autModelo').value=cfg.autorizacaoModelo||''; }
+  renderCadastros();
+}
+function renderCadastros(){
+  const l=IM.filter(i=>i.origem==='cliente');
+  $('cadList').innerHTML=l.length?l.map(i=>`<div class="cad-row">
+    <div><b>${esc(i.titulo)}</b> <span class="sub">${esc(i.ref)} · ${esc(i.localizacao||'')} · ${esc(i.preco||'')}</span><br>
+    <span class="sub">${i.ativo?'Publicado':'Aguardando'} · autorização ${i.autorizacaoRecebida?'recebida':'não recebida'} · ${(i.fotos||[]).length} foto(s)${(i.youtube||i.tour360)?' · vídeo/tour':''}</span></div>
+    <div class="linha-up">
+      <button class="btn ghost sm" onclick="cadAutorizacao('${esc(i.id)}',${!i.autorizacaoRecebida})">${i.autorizacaoRecebida?'Desmarcar autorização':'Autorização recebida'}</button>
+      <button class="btn sm" onclick="cadPublicar('${esc(i.id)}',${!i.ativo})">${i.ativo?'Despublicar':'Publicar'}</button>
+      <button class="btn ghost sm" onclick="editar('${esc(i.id)}')">Editar</button>
+    </div></div>`).join(''):'<p class="dica">Nenhum cadastro enviado pelo site ainda.</p>';
+}
+async function cadAutorizacao(id,v){const r=await API('/api/imoveis/'+id,{method:'PATCH',body:JSON.stringify({autorizacaoRecebida:v})}); if(r.success){aviso('Atualizado.');await loadCadastros()}else aviso(r.error||'Não foi possível atualizar.')}
+async function cadPublicar(id,v){const r=await API('/api/imoveis/'+id,{method:'PATCH',body:JSON.stringify({ativo:v})}); if(r.success){aviso(v?'Publicado no site.':'Despublicado.');await loadCadastros()}else aviso(r.error||'Não foi possível publicar.')}
+$('autSalvar').onclick=async()=>{const cfg=await API('/api/config'); const c={...cfg,autorizacaoModelo:$('autModelo').value.trim()}; const r=await API('/api/config',{method:'POST',body:JSON.stringify(c)}); aviso(r.success?'Modelo salvo.':'Não foi possível salvar o modelo.')};
 function editar(id){abrir(IM.find(x=>x.id==id))}
 function preencher(d){
   CAMPOS.forEach(([k,,x])=>{if(k==='S'||x==='V')return;if(x==='TG'){setTG(d.destaques||(d.destaque&&d.destaque!=='none'?[d.destaque]:[]));return}if(x==='C'){setChk(k,d[k]||[]);return}if(k.startsWith('pv_')){$('f_'+k).value=(d.privado||{})[k.slice(3)]||'';return}const el=$('f_'+k);el.value=x==='P'?(d[k]||[]).map(p=>typeof p==='object'?`${p.nome||''} | ${p.area||''} | ${p.url}`:p).join('\n'):(x==='A'||x==='X')?(d[k]||[]).map(y=>(y&&typeof y==='object')?(y.k+': '+y.v):y).join('\n'):(d[k]??DEF[k]??'');if(x==='A'||x==='P')galeria(k)});
