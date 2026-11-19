@@ -250,8 +250,8 @@ aside::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border:0}
 <button class="nav" data-v="cadastros"><svg class="ico" aria-hidden="true"><use href="#i-users"/></svg><span>Cadastros de clientes</span></button>
 <div class="grupo-menu">Páginas do site</div>
 <button class="nav" data-v="marca" data-ancora="qCampos"><svg class="ico" aria-hidden="true"><use href="#i-info"/></svg><span>Quem Somos</span></button>
-<button class="nav" data-v="marca" data-ancora="aCampos"><svg class="ico" aria-hidden="true"><use href="#i-msg"/></svg><span>Faixa azul de atendimento</span></button>
 <button class="nav" data-v="marca" data-ancora="pCampos"><svg class="ico" aria-hidden="true"><use href="#i-brief"/></svg><span>Construtoras parceiras</span></button>
+<button class="nav" data-v="marca" data-ancora="aCampos"><svg class="ico" aria-hidden="true"><use href="#i-msg"/></svg><span>Atendimento humano</span></button>
 <button class="nav" data-v="marca" data-ancora="mCampos"><svg class="ico" aria-hidden="true"><use href="#i-phone"/></svg><span>Contato</span></button>
 <button class="nav" data-v="conteudos" data-bloco="blog"><svg class="ico" aria-hidden="true"><use href="#i-pen"/></svg><span>Blog</span></button>
 <button class="nav" data-v="conteudos" data-bloco="noticia"><svg class="ico" aria-hidden="true"><use href="#i-news"/></svg><span>Notícias</span></button>
@@ -389,12 +389,12 @@ aside::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border:0}
 
     <section id="v-marca" class="hidden">
       <div class="top">
-        <div><h2 class="head">Marca e Quem Somos</h2><p class="sub">Textos, fotos e contatos que aparecem no topo, no rodapé e na seção "Quem Somos" do site.</p></div>
+        <div><h2 class="head">Marca e Quem Somos</h2><p class="sub">Textos, fotos e contatos que aparecem no site. Escolha o bloco no menu ao lado.</p></div>
         <button class="btn" id="mSalvar">Salvar alterações</button>
       </div>
       <div class="panel"><h3 style="font-size:19px;margin-bottom:14px">Marca e contatos</h3><div id="mCampos" class="g"></div></div>
       <div class="panel"><h3 style="font-size:19px;margin-bottom:14px">Seção Quem Somos</h3><div id="qCampos" class="g"></div></div>
-      <div class="panel"><h3 style="font-size:19px;margin-bottom:14px">Faixa azul de atendimento</h3><div id="aCampos" class="g"></div></div>
+      <div class="panel"><h3 style="font-size:19px;margin-bottom:14px">Foto do bloco &quot;Conte o que procura&quot;</h3><div id="aCampos" class="g"></div></div>
       <div class="panel"><h3 style="font-size:19px;margin-bottom:14px">Construtoras e incorporadoras parceiras</h3><div id="pCampos" class="g"></div></div>
       <div class="barra"><button class="btn" id="mSalvar2">Salvar alterações</button></div>
     </section>
@@ -629,7 +629,7 @@ async function acao(id,t){
 }
 
 // Cada item do menu abre só a sua página (Quem Somos, Contato, Foto, Construtoras; Blog ou Notícias)
-const MARCA_BLOCOS={qCampos:'Quem Somos',aCampos:'Faixa azul de atendimento',pCampos:'Construtoras parceiras',mCampos:'Contato'};
+const MARCA_BLOCOS={qCampos:'Quem Somos',aCampos:'Atendimento humano',pCampos:'Construtoras parceiras',mCampos:'Contato'};
 function mostraMarca(bloco){
   const sel=MARCA_BLOCOS[bloco]?bloco:'qCampos';
   const vm=$('v-marca');
