@@ -741,27 +741,42 @@ const tarjasDo = i => { const l = Array.isArray(i.destaques) ? i.destaques : (i.
         if (ct) ct.textContent = (Math.round(t.scrollLeft / t.clientWidth) + 1) + '/' + t.children.length;
     }, true);
 
+    // Cartão padrão de TODOS os anúncios (vitrine, Minha Casa Minha Vida, usados): mesmo visual da Coleção Exclusiva.
+    // Foto cheia, que passa para o lado; nome do imóvel sempre em UMA linha (diminui a fonte para caber).
     function cartao(i) {
-                const specs = [i.area, i.dormitorios, i.vagas].filter(Boolean).map(esc).join(' &nbsp;|&nbsp; ');
-        // Detecta se a foto principal veio do campo "foto" (stand/principal) ou da galeria
-        const temFotoPrincipal = !!urlOk(i.foto);
-        const srcCapa = capa(i);
+        const srcCapa = capa(i), tarjas = tarjasDo(i).map(k => `<span class="badge ${TARJAS[k][0]}">${TARJAS[k][1]}</span>`).join('');
         return `
-            <div class="card" onclick="abrirModal('${esc(i.id)}')">
-                <div class="card-img-wrap">
-                    <div class="tarjas">${tarjasDo(i).map(k => `<span class="badge ${TARJAS[k][0]}">${TARJAS[k][1]}</span>`).join('')}</div>
-                    ${temFotoPrincipal ? '' : '<span class="badge" style="background:#64748B;top:auto;bottom:10px;font-size:.65rem">Sem foto principal definida</span>'}
-                    ${carrosselFotos(i, srcCapa)}
+            <article class="im-card" tabindex="0" onclick="abrirModal('${esc(i.id)}')" onkeydown="if(event.key==='Enter')abrirModal('${esc(i.id)}')">
+                ${carrosselFotos(i, srcCapa)}
+                ${tarjas ? `<div class="tarjas">${tarjas}</div>` : ''}
+                ${i.diferencial ? `<span class="opp-dif" title="${esc(i.diferencial)}">${esc(i.diferencial)}</span>` : ''}
+                <div class="opp-info">
+                    <h3 title="${esc(i.titulo)}">${esc(i.titulo)}</h3>
+                    <p class="opp-loc">${esc(bairroDe(i.localizacao))}</p>
+                    <div class="opp-chips">${i.dormitorios ? `<span>${esc(i.dormitorios)}</span>` : ''}${i.area ? `<span>${esc(i.area)}</span>` : ''}</div>
+                    ${i.proximidade ? `<p class="opp-prox"><i class="fas fa-map-marker-alt"></i>${esc(i.proximidade)}</p>` : ''}
+                    <div class="opp-preco">${esc(i.preco)}</div>
                 </div>
-                <div class="card-body">
-                    <h3>${esc(i.titulo)}</h3>
-                    <div class="card-location"><i class="fas fa-map-marker-alt"></i> ${esc(i.localizacao)}</div>
-                    <div class="card-price">${esc(i.preco)}</div>
-                    <p style="font-size:.82rem;color:var(--text-muted);margin-top:8px">${specs}</p>
-                    <p style="font-size:.72rem;color:var(--text-muted);margin-top:8px">Cód. ${esc(i.ref)}</p>
-                </div>
-            </div>`;
+                <span class="im-ref">Cód. ${esc(i.ref)}</span>
+            </article>`;
     }
+
+    // Regra do nome em uma linha: se não couber, a letra diminui aos poucos (até um mínimo); se ainda não couber, termina em "…"
+    function ajustarTitulos() {
+        document.querySelectorAll('.opp-info h3').forEach(t => {
+            t.style.fontSize = '';
+            if (!t.clientWidth) return;
+            const base = parseFloat(getComputedStyle(t).fontSize); let f = base;
+            while (t.scrollWidth > t.clientWidth + 1 && f > base * 0.62) { f -= 0.5; t.style.fontSize = f + 'px'; }
+        });
+    }
+    (function () {
+        let agendado = false;
+        const agenda = () => { if (agendado) return; agendado = true; requestAnimationFrame(() => { agendado = false; ajustarTitulos(); }); };
+        new MutationObserver(agenda).observe(document.body, { childList: true, subtree: true });
+        window.addEventListener('resize', agenda);
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(agenda);
+    })();
 
     function renderizarGrade(lista) {
         const v = document.getElementById('vitrine');
@@ -1640,9 +1655,25 @@ function renderMcmv() {
         if (u) box.innerHTML = `<img src="${u}" alt="Atendimento Joildo Brokers" loading="lazy">`;
     }
 
+    // De onde veio o visitante: marca do link (utm_source) ou site de origem; fica guardado durante a visita
+    function origemDaVisita() {
+        try {
+            const u = (new URLSearchParams(location.search).get('utm_source') || '').toLowerCase();
+            if (u) sessionStorage.setItem('origemVisita', u);
+            else if (!sessionStorage.getItem('origemVisita') && document.referrer) {
+                const h = new URL(document.referrer).hostname.toLowerCase();
+                if (h !== location.hostname) sessionStorage.setItem('origemVisita',
+                    /instagram\.com$/.test(h) ? 'instagram' : /(facebook\.com|fb\.com|fb\.me|messenger\.com)$/.test(h) ? 'facebook' :
+                    /google\./.test(h) ? 'google' : /(whatsapp\.com|wa\.me)$/.test(h) ? 'whatsapp' : /youtube\.com$|youtu\.be$/.test(h) ? 'youtube' :
+                    /tiktok\.com$/.test(h) ? 'tiktok' : 'outros');
+            }
+            return sessionStorage.getItem('origemVisita') || 'direto';
+        } catch (e) { return 'direto'; }
+    }
+
     async function carregar() {
     aplicarPaginaCadastro();
-        try { fetch('/api/visita-site', { method: 'POST', keepalive: true }).catch(() => {}); } catch (e) {}
+        try { fetch('/api/visita-site', { method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ origem: origemDaVisita() }) }).catch(() => {}); } catch (e) {}
         await carregarConfig();
         try {
             const res = await fetch('/api/imoveis');

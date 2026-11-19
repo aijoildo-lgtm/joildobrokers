@@ -623,3 +623,21 @@ section.mapa-section .mapa-nota { max-width: var(--wrap); margin-left: auto; mar
 .card-seta.esq { left: 10px; }
 .card-seta.dir { right: 10px; }
 .card-contador { position: absolute; left: 10px; bottom: 10px; z-index: 11; background: rgba(10,17,40,0.75); color: #fff; font-size: .68rem; font-weight: 700; padding: 3px 9px; border-radius: 20px; pointer-events: none; }
+
+/* CARTÃO PADRÃO DOS ANÚNCIOS (igual ao da Coleção Exclusiva) */
+.im-card { position: relative; aspect-ratio: 3 / 4; border-radius: 18px; overflow: hidden; background: #1E293B; color: #fff; cursor: pointer; box-shadow: 0 10px 30px rgba(10,17,40,0.12); transition: transform .4s ease, box-shadow .4s ease; }
+.im-card:hover { transform: translateY(-6px); box-shadow: 0 20px 45px rgba(10,17,40,0.28); }
+.im-card:focus-visible { outline: 3px solid var(--gold); outline-offset: 4px; }
+.im-card .card-fotos { position: absolute; inset: 0; }
+.im-card::after { content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; background: linear-gradient(to top, rgba(8,15,36,.92) 0%, rgba(8,15,36,.4) 50%, rgba(8,15,36,.05) 100%); }
+.im-card .tarjas { top: 18px; z-index: 10; max-width: 50%; }
+.im-card .tarjas .badge { white-space: normal; line-height: 1.25; }
+.im-card .opp-dif { z-index: 3; right: 12px; max-width: 48%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 6px 11px; font-size: .74rem; }
+.im-card .opp-info { position: absolute; left: 0; right: 0; bottom: 0; width: auto; padding: 20px 20px 22px; z-index: 3; pointer-events: none; }
+.im-card .opp-info h3 { font-size: 1.3rem; }
+.im-card .card-contador { left: auto; right: 14px; bottom: auto; top: 60px; }
+.im-ref { position: absolute; right: 16px; bottom: 22px; z-index: 3; font-size: .68rem; opacity: .75; pointer-events: none; }
+/* Regra: o nome do imóvel fica sempre em uma única linha */
+.opp-info h3 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+@media (max-width: 620px) { .im-card { aspect-ratio: 4 / 5; } }
+

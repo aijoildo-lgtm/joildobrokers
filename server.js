@@ -10,7 +10,21 @@ const orulo = require('./orulo');
 
 const app = express();
 app.set('trust proxy', 1);
-app.use(cors());
+app.disable('x-powered-by'); // não anuncia que o servidor é Express
+// Cabeçalhos de segurança (não alteram nenhuma função do site)
+app.use((req, res, next) => {
+  res.set({
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'SAMEORIGIN',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=()',
+    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+    'Cross-Origin-Opener-Policy': 'same-origin'
+  });
+  next();
+});
+// CORS: por padrão só o próprio site fala com a API. Para liberar outro endereço, defina CORS_ORIGIN no Render.
+if (process.env.CORS_ORIGIN) app.use(cors({ origin: process.env.CORS_ORIGIN.split(',').map(x => x.trim()) }));
 app.use(express.json({ limit: '30mb' }));
 
 const DATA_FILE = path.join(__dirname, 'imoveis.json');
@@ -82,12 +96,21 @@ const tokenValido = (t) => {
 const exigirLogin = (req, res, next) =>
   tokenValido(req.headers['x-token']) ? next() : res.status(401).json({ success: false, error: 'Não autorizado.' });
 
+// Freio contra tentativa de senha em massa: 8 erros por IP a cada 15 minutos
+const tentativas = new Map();
+const igual = (a, b) => { const x = crypto.createHash('sha256').update(String(a)).digest(), y = crypto.createHash('sha256').update(String(b)).digest(); return crypto.timingSafeEqual(x, y); };
+setInterval(() => { const agora = Date.now(); for (const [ip, t] of tentativas) if (t.ate < agora) tentativas.delete(ip); }, 600e3).unref();
 app.post('/api/login', (req, res) => {
   const { user, pass } = req.body || {};
-  if (user === ADMIN_USER && pass === ADMIN_PASS) {
+  const reg = tentativas.get(req.ip), agora = Date.now();
+  if (reg && reg.ate > agora && reg.n >= 8) return res.status(429).json({ success: false, error: 'Muitas tentativas. Aguarde alguns minutos.' });
+  if (igual(user, ADMIN_USER) && igual(pass, ADMIN_PASS)) {
+    tentativas.delete(req.ip);
     const exp = Date.now() + 7 * 24 * 3600 * 1000;
     return res.json({ success: true, token: `${exp}.${assinar(exp)}` });
   }
+  const t = reg && reg.ate > agora ? reg : { n: 0, ate: agora + 15 * 60e3 };
+  t.n++; tentativas.set(req.ip, t);
   res.status(401).json({ success: false, error: 'Acesso negado.' });
 });
 
@@ -95,9 +118,12 @@ app.post('/api/login', (req, res) => {
 const enviar = (f) => (req, res) => res.sendFile(path.join(__dirname, f));
 app.get('/', enviar('index.html'));
 // o painel antigo (admin) foi substituído pelo Cpainel; o arquivo antigo continua em /admin-antigo
-app.get(['/admin', '/admin.html'], (req, res) => res.redirect('/cpainel'));
-app.get('/admin-antigo', enviar('admin-antigo.html'));
-app.get(['/cpainel', '/cpainel.html'], enviar('cpainel.html'));
+// O painel nunca é indexado. Com ADMIN_PATH definido no Render (ex.: ADMIN_PATH=entrada-x7k2q9), ele só abre nesse
+// endereço e /cpainel e /admin passam a responder "não encontrado". Sem a variável, continua em /cpainel como antes.
+const painel = (req, res) => { res.set({ 'X-Robots-Tag': 'noindex, nofollow, noarchive', 'Cache-Control': 'no-store' }); res.sendFile(path.join(__dirname, 'cpainel.html')); };
+const ADMIN_PATH = String(process.env.ADMIN_PATH || '').replace(/[^a-zA-Z0-9_-]/g, '');
+if (ADMIN_PATH) app.get('/' + ADMIN_PATH, painel);
+else app.get(['/cpainel', '/cpainel.html', '/admin', '/admin.html'], (req, res, next) => req.path.startsWith('/admin') ? res.redirect('/cpainel') : painel(req, res, next));
 app.get('/style.css', enviar('style.css'));
 app.get('/taxonomia.js', enviar('taxonomia.js'));
 
@@ -208,7 +234,7 @@ app.get('/imovel/:ref/:slug?', ah(async (req, res) => {
 }));
 app.get('/robots.txt', (req, res) => {
   const base = `${req.protocol}://${req.get('host')}`;
-  res.type('text').send(`User-agent: *\nAllow: /\nDisallow: /cpainel\nDisallow: /admin\nDisallow: /api/\nSitemap: ${base}/sitemap.xml`);
+  res.type('text').send(`User-agent: *\nAllow: /\nDisallow: /api/\nSitemap: ${base}/sitemap.xml`);
 });
 app.get('/sitemap.xml', ah(async (req, res) => {
   const base = `${req.protocol}://${req.get('host')}`;
@@ -216,7 +242,7 @@ app.get('/sitemap.xml', ah(async (req, res) => {
   res.type('xml').send(`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${base}/</loc></url>${urls.join('')}</urlset>`);
 }));
 // APIs
-app.get('/api/versao', (req, res) => res.json({ versao: '2026-11-14-ia', banco: bancoStatus }));
+app.get('/api/versao', (req, res) => res.json({ ok: true }));
 const publico = (i) => { const { privado, linkOrigem, origem, sincronizar, espelharMidia, historico, sincronizadoEm, ...r } = i; return r; };
 app.get('/api/imoveis', ah(async (req, res) => res.json((await getImoveis()).filter(i => i.ativo !== false).map(publico))));
 app.get('/api/admin/imoveis', exigirLogin, ah(async (req, res) => res.json(await getImoveis())));
@@ -715,9 +741,26 @@ async function gravarVisitas() {
 // por dia (ex.: "2026-11-17": 42), nunca dados pessoais do visitante.
 const diaHoje = () => new Date().toISOString().slice(0, 10);
 const siteVistos = new Map(); // "ip|dia" -> true, limpa sozinho
+// Origem da visita (de onde o visitante veio): só uma palavra de uma lista fixa, nunca dados pessoais.
+const ORIGENS = ['instagram', 'facebook', 'google', 'whatsapp', 'youtube', 'tiktok', 'direto', 'outros'];
+const VISITAS_ORIGEM_FILE = path.join(__dirname, 'visitas-origem.json');
+const origemVistos = new Map(); // "ip|dia|origem" -> true
+async function contarOrigem(req, dia) {
+  let o = String((req.body && req.body.origem) || 'direto').toLowerCase().replace(/[^a-z]/g, '').slice(0, 20);
+  if (!ORIGENS.includes(o)) o = 'outros';
+  const k = `${req.ip}|${dia}|${o}`;
+  if (origemVistos.has(k)) return;
+  origemVistos.set(k, true);
+  const chave = `${dia}|${o}`;
+  try {
+    if (db) await db.collection('visitas_origem').updateOne({ _id: chave }, { $inc: { n: 1 } }, { upsert: true });
+    else { const m = lerJson(VISITAS_ORIGEM_FILE, {}); m[chave] = (m[chave] || 0) + 1; gravarJson(VISITAS_ORIGEM_FILE, m); }
+  } catch (e) { console.error('Erro gravando origem da visita:', e.message); }
+}
 app.post('/api/visita-site', async (req, res) => {
   const dia = diaHoje(), quem = `${req.ip}|${dia}`;
   res.json({ success: true }); // responde logo; grava em segundo plano
+  contarOrigem(req, dia);
   if (siteVistos.has(quem)) return;
   siteVistos.set(quem, true);
   try {
@@ -731,7 +774,13 @@ app.get('/api/stats/visitas-site', exigirLogin, ah(async (req, res) => {
   else mapa = lerJson(VISITAS_FILE, {});
   res.json(mapa);
 }));
-setInterval(() => { const hoje = diaHoje(); for (const k of siteVistos.keys()) if (!k.endsWith('|' + hoje)) siteVistos.delete(k); }, 3600e3).unref();
+app.get('/api/stats/origens', exigirLogin, ah(async (req, res) => {
+  let mapa = {};
+  if (db) { const docs = await db.collection('visitas_origem').find({}).toArray(); docs.forEach(d => mapa[d._id] = d.n); }
+  else mapa = lerJson(VISITAS_ORIGEM_FILE, {});
+  res.json(mapa);
+}));
+setInterval(() => { const hoje = diaHoje(); for (const k of siteVistos.keys()) if (!k.endsWith('|' + hoje)) siteVistos.delete(k); for (const k of origemVistos.keys()) if (!k.includes('|' + hoje + '|')) origemVistos.delete(k); }, 3600e3).unref();
 setInterval(gravarVisitas, 60e3).unref();
 process.on('SIGTERM', () => gravarVisitas().finally(() => process.exit(0)));
 
