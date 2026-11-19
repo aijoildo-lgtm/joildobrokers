@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+    <script>try{if(sessionStorage.getItem('cortina')){sessionStorage.removeItem('cortina');document.documentElement.classList.add('cortina-entra');var __f=function(){var c=document.getElementById('cortina');if(c)c.classList.add('abre');setTimeout(function(){document.documentElement.classList.remove('cortina-entra');if(c)c.className=''},1100)};window.addEventListener('load',function(){setTimeout(__f,150)});setTimeout(__f,3000)}}catch(e){}</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <title>Joildo Brokers | High Performance Real Estate Advisory</title>
     <link rel="stylesheet" href="/style.css">
     <meta name="description" content="Joildo Brokers: consultoria imobiliária em São Paulo. Lançamentos, imóveis em construção, prontos e usados, com atendimento personalizado.">
@@ -45,6 +47,7 @@
 </style>
 </head>
 <body>
+<div id="cortina" aria-hidden="true"><span>JOILDO <b>BROKERS</b></span></div>
 
 <!-- BARRA SOCIAL NO TOPO -->
 <div class="social-bar">
@@ -60,8 +63,8 @@
 <header>
     <div class="logo-container">
         <a href="/" class="logo">
-            <img id="dyn-logo-img" src="" alt="Joildo Brokers" class="logo-img" style="display:none;">
-            <span id="dyn-logo-text">JOILDO <span>BROKERS</span></span>
+            <img id="dyn-logo-img" src="/logo-joildo-header.svg" alt="Joildo Brokers - Inteligência Imobiliária" class="logo-img" onerror="this.style.display='none';document.getElementById('dyn-logo-text').style.display='inline';document.getElementById('dyn-slogan').style.display='';">
+            <span id="dyn-logo-text" style="display:none;">JOILDO <span>BROKERS</span></span>
         </a>
         <span class="logo-tagline" id="dyn-slogan">Ética e dedicação para tornar seus sonhos realidade</span>
     </div>
@@ -444,7 +447,7 @@
 <footer class="footer-section">
     <div class="footer-container">
         <div class="footer-col">
-            <a href="/" class="logo" style="color: white; font-size: 1.6rem;">JOILDO <span>BROKERS</span></a>
+            <a href="/" class="logo" aria-label="Joildo Brokers"><img src="/logo-joildo-footer.svg" alt="Joildo Brokers - Inteligência Imobiliária" class="footer-logo-img"></a>
             <p style="margin-top: 15px; color: #94A3B8; font-size: 0.88rem; line-height: 1.6;">
                 Consultoria imobiliária boutique sob a liderança executiva de <strong>Joildo Costa</strong>. Especialista na intermediação estratégica de ativos residenciais e comerciais de alta liquidez.
             </p>
@@ -604,8 +607,11 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
                 document.getElementById('dyn-logo-img').style.display = 'block';
                 document.getElementById('dyn-logo-text').style.display = 'none';
             } else {
-                document.getElementById('dyn-logo-img').style.display = 'none';
-                document.getElementById('dyn-logo-text').style.display = 'inline';
+                // sem logo enviada no painel: usa o logo padrão (JB + Inteligência Imobiliária), que já traz o próprio subtítulo
+                document.getElementById('dyn-logo-img').src = '/logo-joildo-header.svg';
+                document.getElementById('dyn-logo-img').style.display = 'block';
+                document.getElementById('dyn-logo-text').style.display = 'none';
+                document.getElementById('dyn-slogan').style.display = 'none';
             }
 
             if (configGeral.slogan) {
@@ -743,6 +749,10 @@ const tarjasDo = i => { const l = Array.isArray(i.destaques) ? i.destaques : (i.
 
     // Cartão padrão de TODOS os anúncios (vitrine, Minha Casa Minha Vida, usados): mesmo visual da Coleção Exclusiva.
     // Foto cheia, que passa para o lado; nome do imóvel sempre em UMA linha (diminui a fonte para caber).
+    // Nome curto no cartão (o nome completo continua no anúncio): Apartamento -> Apto., Sala Comercial -> Sala
+    const tituloCurto = t => String(t || '')
+        .replace(/\bApartamentos\b/gi, 'Aptos.').replace(/\bApartamento\b/gi, 'Apto.')
+        .replace(/\bSalas Comerciais\b/gi, 'Salas').replace(/\bSala Comercial\b/gi, 'Sala');
     function cartao(i) {
         const srcCapa = capa(i), tarjas = tarjasDo(i).map(k => `<span class="badge ${TARJAS[k][0]}">${TARJAS[k][1]}</span>`).join('');
         return `
@@ -751,7 +761,7 @@ const tarjasDo = i => { const l = Array.isArray(i.destaques) ? i.destaques : (i.
                 ${tarjas ? `<div class="tarjas">${tarjas}</div>` : ''}
                 ${i.diferencial ? `<span class="opp-dif" title="${esc(i.diferencial)}">${esc(i.diferencial)}</span>` : ''}
                 <div class="opp-info">
-                    <h3 title="${esc(i.titulo)}">${esc(i.titulo)}</h3>
+                    <h3 title="${esc(i.titulo)}">${esc(tituloCurto(i.titulo))}</h3>
                     <p class="opp-loc">${esc(bairroDe(i.localizacao))}</p>
                     <div class="opp-chips">${i.dormitorios ? `<span>${esc(i.dormitorios)}</span>` : ''}${i.area ? `<span>${esc(i.area)}</span>` : ''}</div>
                     ${i.proximidade ? `<p class="opp-prox"><i class="fas fa-map-marker-alt"></i>${esc(i.proximidade)}</p>` : ''}
@@ -775,7 +785,8 @@ const tarjasDo = i => { const l = Array.isArray(i.destaques) ? i.destaques : (i.
         const agenda = () => { if (agendado) return; agendado = true; requestAnimationFrame(() => { agendado = false; ajustarTitulos(); }); };
         new MutationObserver(agenda).observe(document.body, { childList: true, subtree: true });
         window.addEventListener('resize', agenda);
-        if (document.fonts && document.fonts.ready) document.fonts.ready.then(agenda);
+        if (document.fonts) { document.fonts.ready.then(agenda); document.fonts.addEventListener('loadingdone', agenda); }
+        window.addEventListener('load', () => { agenda(); setTimeout(agenda, 700); }); // a fonte do título pode chegar depois: mede de novo
     })();
 
     function renderizarGrade(lista) {
@@ -1114,6 +1125,7 @@ const tarjasDo = i => { const l = Array.isArray(i.destaques) ? i.destaques : (i.
 </div>`;
 
         const m = document.getElementById('propertyModal');
+        m.classList.remove('saindo');
         m.style.display = 'flex';
         document.body.style.overflow = 'hidden';
         galThumbs();
@@ -1357,9 +1369,12 @@ const tarjasDo = i => { const l = Array.isArray(i.destaques) ? i.destaques : (i.
     function fecharModal() {
         document.title = TITULO_SITE;
         try { if (location.pathname.startsWith('/imovel/')) history.pushState(null, '', '/'); } catch (e) {}
-        document.getElementById('propertyModal').style.display = 'none';
+        const m = document.getElementById('propertyModal');
         document.body.style.overflow = '';
         clearInterval(galTimerModal);
+        if (matchMedia('(prefers-reduced-motion: reduce)').matches) { m.style.display = 'none'; return; }
+        m.classList.add('saindo'); // sai com animação e só então some
+        setTimeout(() => { if (m.classList.contains('saindo')) { m.style.display = 'none'; m.classList.remove('saindo'); } }, 230);
     }
     function enviarLeadModal(id) {
         const i = bancoImoveis.find(x => String(x.id) === String(id)) || {};
@@ -1382,7 +1397,7 @@ const tarjasDo = i => { const l = Array.isArray(i.destaques) ? i.destaques : (i.
             <span class="opp-tag">${esc(FASES[i.estagio] || 'Oportunidade')}</span>
             ${i.diferencial ? `<span class="opp-dif">${esc(i.diferencial)}</span>` : ''}
             <div class="opp-info">
-                <h3>${esc(i.titulo)}</h3>
+                <h3 title="${esc(i.titulo)}">${esc(tituloCurto(i.titulo))}</h3>
                 <p class="opp-loc">${esc(bairroDe(i.localizacao))}</p>
                 <div class="opp-chips">${i.dormitorios ? `<span>${esc(i.dormitorios)}</span>` : ''}${i.area ? `<span>${esc(i.area)}</span>` : ''}</div>
                 ${i.proximidade ? `<p class="opp-prox"><i class="fas fa-map-marker-alt"></i>${esc(i.proximidade)}</p>` : ''}
@@ -1654,6 +1669,51 @@ function renderMcmv() {
         box.style.display = u ? '' : 'none';
         if (u) box.innerHTML = `<img src="${u}" alt="Atendimento Joildo Brokers" loading="lazy">`;
     }
+
+    // ===== MOVIMENTO =====
+    // Títulos entram pela esquerda, subtítulos pela direita e cartões sobem em sequência. Respeita quem desativa animações.
+    (function () {
+        if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        const ALVOS = [
+            ['.section-header h2, .ins-head h2', 'esq'],
+            ['.section-header p, .ins-head p', 'dir'],
+            ['.im-card, .ins-grid > *, .bx-grid > *, .mercado-grid > *, .blog-grid > *, #mcmv-grid > *, .parc-wrap > *', 'baixo'],
+            ['.opp-wrap, .colecao-faixa, .usados-linha', 'baixo'] // carrosséis entram como bloco: os cartões que giram não piscam
+        ];
+        const io = new IntersectionObserver(es => es.forEach(e => {
+            if (!e.isIntersecting) return;
+            const el = e.target; io.unobserve(el); el.classList.add('mv-in');
+            setTimeout(() => { el.classList.remove('mv', 'mv-in', 'mv-esq', 'mv-dir', 'mv-baixo'); el.style.removeProperty('--md'); }, 1400); // devolve o controle ao hover do cartão
+        }), { threshold: 0.12, rootMargin: '0px 0px -6% 0px' });
+        function marcar() {
+            ALVOS.forEach(([sel, dir]) => document.querySelectorAll(sel).forEach(el => {
+                if (el._mv || el.closest('.usados-linha') && el.classList.contains('im-card')) return; el._mv = 1;
+                el.classList.add('mv', 'mv-' + dir);
+                if (dir === 'baixo' && el.parentElement) el.style.setProperty('--md', ([...el.parentElement.children].indexOf(el) % 4) * 90 + 'ms');
+                io.observe(el);
+            }));
+        }
+        marcar();
+        let ag = false;
+        new MutationObserver(() => { if (ag) return; ag = true; requestAnimationFrame(() => { ag = false; marcar(); }); }).observe(document.body, { childList: true, subtree: true });
+    })();
+    // Transição entre páginas: cortina azul sobe ao sair e abre ao chegar
+    (function () {
+        const c = document.getElementById('cortina');
+        if (!c || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        document.addEventListener('click', e => {
+            if (e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+            const a = e.target.closest('a[href]'); if (!a || a.target === '_blank' || a.hasAttribute('download')) return;
+            const href = a.getAttribute('href') || '';
+            if (!/^\/(?!\/)/.test(href) || /^\/(api|uploads)\b/.test(href) || /\.[a-z0-9]{2,5}($|[?#])/i.test(href)) return;
+            if (href === location.pathname + location.search) return;
+            e.preventDefault();
+            try { sessionStorage.setItem('cortina', '1'); } catch (x) {}
+            c.style.display = 'flex'; void c.offsetWidth; c.classList.add('fecha');
+            setTimeout(() => { location.href = href; }, 520);
+        });
+        window.addEventListener('pageshow', ev => { if (ev.persisted) { c.classList.remove('fecha'); c.style.display = ''; } }); // voltar do navegador
+    })();
 
     // De onde veio o visitante: marca do link (utm_source) ou site de origem; fica guardado durante a visita
     function origemDaVisita() {

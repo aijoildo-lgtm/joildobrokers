@@ -126,6 +126,9 @@ if (ADMIN_PATH) app.get('/' + ADMIN_PATH, painel);
 else app.get(['/cpainel', '/cpainel.html', '/admin', '/admin.html'], (req, res, next) => req.path.startsWith('/admin') ? res.redirect('/cpainel') : painel(req, res, next));
 app.get('/style.css', enviar('style.css'));
 app.get('/taxonomia.js', enviar('taxonomia.js'));
+// LOGOS E ÍCONE DO SITE (lista fixa de arquivos públicos)
+['logo-joildo.svg', 'logo-joildo.png', 'logo-joildo-header.svg', 'logo-joildo-footer.svg', 'favicon.svg'].forEach(f => app.get('/' + f, (req, res) => { res.set('Cache-Control', 'public, max-age=86400'); res.sendFile(path.join(__dirname, f)); }));
+app.get('/favicon.ico', (req, res) => res.redirect(301, '/favicon.svg'));
 
 // BANCO DE DADOS (MongoDB se MONGODB_URI existir; senão arquivos JSON)
 let db = null, bancoStatus = 'arquivos';

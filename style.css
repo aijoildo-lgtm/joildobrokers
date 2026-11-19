@@ -48,7 +48,8 @@ header {
 .logo { font-size: 1.45rem; font-weight: 900; color: var(--primary); text-decoration: none; letter-spacing: -0.5px; }
 .logo span { color: var(--gold); font-family: 'Playfair Display', serif; font-style: italic; }
 .logo-tagline { font-size: 0.62rem; color: var(--gold); font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 2px; }
-.logo-img { max-height: 48px; width: auto; object-fit: contain; }
+.logo-img { max-height: 58px; width: auto; max-width: 100%; object-fit: contain; display: block; }
+.footer-logo-img { height: 76px; width: auto; max-width: 100%; display: block; }
 
 nav ul { display: flex; list-style: none; gap: 20px; align-items: center; }
 nav ul li { position: relative; }
@@ -550,7 +551,7 @@ a.parc-item:hover { box-shadow: 0 8px 20px rgba(10,17,40,.14); }
 #colecao .colecao-linha.rola { display: flex; justify-content: flex-start; }
 #colecao .colecao-linha .opp-card { flex: none; width: auto; min-width: 0; aspect-ratio: 3 / 4; }
 #colecao .colecao-linha.rola .opp-card { width: auto; flex: 0 0 calc((100% - (var(--colv) - 1) * var(--espaco)) / var(--colv)); }
-#colecao .opp-info h3 { font-size: 1.3rem; }
+#colecao .opp-info h3 { font-size: 1.2rem; }
 #colecao .opp-tag, #colecao .opp-dif { font-size: .72rem; }
 #colecao .colecao-vago { aspect-ratio: 3 / 4; border: 1px dashed #D5C98F; border-radius: 18px; background: rgba(212,175,55,.06); }
 @media (max-width: 620px) { #colecao .colecao-vago { display: none; } }
@@ -634,10 +635,58 @@ section.mapa-section .mapa-nota { max-width: var(--wrap); margin-left: auto; mar
 .im-card .tarjas .badge { white-space: normal; line-height: 1.25; }
 .im-card .opp-dif { z-index: 3; right: 12px; max-width: 48%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 6px 11px; font-size: .74rem; }
 .im-card .opp-info { position: absolute; left: 0; right: 0; bottom: 0; width: auto; padding: 20px 20px 22px; z-index: 3; pointer-events: none; }
-.im-card .opp-info h3 { font-size: 1.3rem; }
+.im-card .opp-info h3 { font-size: 1.2rem; }
 .im-card .card-contador { left: auto; right: 14px; bottom: auto; top: 60px; }
 .im-ref { position: absolute; right: 16px; bottom: 22px; z-index: 3; font-size: .68rem; opacity: .75; pointer-events: none; }
 /* Regra: o nome do imóvel fica sempre em uma única linha */
 .opp-info h3 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 @media (max-width: 620px) { .im-card { aspect-ratio: 4 / 5; } }
 
+
+/* ===== MOVIMENTO ===== */
+#cortina { display: none; position: fixed; inset: 0; z-index: 99999; pointer-events: none; align-items: center; justify-content: center; background: linear-gradient(135deg, #0A1128, #16224d); transform: translateY(100%); transition: transform .55s cubic-bezier(.76,0,.24,1); }
+#cortina span { font-family: 'Playfair Display', serif; color: #fff; font-size: 1.8rem; letter-spacing: .14em; opacity: 0; transition: opacity .3s .2s; }
+#cortina b { color: var(--gold); font-weight: 700; }
+#cortina.fecha { transform: none; pointer-events: all; } #cortina.fecha span { opacity: 1; }
+html.cortina-entra #cortina { display: flex; transform: none; transition: none; pointer-events: all; }
+html.cortina-entra #cortina span { opacity: 1; transition: none; }
+html.cortina-entra #cortina.abre { transform: translateY(-100%); transition: transform .75s cubic-bezier(.76,0,.24,1); pointer-events: none; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .mv { opacity: 0; transform: translate3d(var(--mx, 0px), var(--my, 0px), 0); transition: opacity .9s cubic-bezier(.16,1,.3,1) var(--md, 0ms), transform .9s cubic-bezier(.16,1,.3,1) var(--md, 0ms) !important; }
+  .mv-esq { --mx: -56px; } .mv-dir { --mx: 56px; } .mv-baixo { --my: 40px; }
+  .mv.mv-in { opacity: 1; transform: none; }
+
+  /* topo da página: cada linha entra pela esquerda, em sequência */
+  .hero-slide.ativo .hero-badge { animation: mvEntra .8s cubic-bezier(.16,1,.3,1) both; }
+  .hero-slide.ativo .hero-title { animation: mvEntra .9s .12s cubic-bezier(.16,1,.3,1) both; }
+  .hero-slide.ativo .hero-content > p { animation: mvEntra .9s .26s cubic-bezier(.16,1,.3,1) both; }
+  .hero-slide.ativo .hero-price { animation: mvEntra .9s .4s cubic-bezier(.16,1,.3,1) both; }
+  .hero-slide.ativo .hero-content > a, .hero-slide.ativo .hero-content > button { animation: mvEntra .9s .55s cubic-bezier(.16,1,.3,1) both; }
+  @keyframes mvEntra { from { opacity: 0; transform: translateX(-60px); } to { opacity: 1; transform: none; } }
+  @keyframes mvSobe { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
+
+  /* anúncio aberto: fundo escurece, o painel sobe e o texto entra em sequência */
+  .modal { animation: mvFundo .35s ease both; }
+  .modal-content { animation: mvPainel .6s cubic-bezier(.16,1,.3,1) both; }
+  .modal.saindo { animation: mvFundoSai .23s ease both; }
+  .modal.saindo .modal-content { animation: mvPainelSai .23s ease both; }
+  .modal-hero-text { animation: mvEntra .9s .25s cubic-bezier(.16,1,.3,1) both; }
+  .modal-left > * { animation: mvSobe .7s cubic-bezier(.16,1,.3,1) both; }
+  .modal-left > *:nth-child(2) { animation-delay: .08s; } .modal-left > *:nth-child(3) { animation-delay: .16s; }
+  .modal-left > *:nth-child(4) { animation-delay: .24s; } .modal-left > *:nth-child(n+5) { animation-delay: .32s; }
+  @keyframes mvFundo { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes mvFundoSai { from { opacity: 1; } to { opacity: 0; } }
+  @keyframes mvPainel { from { opacity: 0; transform: translateY(70px) scale(.97); } to { opacity: 1; transform: none; } }
+  @keyframes mvPainelSai { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(40px) scale(.98); } }
+
+  /* respostas ao toque e ao mouse */
+  .card-foto { transition: transform .9s cubic-bezier(.16,1,.3,1); }
+  .im-card:hover .card-foto { transform: scale(1.06); }
+  .im-card:active { transform: translateY(-3px) scale(.985); }
+  .opp-card:active { transform: scale(.985); }
+  .btn-header-cta:active { transform: scale(.96); }
+  nav ul > li > a:not(.btn-header-cta) { position: relative; }
+  nav ul > li > a:not(.btn-header-cta)::after { content: ''; position: absolute; left: 0; right: 0; bottom: -6px; height: 2px; background: var(--gold); transform: scaleX(0); transform-origin: left; transition: transform .35s cubic-bezier(.16,1,.3,1); }
+  nav ul > li > a:not(.btn-header-cta):hover::after { transform: scaleX(1); }
+}
