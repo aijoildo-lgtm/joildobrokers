@@ -573,6 +573,16 @@ a.parc-item:hover { box-shadow: 0 8px 20px rgba(10,17,40,.14); }
 .usados-vago { aspect-ratio: 3 / 4; border: 1px dashed #D5C98F; border-radius: 18px; background: rgba(212,175,55,.06); }
 @media (max-width: 620px) { .usados-vago { display: none; } }
 
+/* Cadastre seu imóvel: fora da página inicial; em /cadastre aparece sozinha */
+#cadastre { display: none; }
+.cad-voltar { display: none; }
+body.pagina-cadastro > .hero-section, body.pagina-cadastro > .search-widget-container, body.pagina-cadastro > .filter-nav,
+body.pagina-cadastro > .section-header, body.pagina-cadastro > #vitrine, body.pagina-cadastro > style,
+body.pagina-cadastro > section:not(#cadastre) { display: none !important; }
+body.pagina-cadastro #cadastre { display: block; min-height: 70vh; padding-top: 48px; }
+body.pagina-cadastro .cad-voltar { display: block; width: 100%; max-width: var(--wrap); box-sizing: border-box; margin: 0 auto 18px; color: var(--primary); font-weight: 600; text-decoration: none; }
+body.pagina-cadastro .cad-voltar:hover { text-decoration: underline; }
+
 /* Cadastre seu imóvel */
 .cad-wrap { width: 100%; max-width: var(--wrap); margin: 0 auto; display: grid; grid-template-columns: 1fr 1.3fr; gap: 40px; align-items: start; }
 .cad-passos { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 18px; }

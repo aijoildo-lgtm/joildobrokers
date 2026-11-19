@@ -177,6 +177,7 @@ const novaRef = () => `REF-${Math.floor(100000 + Math.random() * 900000)}`;
 const escA = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const slug = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 80);
 const precoNumSrv = (v) => { const m = String(v || '').match(/(\d{1,3}(?:\.\d{3})+|\d+)(?:,\d{1,2})?/); return m ? parseInt(m[1].replace(/\./g, ''), 10) : 0; };
+app.get('/cadastre', enviar('index.html'));
 app.get('/imovel/:ref/:slug?', ah(async (req, res) => {
   // imóveis pausados (ainda não publicados) também podem ser abertos por este link direto, para
   // quem está editando revisar como vai ficar; eles não entram no sitemap nem são indexados (noindex).

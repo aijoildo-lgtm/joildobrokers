@@ -78,7 +78,7 @@
                     <a href="#" onclick="filtrarEstagio('construcao');return false"><i class="fas fa-hard-hat"></i> Em construção</a>
                     <a href="#" onclick="filtrarEstagio('prontos');return false"><i class="fas fa-key"></i> Prontos para morar</a>
                     <a href="#" onclick="filtrarEstagio('usados');return false"><i class="fas fa-handshake"></i> Usados</a>
-<a href="#cadastre" onclick="document.getElementById('cadastre').scrollIntoView({behavior:'smooth'});return false"><i class="fas fa-file-signature"></i> Cadastre seu imóvel</a>
+<a href="/cadastre"><i class="fas fa-file-signature"></i> Cadastre seu imóvel</a>
                 </div></li>
             <li><a href="#oportunidades">Oportunidades</a></li>
             <li><a href="#bairros">Bairros</a></li>
@@ -242,7 +242,8 @@
 </section>
 
 <!-- CADASTRE SEU IMÓVEL: o cliente baixa o modelo de autorização, preenche e envia; só publicamos depois de receber o documento assinado -->
-<section class="ins-section reveal" id="cadastre">
+<section class="ins-section" id="cadastre">
+    <a class="cad-voltar" href="/">← Voltar para os imóveis</a>
     <div class="ins-head"><h2>Cadastre seu imóvel</h2>
     <p>Venda com respaldo profissional do início ao fim</p></div>
     <div class="cad-wrap">
@@ -1452,6 +1453,22 @@ function renderUsados() {
     renderUsados._r = () => { clearTimeout(usResize); usResize = setTimeout(montar, 250); };
     window.addEventListener('resize', renderUsados._r);
 }
+// PÁGINA DE CADASTRO (/cadastre): mostra só o formulário, com o cabeçalho para voltar ao site
+function aplicarPaginaCadastro() {
+    const naPagina = location.pathname.replace(/\/+$/, '') === '/cadastre' || location.hash === '#cadastre';
+    document.body.classList.toggle('pagina-cadastro', naPagina);
+    if (naPagina) {
+        document.title = 'Cadastre seu imóvel | Joildo Brokers';
+        window.scrollTo(0, 0);
+    }
+}
+document.addEventListener('click', e => {
+    if (!document.body.classList.contains('pagina-cadastro')) return;
+    const a = e.target.closest('a[href]');
+    if (!a || !a.closest('header') || a.getAttribute('href') === '/cadastre') return;
+    const destino = a.getAttribute('href');
+    if (destino && destino.startsWith('#') && destino !== '#') { e.preventDefault(); location.href = '/' + destino; }
+}, true);
 // CADASTRE SEU IMÓVEL: link do modelo de autorização (vem do painel) e envio do formulário
 function renderCadastro() {
     const a = document.getElementById('cadModelo');
@@ -1598,6 +1615,7 @@ function renderMcmv() {
     }
 
     async function carregar() {
+    aplicarPaginaCadastro();
         try { fetch('/api/visita-site', { method: 'POST', keepalive: true }).catch(() => {}); } catch (e) {}
         await carregarConfig();
         try {
