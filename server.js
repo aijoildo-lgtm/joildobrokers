@@ -145,6 +145,8 @@ const saveConfig = async (c) => db ? db.collection('config').updateOne({ _id: 's
 // VALIDAÇÃO DO IMÓVEL (só campos conhecidos, com limites)
 const TXT = ['ref','titulo','preco','foto','localizacao','estagio','destaque','area','dormitorios','vagas','youtube','tour360','transacao','categoria','tipo','apresentacao','diferencial','proximidade','origem','linkOrigem','videoArquivo','sincronizadoEm','construtora','precoM2','seoTitulo','seoDescricao','seoPalavras','cep','logradouro','numero','complemento','visibilidade','iptu','condominio','taxas','obsValores','areaTotal','areaPrivativa','areaConstruida','perfil','mobilia','banheiros','suites','salas','lavabos','modoCadastro'];
 const s2 = (v, n) => String(v == null ? '' : v).slice(0, n);
+// Tarjas do imóvel: só as da lista oficial, até 3 por imóvel
+const TARJAS_VALIDAS = new Set(["breve", "lancamento", "obras", "pronto", "mudeja", "ultimas", "visitedecorado", "ultimosdecorado", "oportunidade", "exclusivo", "condespeciais", "desc10", "desc15", "desc20", "desc25", "docgratis", "ato1000", "entradafacil", "fgts", "financia100", "finandireto", "semanalise", "permuta", "carroentrada", "metro", "shortstay", "temporada", "his1", "his2", "hmp", "r2v", "nr"]);
 function limpar(b) {
   const o = {};
   TXT.forEach(k => { if (b[k] != null) o[k] = s2(b[k], k === 'apresentacao' ? 4000 : 500); });
@@ -166,6 +168,8 @@ function limpar(b) {
   o.lat = coord(b.lat); o.lng = coord(b.lng);
   o.ativo = b.ativo !== false;
   if (b.demo === true) o.demo = true;
+  o.destaques = (Array.isArray(b.destaques) ? b.destaques : []).map(x => s2(x, 40)).filter(x => TARJAS_VALIDAS.has(x)).filter((x, n, a) => a.indexOf(x) === n).slice(0, 3);
+  o.destaque = o.destaques[0] || 'none';
   return o;
 }
 const novaRef = () => `REF-${Math.floor(100000 + Math.random() * 900000)}`;

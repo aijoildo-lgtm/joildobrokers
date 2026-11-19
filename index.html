@@ -126,7 +126,7 @@
             <label>Dormitórios <select id="search_dorm"><option value="">Qualquer</option><option value="1">1 ou mais</option><option value="2">2 ou mais</option><option value="3">3 ou mais</option><option value="4">4 ou mais</option></select></label>
             <label>Vagas <select id="search_vagas"><option value="">Qualquer</option><option value="1">1 ou mais</option><option value="2">2 ou mais</option><option value="3">3 ou mais</option><option value="4">4 ou mais</option></select></label>
             <label>Área mínima (m²) <input type="number" id="search_area" min="0" placeholder="Ex: 80"></label>
-            <label>Diferencial <select id="search_tarja"><option value="">Qualquer</option><option value="exclusivo">Exclusividade</option><option value="desconto">Desconto</option><option value="oportunidade">Oportunidade</option><option value="decorado">Decorado</option><option value="pronto">Pronto para morar</option><option value="mcmv">Minha Casa Minha Vida</option><option value="fgts">Use seu FGTS</option><option value="financia100">Financie até 100%</option><option value="finandireto">Financiamento direto</option><option value="entradafacil">Entrada facilitada</option><option value="ato1000">Ato de R$ 1.000</option><option value="docgratis">Documentação grátis</option><option value="condespeciais">Condições especiais</option><option value="desc10">10% de desconto</option><option value="desc15">15% de desconto</option><option value="desc20">20% de desconto</option><option value="desc25">25% de desconto</option><option value="lancamento">Lançamento</option><option value="breve">Breve lançamento</option><option value="obras">Em obras</option><option value="mudeja">Mude já</option><option value="ultimas">Últimas unidades</option><option value="visitedecorado">Visite o decorado</option><option value="ultimosdecorado">Últimos dias decorado</option><option value="shortstay">Short stay</option><option value="airbnb">Airbnb / Booking</option><option value="metro">Perto do metrô</option><option value="his1">HIS 1</option><option value="his2">HIS 2</option><option value="hmp">HMP</option><option value="r2v">R2V</option><option value="nr">NR</option></select></label>
+            <label>Diferencial <select id="search_tarja"><option value="">Qualquer</option><option value="breve">BREVE LANÇAMENTO</option><option value="lancamento">LANÇAMENTO</option><option value="obras">EM OBRAS</option><option value="pronto">PRONTO PARA MORAR</option><option value="mudeja">MUDE JÁ</option><option value="ultimas">ÚLTIMAS UNIDADES</option><option value="visitedecorado">VISITE O DECORADO</option><option value="ultimosdecorado">ÚLTIMOS DIAS DO DECORADO</option><option value="oportunidade">OPORTUNIDADE</option><option value="exclusivo">EXCLUSIVIDADE</option><option value="condespeciais">CONDIÇÕES ESPECIAIS</option><option value="desc10">10% DE DESCONTO</option><option value="desc15">15% DE DESCONTO</option><option value="desc20">20% DE DESCONTO</option><option value="desc25">25% DE DESCONTO</option><option value="docgratis">DOCUMENTAÇÃO GRÁTIS</option><option value="ato1000">ATO DE R$ 1.000</option><option value="entradafacil">ENTRADA FACILITADA</option><option value="fgts">USE SEU FGTS</option><option value="financia100">FINANCIE ATÉ 100%</option><option value="finandireto">FINANCIAMENTO DIRETO</option><option value="semanalise">SEM ANÁLISE DE CRÉDITO</option><option value="permuta">ACEITA PERMUTA</option><option value="carroentrada">ACEITA CARRO COMO ENTRADA</option><option value="metro">PERTO DO METRÔ</option><option value="shortstay">IDEAL PARA INVESTIR (SHORT STAY)</option><option value="temporada">LOCAÇÃO POR TEMPORADA</option><option value="his1">HIS 1</option><option value="his2">HIS 2</option><option value="hmp">HMP</option><option value="r2v">R2V</option><option value="nr">NR (NÃO RESIDENCIAL)</option></select></label>
             <button type="button" class="btn-header-cta" style="border:none;cursor:pointer" onclick="filtrarBusca()">Aplicar</button>
             <button type="button" class="link-avancada" style="font-weight:500" onclick="limparAvancada()">Limpar filtros</button>
         </div>
@@ -268,7 +268,7 @@
                 Atendimento Humano em Minutos
             </div>
             <h2 class="concierge-title">Conte o que procura.<br>Em minutos você recebe uma seleção.</h2>
-            <p class="concierge-desc">Fale diretamente com o consultor <strong>Joildo Costa</strong> pelo WhatsApp ou agende uma ligação no horário de sua preferência. Nossa equipe permanece à disposição para atendimento imediato.</p>
+            <p class="concierge-desc">Fale diretamente com o corretor <strong>Joildo Costa</strong> pelo WhatsApp ou agende uma ligação no horário de sua preferência. Nossa equipe permanece à disposição para atendimento imediato.</p>
             <div class="concierge-actions">
                 <a href="#" class="btn-concierge-zap dyn-zap-link" target="_blank">
                     <i class="fab fa-whatsapp" style="font-size:1.3rem;"></i> FALAR NO WHATSAPP
@@ -460,7 +460,7 @@
 <div class="jb-bar">
     <div class="jb-bar-brand">
         <span class="jb-kicker">Atendimento exclusivo</span>
-        <span class="jb-bar-title">Fale com o consultor</span>
+        <span class="jb-bar-title">Fale com o corretor</span>
     </div>
     <div class="jb-bar-actions">
         <a href="#" class="jb-btn jb-wa dyn-zap-link" target="_blank" rel="noopener" aria-label="WhatsApp de Joildo Costa">
@@ -488,7 +488,7 @@
         <button type="button" class="jb-x" onclick="fecharChat()" aria-label="Fechar">&times;</button>
         <span class="jb-kicker">Joildo Brokers</span>
         <h4 id="jbChatTitulo">Como posso ajudar?</h4>
-        <p class="jb-sub">Conte o que procura. Sua mensagem chega direto ao consultor Joildo Costa.</p>
+        <p class="jb-sub">Conte o que procura. Sua mensagem chega direto ao corretor Joildo Costa.</p>
         <form class="jb-form" id="jbForm" onsubmit="event.preventDefault(); enviarChat('zap');">
             <div class="jb-grid">
                 <input id="jbNome" type="text" placeholder="Seu nome" required>
@@ -629,7 +629,9 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
 
     const COORDS = {'jardins':[-23.5659,-46.6623],'itaim bibi':[-23.5851,-46.6797],'pinheiros':[-23.5670,-46.6919],'vila nova conceicao':[-23.5897,-46.6674],'moema':[-23.6010,-46.6660],'alphaville':[-23.4975,-46.8503],'paraiso':[-23.5750,-46.6475],'tatuape':[-23.5400,-46.5760],'vila mariana':[-23.5890,-46.6340]};
     const FASES = {lancamentos:'Lançamento', construcao:'Em construção', prontos:'Pronto', oportunidades:'Oportunidade'};
-    const TARJAS = {exclusivo:['badge-exclusivo','Exclusividade'], desconto:['badge-desconto','20% de desconto'], oportunidade:['badge-oportunidade','Oportunidade'], decorado:['badge-decorado','Decorado'], pronto:['badge-pronto','Pronto para morar'], mcmv:['badge-mcmv','Minha Casa Minha Vida'],fgts:['badge-financ','Use seu FGTS'],financia100:['badge-financ','Financie até 100%'],finandireto:['badge-financ','Financiamento direto'],entradafacil:['badge-financ','Entrada facilitada'],ato1000:['badge-financ','Ato de R$ 1.000'],docgratis:['badge-financ','Documentação grátis'],condespeciais:['badge-financ','Condições especiais'],desc10:['badge-desconto','10% de desconto'],desc15:['badge-desconto','15% de desconto'],desc20:['badge-desconto','20% de desconto'],desc25:['badge-desconto','25% de desconto'],lancamento:['badge-obra','Lançamento'],breve:['badge-obra','Breve lançamento'],obras:['badge-obra','Em obras'],mudeja:['badge-urgente','Mude já'],ultimas:['badge-urgente','Últimas unidades'],visitedecorado:['badge-decorado','Visite o decorado'],ultimosdecorado:['badge-decorado','Últimos dias decorado'],shortstay:['badge-uso','Short stay'],airbnb:['badge-uso','Airbnb / Booking'],metro:['badge-uso','Perto do metrô'],his1:['badge-his','HIS 1'],his2:['badge-his','HIS 2'],hmp:['badge-his','HMP'],r2v:['badge-his','R2V'],nr:['badge-his','NR']};
+    const TARJAS = {breve:["badge-obra","BREVE LANÇAMENTO"],lancamento:["badge-obra","LANÇAMENTO"],obras:["badge-obra","EM OBRAS"],pronto:["badge-pronto","PRONTO PARA MORAR"],mudeja:["badge-urgente","MUDE JÁ"],ultimas:["badge-urgente","ÚLTIMAS UNIDADES"],visitedecorado:["badge-decorado","VISITE O DECORADO"],ultimosdecorado:["badge-decorado","ÚLTIMOS DIAS DO DECORADO"],oportunidade:["badge-oportunidade","OPORTUNIDADE"],exclusivo:["badge-exclusivo","EXCLUSIVIDADE"],condespeciais:["badge-financ","CONDIÇÕES ESPECIAIS"],desc10:["badge-desconto","10% DE DESCONTO"],desc15:["badge-desconto","15% DE DESCONTO"],desc20:["badge-desconto","20% DE DESCONTO"],desc25:["badge-desconto","25% DE DESCONTO"],docgratis:["badge-financ","DOCUMENTAÇÃO GRÁTIS"],ato1000:["badge-financ","ATO DE R$ 1.000"],entradafacil:["badge-financ","ENTRADA FACILITADA"],fgts:["badge-financ","USE SEU FGTS"],financia100:["badge-financ","FINANCIE ATÉ 100%"],finandireto:["badge-financ","FINANCIAMENTO DIRETO"],semanalise:["badge-financ","SEM ANÁLISE DE CRÉDITO"],permuta:["badge-financ","ACEITA PERMUTA"],carroentrada:["badge-financ","ACEITA CARRO COMO ENTRADA"],metro:["badge-uso","PERTO DO METRÔ"],shortstay:["badge-uso","IDEAL PARA INVESTIR (SHORT STAY)"],temporada:["badge-uso","LOCAÇÃO POR TEMPORADA"],his1:["badge-his","HIS 1"],his2:["badge-his","HIS 2"],hmp:["badge-his","HMP"],r2v:["badge-his","R2V"],nr:["badge-his","NR (NÃO RESIDENCIAL)"]};
+// Tarjas do imóvel: até 3 por imóvel (com compatibilidade para imóveis cadastrados antes)
+const tarjasDo = i => { const l = Array.isArray(i.destaques) ? i.destaques : (i.destaque && i.destaque !== 'none' ? [i.destaque] : []); return l.filter(k => TARJAS[k]).slice(0, 3); };
     let mapa = null, camadaMapa = null, galTimer = null;
 
     const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -677,15 +679,14 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
     }
 
     function cartao(i) {
-        const t = TARJAS[i.destaque];
-        const specs = [i.area, i.dormitorios, i.vagas].filter(Boolean).map(esc).join(' &nbsp;|&nbsp; ');
+                const specs = [i.area, i.dormitorios, i.vagas].filter(Boolean).map(esc).join(' &nbsp;|&nbsp; ');
         // Detecta se a foto principal veio do campo "foto" (stand/principal) ou da galeria
         const temFotoPrincipal = !!urlOk(i.foto);
         const srcCapa = capa(i);
         return `
             <div class="card" onclick="abrirModal('${esc(i.id)}')">
                 <div class="card-img-wrap">
-                    ${t ? `<span class="badge ${t[0]}">${t[1]}</span>` : ''}
+                    <div class="tarjas">${tarjasDo(i).map(k => `<span class="badge ${TARJAS[k][0]}">${TARJAS[k][1]}</span>`).join('')}</div>
                     ${temFotoPrincipal ? '' : '<span class="badge" style="background:#64748B;top:auto;bottom:10px;font-size:.65rem">Sem foto principal definida</span>'}
                     <div class="card-img" style="background-image:url('${srcCapa}')"></div>
                 </div>
@@ -760,7 +761,7 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
                 (!dorm || primeiroNum(i.dormitorios) >= dorm) &&
                 (!vagas || primeiroNum(i.vagas) >= vagas) &&
                 (!transacao || i.transacao === transacao) &&
-                (!tarja || i.destaque === tarja) &&
+                (!tarja || tarjasDo(i).includes(tarja)) &&
                 (!areaMin || primeiroNum(i.area) >= areaMin);
         });
         const ORDENADORES = {
@@ -1290,7 +1291,7 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
     document.getElementById('propertyModal').addEventListener('click', e => { if (e.target.id === 'propertyModal') fecharModal(); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModal(); });
 
-    const ehOpp = i => i.estagio === 'oportunidades' || i.destaque === 'oportunidade';
+    const ehOpp = i => i.estagio === 'oportunidades' || tarjasDo(i).includes('oportunidade');
     function cartaoOpp(i) {
         return `<article class="opp-card" tabindex="0" style="background-image:url('${capa(i)}')" onclick="abrirModal('${esc(i.id)}')" onkeydown="if(event.key==='Enter')abrirModal('${esc(i.id)}')">
             <span class="opp-tag">${esc(FASES[i.estagio] || 'Oportunidade')}</span>

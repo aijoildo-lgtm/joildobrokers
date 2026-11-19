@@ -139,8 +139,8 @@ textarea{resize:vertical}
     <button class="nav sub2" data-v="novo" data-modo="manual">Manual</button>
     <button class="nav sub2" data-v="novo" data-modo="aocubo">AoCubo</button>
     <button class="nav sub2" data-v="novo" data-modo="orulo">Órulo</button>
-    <button class="nav" data-v="conteudos">Blog</button>
-    <button class="nav sub2" data-v="conteudos">Acompanhe nossas notícias</button>
+    <button class="nav" data-v="conteudos" data-bloco="blog">Blog</button>
+    <button class="nav sub2" data-v="conteudos" data-bloco="noticia">Acompanhe nossas notícias</button>
     <button class="nav" data-v="financ">Financiamento</button>
     <button class="nav" data-v="raiox">Raio-X do preço</button>
     <button class="nav" data-v="marca" data-ancora="qCampos">Quem Somos</button>
@@ -288,7 +288,7 @@ textarea{resize:vertical}
 <script>
 const $=id=>document.getElementById(id),DIA=864e5;
 const ESTAGIOS=[['','Não informado'],['lancamentos','Lançamento'],['construcao','Em construção'],['prontos','Pronto'],['usados','Usado']];
-const TARJAS=[['none','Nenhuma'],['exclusivo','Exclusividade'],['desconto','Desconto'],['oportunidade','Oportunidade'],['decorado','Decorado'],['pronto','Pronto para morar'],['mcmv','Minha Casa Minha Vida'],['fgts','Use seu FGTS'],['financia100','Financie até 100%'],['finandireto','Financiamento direto'],['entradafacil','Entrada facilitada'],['ato1000','Ato de R$ 1.000'],['docgratis','Documentação grátis'],['condespeciais','Condições especiais'],['desc10','10% de desconto'],['desc15','15% de desconto'],['desc20','20% de desconto'],['desc25','25% de desconto'],['lancamento','Lançamento'],['breve','Breve lançamento'],['obras','Em obras'],['mudeja','Mude já'],['ultimas','Últimas unidades'],['visitedecorado','Visite o decorado'],['ultimosdecorado','Últimos dias decorado'],['shortstay','Short stay'],['airbnb','Airbnb / Booking'],['metro','Perto do metrô'],['his1','HIS 1'],['his2','HIS 2'],['hmp','HMP'],['r2v','R2V'],['nr','NR']];
+const TARJAS=[['breve',"BREVE LANÇAMENTO"],['lancamento',"LANÇAMENTO"],['obras',"EM OBRAS"],['pronto',"PRONTO PARA MORAR"],['mudeja',"MUDE JÁ"],['ultimas',"ÚLTIMAS UNIDADES"],['visitedecorado',"VISITE O DECORADO"],['ultimosdecorado',"ÚLTIMOS DIAS DO DECORADO"],['oportunidade',"OPORTUNIDADE"],['exclusivo',"EXCLUSIVIDADE"],['condespeciais',"CONDIÇÕES ESPECIAIS"],['desc10',"10% DE DESCONTO"],['desc15',"15% DE DESCONTO"],['desc20',"20% DE DESCONTO"],['desc25',"25% DE DESCONTO"],['docgratis',"DOCUMENTAÇÃO GRÁTIS"],['ato1000',"ATO DE R$ 1.000"],['entradafacil',"ENTRADA FACILITADA"],['fgts',"USE SEU FGTS"],['financia100',"FINANCIE ATÉ 100%"],['finandireto',"FINANCIAMENTO DIRETO"],['semanalise',"SEM ANÁLISE DE CRÉDITO"],['permuta',"ACEITA PERMUTA"],['carroentrada',"ACEITA CARRO COMO ENTRADA"],['metro',"PERTO DO METRÔ"],['shortstay',"IDEAL PARA INVESTIR (SHORT STAY)"],['temporada',"LOCAÇÃO POR TEMPORADA"],['his1',"HIS 1"],['his2',"HIS 2"],['hmp',"HMP"],['r2v',"R2V"],['nr',"NR (NÃO RESIDENCIAL)"]];
 const DEF={transacao:'Vender Imóvel',categoria:'Residencial',destaque:'none',visibilidade:'bairro'};
 const NOMES={titulo:'título',preco:'preço',area:'área',dormitorios:'dormitórios',foto:'foto'};
 const SIMNAO=['Não','Sim'];
@@ -296,7 +296,7 @@ const CAMPOS=[
 ['S','Dados do imóvel'],['titulo','Título (nome do empreendimento) *'],['ref','Código de referência'],['construtora','Construtora / incorporadora'],
 ['transacao','Finalidade',['Vender Imóvel','Alugar Imóvel']],['categoria','Categoria',['Residencial','Comercial']],
 ['cadastradoPor','Cadastrado por','Q'],
-['tipo','Tipo de imóvel','L'],['estagio','Estágio (situação)',ESTAGIOS],['destaque','Tarja no site',TARJAS],
+['tipo','Tipo de imóvel','L'],['estagio','Estágio (situação)',ESTAGIOS],['destaques','Tarjas no site (até 3)','TG'],
 ['S','Localização'],['localizacao','Bairro, cidade - UF *'],['cep','CEP'],['logradouro','Logradouro'],['numero','Número'],['complemento','Complemento'],
 ['visibilidade','Visibilidade no site',[['bairro','Mostrar só o bairro'],['endereco','Mostrar endereço completo']]],['proximidade','Proximidade (ex.: 5 min do metrô)'],['lat','Latitude (opcional, para o mapa)'],['lng','Longitude (opcional)'],
 ['S','Valores'],['preco','Valor a partir de *'],['precoM2','Valor por m² (ex.: R$ 11.040)'],['condominio','Condomínio'],['iptu','IPTU'],['taxas','Taxas'],['obsValores','Observação sobre os valores'],
@@ -321,9 +321,9 @@ $('fImovel').innerHTML=CAMPOS.map(([k,l,x])=>{
   if(k==='S'){ST=STEP[l]||ST;PP=l.startsWith('Fotos')?'fotos':l==='Plantas'?'plantas':'';return `<div class="sec" ${att()}>${l}</div>`}
   const ctl=Array.isArray(x)?`<select id="f_${k}">${x.map(o=>{const[v,t]=Array.isArray(o)?o:[o,o];return `<option value="${v}">${t}</option>`}).join('')}</select>`
     :x==='P'?`<textarea id="f_${k}" rows="4" placeholder="Planta 01 - 3 dorm 84m² | https://..."></textarea>`:x==='X'?`<textarea id="f_${k}" rows="4"></textarea>`:x==='A'?`<textarea id="f_${k}" rows="4" placeholder="https://..."></textarea>`
-    :x==='D'?`<textarea id="f_${k}" rows="3" maxlength="160"></textarea>`:x==='C'?`<div class="chk" id="f_${k}"></div><div class="linha-up"><input id="n_${k}" placeholder="Outra opção" style="max-width:240px"><button type="button" class="btn ghost sm" data-addchk="${k}">Adicionar</button></div>`:x==='T'?`<textarea id="f_${k}" rows="5"></textarea>`
+    :x==='D'?`<textarea id="f_${k}" rows="3" maxlength="160"></textarea>`:x==='TG'?`<div class="chk" id="f_destaques">${TARJAS.map(([v,t])=>`<label><input type="checkbox" value="${v}">${t}</label>`).join('')}</div><p class="ajuda">Escolha até 3 tarjas. Elas aparecem no canto da foto do imóvel.</p>`:x==='C'?`<div class="chk" id="f_${k}"></div><div class="linha-up"><input id="n_${k}" placeholder="Outra opção" style="max-width:240px"><button type="button" class="btn ghost sm" data-addchk="${k}">Adicionar</button></div>`:x==='T'?`<textarea id="f_${k}" rows="5"></textarea>`
     :`<input id="f_${k}"${x==='L'?' list="tipos"':x==='Q'?' list="pessoas" placeholder="Seu nome ou de quem cadastrou"':''}>`;
-  return `<div class="f${['A','T','P','X','D','C'].includes(x)?' full':''}" ${att()}><label for="f_${k}">${l}</label>${ctl}${upl(k)}${(x==='A'||x==='P')?`<div class="gal" id="g_${k}"></div>`:''}</div>`;
+  return `<div class="f${['A','T','P','X','D','C','TG'].includes(x)?' full':''}" ${att()}><label for="f_${k}">${l}</label>${ctl}${upl(k)}${(x==='A'||x==='P')?`<div class="gal" id="g_${k}"></div>`:''}</div>`;
 }).join('')+`<div class="sec" data-s="1">Tipologias e valores</div><div class="full" data-s="1" id="tipos-box"></div><div class="sec" data-s="4">Publicação</div><div class="f full" data-s="4" style="display:flex;gap:28px;flex-wrap:wrap"><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_emDestaque" style="width:auto">Destacar na página inicial</label><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_ativo" style="width:auto" checked>Publicado no site</label><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_sincronizar" style="width:auto" checked>Atualizar preço, condições e tipologias pelo link</label><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_espelharMidia" style="width:auto" checked>Espelhar fotos e plantas do portal</label></div>`;
 
 let IM=[],CUR=null,BASE={},timer=null;
@@ -437,18 +437,29 @@ async function acao(id,t){
   aviso(m);await load();
 }
 
-function ir(v){
-  if(v==='conteudos')loadCN();
+// Cada item do menu abre só a sua página (Quem Somos, Contato, Foto, Construtoras; Blog ou Notícias)
+const MARCA_BLOCOS={qCampos:'Quem Somos',aCampos:'Foto do Atendimento',pCampos:'Construtoras e Incorporadoras',mCampos:'Contato'};
+function mostraMarca(bloco){
+  const sel=MARCA_BLOCOS[bloco]?bloco:'qCampos';
+  const vm=$('v-marca');
+  vm.querySelectorAll('.panel').forEach(p=>p.classList.toggle('hidden',!p.contains($(sel))));
+  vm.querySelector('.head').textContent=MARCA_BLOCOS[sel];
+  document.querySelectorAll('aside .nav[data-ancora]').forEach(b=>b.classList.toggle('on',b.dataset.ancora===sel));
+}
+function ir(v,bloco){
+  if(v==='conteudos'){if(bloco==='blog'||bloco==='noticia')CT=bloco;loadCN()}
   if(v==='marca')loadMarca();
   if(v==='financ')loadFinanc();
   if(v==='raiox')loadRaiox();
   ['dash','lista','form','conteudos','marca','financ','raiox'].forEach(s=>$('v-'+s).classList.toggle('hidden',s!==v));
   document.querySelectorAll('aside .nav').forEach(b=>b.classList.toggle('on',b.dataset.v===v||(v==='form'&&b.dataset.v==='novo')));
+  if(v==='marca')mostraMarca(bloco);
+  if(v==='conteudos')document.querySelectorAll('aside .nav[data-bloco]').forEach(b=>b.classList.toggle('on',b.dataset.bloco===CT));
 }
 function abrir(it){CUR=it||null;BASE=it?{...it}:{};$('ftitulo').textContent=it?it.titulo:'Novo imóvel';$('url').value='';$('impMsg').textContent='';preencher(BASE);setModo(it?(it.modoCadastro||(it.linkOrigem?(/orulo/i.test(it.linkOrigem)?'orulo':'aocubo'):'manual')):'manual');PASSO=1;SUB='fotos';ir('form');mostra();window.scrollTo(0,0)}
 function editar(id){abrir(IM.find(x=>x.id==id))}
 function preencher(d){
-  CAMPOS.forEach(([k,,x])=>{if(k==='S'||x==='V')return;if(x==='C'){setChk(k,d[k]||[]);return}if(k.startsWith('pv_')){$('f_'+k).value=(d.privado||{})[k.slice(3)]||'';return}const el=$('f_'+k);el.value=x==='P'?(d[k]||[]).map(p=>typeof p==='object'?`${p.nome||''} | ${p.area||''} | ${p.url}`:p).join('\n'):(x==='A'||x==='X')?(d[k]||[]).map(y=>(y&&typeof y==='object')?(y.k+': '+y.v):y).join('\n'):(d[k]??DEF[k]??'');if(x==='A'||x==='P')galeria(k)});
+  CAMPOS.forEach(([k,,x])=>{if(k==='S'||x==='V')return;if(x==='TG'){setTG(d.destaques||(d.destaque&&d.destaque!=='none'?[d.destaque]:[]));return}if(x==='C'){setChk(k,d[k]||[]);return}if(k.startsWith('pv_')){$('f_'+k).value=(d.privado||{})[k.slice(3)]||'';return}const el=$('f_'+k);el.value=x==='P'?(d[k]||[]).map(p=>typeof p==='object'?`${p.nome||''} | ${p.area||''} | ${p.url}`:p).join('\n'):(x==='A'||x==='X')?(d[k]||[]).map(y=>(y&&typeof y==='object')?(y.k+': '+y.v):y).join('\n'):(d[k]??DEF[k]??'');if(x==='A'||x==='P')galeria(k)});
   $('f_emDestaque').checked=d.emDestaque===true;$('f_ativo').checked=d.ativo!==false;$('f_sincronizar').checked=d.sincronizar!==false;$('f_espelharMidia').checked=d.espelharMidia!==false;TIPS=(d.tipologias||[]).map(t=>({...t}));renderTips();pend();
 }
 function urlsDe(k){const v=$('f_'+k).value;return k==='plantas'?linesPlantas(v).map(p=>typeof p==='object'?p.url:p):lines(v)}
@@ -462,7 +473,7 @@ function remover(k,n){
   t.value=ls.filter(x=>{if(!ok(x))return true;c++;return c!==n}).join('\n');galeria(k);pend();
 }
 function coleta(){
-  const o={};CAMPOS.forEach(([k,,x])=>{if(k==='S'||x==='V')return;if(x==='C'){o[k]=getChk(k);return}if(k.startsWith('pv_')){(o.privado=o.privado||{})[k.slice(3)]=$('f_'+k).value.trim();return}const v=$('f_'+k).value;o[k]=x==='A'?lines(v):x==='P'?linesPlantas(v):x==='X'?v.split('\n').map(s=>s.trim()).filter(Boolean):v.trim()});
+  const o={};CAMPOS.forEach(([k,,x])=>{if(k==='S'||x==='V')return;if(x==='TG'){o.destaques=getChk('destaques').slice(0,3);return}if(x==='C'){o[k]=getChk(k);return}if(k.startsWith('pv_')){(o.privado=o.privado||{})[k.slice(3)]=$('f_'+k).value.trim();return}const v=$('f_'+k).value;o[k]=x==='A'?lines(v):x==='P'?linesPlantas(v):x==='X'?v.split('\n').map(s=>s.trim()).filter(Boolean):v.trim()});
   o.infoTecnica=(o.infoTecnica||[]).map(l=>{const i=l.indexOf(':');return i<0?{k:l,v:''}:{k:l.slice(0,i).trim(),v:l.slice(i+1).trim()}});o.emDestaque=$('f_emDestaque').checked;o.ativo=$('f_ativo').checked;o.sincronizar=$('f_sincronizar').checked;o.espelharMidia=$('f_espelharMidia').checked;o.tipologias=TIPS.filter(t=>(t.nome||'').trim()).map(t=>({nome:t.nome||'',area:t.area||'',dorm:t.dorm||'',suites:t.suites||'',vagas:t.vagas||'',preco:t.preco||''}));return o;
 }
 function pend(){
@@ -592,8 +603,7 @@ document.addEventListener('click',e=>{
   const v=b.dataset.v;
   if(v==='novo'){abrir(null);if(b.dataset.modo)setModo(b.dataset.modo)}
   else{
-    ir(v);if(v==='lista')renderLista();
-    if(b.dataset.ancora)setTimeout(()=>{const alvo=$(b.dataset.ancora);if(alvo)alvo.scrollIntoView({behavior:'smooth',block:'start'})},60);
+    ir(v,b.dataset.bloco||b.dataset.ancora);if(v==='lista')renderLista();
   }
 });
 let PASSO=1,SUB='fotos';
@@ -863,6 +873,8 @@ function setChk(k,vals){
   $('f_'+k).innerHTML=[...cat,...extras].map(t=>`<label><input type="checkbox" value="${esc(t)}" ${marcados.has(norm(t))?'checked':''}>${esc(t)}</label>`).join('');
 }
 const getChk=k=>[...document.querySelectorAll('#f_'+k+' input:checked')].map(i=>i.value);
+const setTG=vals=>{const m=new Set(vals||[]);document.querySelectorAll('#f_destaques input').forEach(i=>{i.checked=m.has(i.value)})};
+document.addEventListener('change',e=>{if(e.target.closest&&e.target.closest('#f_destaques')&&e.target.checked&&getChk('destaques').length>3){e.target.checked=false;aviso('Máximo de 3 tarjas por imóvel.')}});
 document.addEventListener('click',e=>{
   const k=e.target.dataset&&e.target.dataset.addchk;if(!k)return;
   const inp=$('n_'+k),v=inp.value.trim();if(!v)return;

@@ -557,6 +557,10 @@ a.parc-item:hover { box-shadow: 0 8px 20px rgba(10,17,40,.14); }
 #colecao .colecao-vago { aspect-ratio: 3 / 4; border: 1px dashed #D5C98F; border-radius: 18px; background: rgba(212,175,55,.06); }
 @media (max-width: 620px) { #colecao .colecao-vago { display: none; } }
 
+/* Tarjas: até 3 por imóvel, empilhadas no canto do card */
+.tarjas { position: absolute; top: 14px; left: 0; z-index: 10; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.tarjas .badge { position: static; }
+
 /* Carrosséis: setas dentro da largura padrão */
 .opp-seta.esq { left: 6px; } .opp-seta.dir { right: 6px; }
 
