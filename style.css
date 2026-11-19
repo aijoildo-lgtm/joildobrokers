@@ -36,8 +36,6 @@ body { background-color: var(--bg-light); color: var(--text-dark); padding-botto
 }
 .social-bar a { color: var(--white); text-decoration: none; transition: color 0.3s; }
 .social-bar a:hover { color: var(--gold); }
-.btn-fav-top { color: var(--gold); cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 6px; border-left: 1px solid rgba(255,255,255,0.2); padding-left: 16px; }
-.btn-fav-top i { color: var(--red-eztec); }
 
 /* HEADER & LOGO CONTAINER */
 header {

@@ -54,9 +54,6 @@
     <a href="#" class="dyn-youtube" target="_blank" title="YouTube"><i class="fab fa-youtube"></i></a>
     <a href="#" class="dyn-tiktok" target="_blank" title="TikTok" style="display:none"><i class="fab fa-tiktok"></i></a>
     <a href="#" class="dyn-google-negocio" target="_blank" title="Avalie-nos no Google" style="display:none"><i class="fab fa-google"></i></a>
-    <div class="btn-fav-top" onclick="alert('Portal favoritado com sucesso!')">
-        <i class="fas fa-heart"></i> Favoritos
-    </div>
 </div>
 
 <!-- HEADER COM MENU COMPLETO & SLOGAN -->
@@ -70,7 +67,6 @@
     </div>
     <nav aria-label="Menu principal">
         <ul>
-            <li><a href="#" onclick="window.scrollTo({top:0,behavior:'smooth'});return false">Home</a></li>
             <li class="has-sub"><a href="#vitrine" onclick="return abrirSub(this,'todos')" aria-haspopup="true">Imóveis <i class="fas fa-chevron-down"></i></a>
                 <div class="dropdown">
                     <a href="#" onclick="filtrarEstagio('todos');return false"><i class="fas fa-home"></i> Todos os imóveis</a>
@@ -78,20 +74,21 @@
                     <a href="#" onclick="filtrarEstagio('construcao');return false"><i class="fas fa-hard-hat"></i> Em construção</a>
                     <a href="#" onclick="filtrarEstagio('prontos');return false"><i class="fas fa-key"></i> Prontos para morar</a>
                     <a href="#" onclick="filtrarEstagio('usados');return false"><i class="fas fa-handshake"></i> Usados</a>
-<a href="/cadastre"><i class="fas fa-file-signature"></i> Cadastre seu imóvel</a>
+                    <a href="#mcmv" onclick="return irParaSecao('mcmv')"><i class="fas fa-house-user"></i> Minha Casa Minha Vida</a>
+                    <a href="#" onclick="filtrarEstagio('oportunidades');return false"><i class="fas fa-tags"></i> Oportunidades</a>
+                    <a href="#mapa-imoveis"><i class="fas fa-map-marked-alt"></i> Imóveis no mapa</a>
                 </div></li>
-            <li><a href="#oportunidades">Oportunidades</a></li>
             <li><a href="#bairros">Bairros</a></li>
-            <li><a href="#atendimento-humano">Concierge</a></li>
+            <li><a href="#quem-somos">Quem Somos</a></li>
             <li class="has-sub"><a href="#blog" onclick="return abrirSub(this)" aria-haspopup="true">Conteúdos <i class="fas fa-chevron-down"></i></a>
                 <div class="dropdown">
-                    <a href="#noticias"><i class="far fa-newspaper"></i> Notícias</a>
                     <a href="#blog"><i class="fas fa-pen-nib"></i> Blog</a>
+                    <a href="#noticias"><i class="far fa-newspaper"></i> Notícias</a>
                     <a href="#mercado"><i class="fas fa-chart-line"></i> Mercado imobiliário</a>
                 </div></li>
             <li><a href="#depoimentos">Depoimentos</a></li>
             <li><a href="#contato">Contato</a></li>
-            <li><a href="/admin" class="btn-header-cta"><i class="fas fa-lock"></i> CPANEL CORRETOR</a></li>
+            <li><a href="/cadastre" class="btn-header-cta"><i class="fas fa-file-signature"></i> Venda seu imóvel</a></li>
         </ul>
     </nav>
 </header>
@@ -462,7 +459,6 @@
                 <li><a href="#quem-somos">Quem Somos</a></li>
                 <li><a href="#" onclick="filtrarEstagio('oportunidades')">Oportunidades</a></li>
                 <li><a href="#bairros">Bairros Nobres</a></li>
-                <li><a href="#atendimento-humano">Concierge Direct</a></li>
                 <li><a href="#blog">Blog & Tendências</a></li>
                 <li><a href="#depoimentos">Depoimentos</a></li>
                 <li><a href="#contato">Contato</a></li>
@@ -841,6 +837,13 @@ const tarjasDo = i => { const l = Array.isArray(i.destaques) ? i.destaques : (i.
         document.getElementById('search_fase').value = 'todos';
         document.querySelectorAll('.filter-btn').forEach(x => x.classList.toggle('active', (x.getAttribute('onclick') || '').includes("'todos'")));
         aplicarFiltros(); irParaVitrine();
+    }
+    // vai até uma seção; se ela estiver oculta (sem conteúdo), leva para a vitrine
+    function irParaSecao(id) {
+        const s = document.getElementById(id);
+        if (s && s.style.display !== 'none') s.scrollIntoView({ behavior: 'smooth' }); else irParaVitrine();
+        document.querySelectorAll('nav li.aberto').forEach(li => li.classList.remove('aberto'));
+        return false;
     }
     function abrirSub(a, estagio) {
         if (window.matchMedia('(hover: none)').matches) { a.parentElement.classList.toggle('aberto'); return false; }
