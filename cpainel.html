@@ -155,6 +155,7 @@ tbody tr:last-child td{border-bottom:0}
 .chk{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:6px 14px;border:1px solid #CBD5E1;border-radius:9px;padding:12px 14px;background:#fff}
 .chk label{display:flex;gap:8px;align-items:center;margin:0;font-weight:500;color:var(--ink);font-size:13px;cursor:pointer}
 .chk input{width:auto;accent-color:var(--navy)}
+.chk-x{margin-left:auto;border:0;background:none;color:#B91C1C;font-size:11px;cursor:pointer;opacity:.45;padding:0 2px;text-decoration:underline;font-family:inherit}.chk label:hover .chk-x{opacity:1}
 .th{position:relative}
 .th img{display:block}
 .th .x,.th .cp{position:absolute;border:0;cursor:pointer;font-size:11px;font-weight:700;border-radius:6px}
@@ -431,7 +432,7 @@ const CAMPOS=[
 ['S','Medidas'],['area','Área útil (ex.: 142m²) *'],['areaTotal','Área total'],['areaPrivativa','Área privativa'],['areaConstruida','Área construída'],
 ['S','Características'],['perfil','Perfil',['','Novo','Em construção','Usado','Na planta']],['mobilia','Mobília',['','Não mobiliado','Semimobiliado','Mobiliado']],['dormitorios','Dormitórios (ex.: 3 Suítes) *'],['suites','Suítes'],['banheiros','Banheiros'],['salas','Salas'],['lavabos','Lavabos'],['vagas','Vagas (ex.: 2 vagas)'],['diferencial','Diferencial'],
 ['lazer','Lazer e características do condomínio','C'],['caracteristicasUnidade','Características da unidade','C'],['proximidades','O que tem perto?','C'],
-['S','Informações técnicas e tipologias'],['infoTecnica','Informações técnicas (uma por linha: item: valor)','X'],
+['S','Informações técnicas e tipologias'],['infoTecnica','Informações técnicas — preenchidas sozinhas pela Órulo/AoCubo (uma por linha: item: valor)','X'],
 ['S','Fotos do condomínio e do apartamento'],['foto','Foto de capa — ideal 1600 × 1067 px (horizontal 3:2), JPG ou WebP até 500 KB. Vazio usa a primeira da galeria'],['fotos','Galeria — ideal 1600 × 1067 px (horizontal 3:2), JPG até 500 KB cada; mínimo 1200 px de largura. Um link por linha (ou envie do computador)','A'],
 ['S','Plantas'],['plantas','Plantas: uma por linha, no formato Nome | Metragem | link  (ex.: Planta 01 | 84 m² | https://...). Imagem JPG ou PNG com 1200 px de largura, até 400 KB','P'],
 ['S','Atualização automática'],['linkOrigem','Link de origem (AoCubo ou Órulo)'],
@@ -682,7 +683,27 @@ function preencher(d){
   CAMPOS.forEach(([k,,x])=>{if(k==='S'||x==='V')return;if(x==='TG'){setTG(d.destaques||(d.destaque&&d.destaque!=='none'?[d.destaque]:[]));return}if(x==='C'){setChk(k,d[k]||[]);return}if(k.startsWith('pv_')){$('f_'+k).value=(d.privado||{})[k.slice(3)]||'';return}const el=$('f_'+k);el.value=x==='P'?(d[k]||[]).map(p=>typeof p==='object'?`${p.nome||''} | ${p.area||''} | ${p.url}`:p).join('\n'):(x==='A'||x==='X')?(d[k]||[]).map(y=>(y&&typeof y==='object')?(y.k+': '+y.v):y).join('\n'):(d[k]??DEF[k]??'');if(x==='A'||x==='P')galeria(k)});
   $('f_emDestaque').checked=d.emDestaque===true;$('f_ativo').checked=d.ativo!==false;$('f_sincronizar').checked=d.sincronizar!==false;$('f_espelharMidia').checked=d.espelharMidia!==false;TIPS=(d.tipologias||[]).map(t=>({...t}));renderTips();pend();
   if(!CUR&&!d.ref)autoRef();
+  setTimeout(()=>{try{autoProx()}catch(e){}},500);
+  setTimeout(()=>{try{autoTec()}catch(e){}},900);
 }
+const TEC_TENTADO=new Set();
+async function atualizarTecnico(silencioso){
+  const link=(CUR&&CUR.linkOrigem)||BASE.linkOrigem||$('url').value.trim();
+  if(!link){if(!silencioso)aviso('Esse imóvel não tem link da Órulo/AoCubo. Use Novo imóvel > Órulo ou AoCubo e cole o link.');return}
+  if(!silencioso)aviso('Buscando metragens e valores na origem...');
+  const r=await API('/api/importar-link',{method:'POST',body:JSON.stringify({url:link})});
+  if(!r||!r.success){if(!silencioso)aviso((r&&r.error)||'Não consegui ler o link.');return}
+  const d=r.dados,novo={};
+  ['preco','precoM2','area','dormitorios','vagas','estagio','tipologias','infoTecnica'].forEach(k=>{const v=d[k];if(Array.isArray(v)?v.length:v)novo[k]=v});
+  if(!Object.keys(novo).length){if(!silencioso)aviso('A origem não trouxe tipologias nem informações técnicas para este imóvel.');return}
+  BASE={...coleta(),...novo,linkOrigem:link};preencher(BASE);
+  aviso('Metragens, valores e informações técnicas preenchidos pela origem. Confira e clique em Salvar.');
+}
+function autoTec(){
+  const link=(CUR&&CUR.linkOrigem)||BASE.linkOrigem;if(!link||TIPS.length)return;
+  if(TEC_TENTADO.has(link))return;TEC_TENTADO.add(link);atualizarTecnico(true);
+}
+document.addEventListener('click',e=>{if(e.target.id==='tpAuto')atualizarTecnico(false)});
 let refBusy=false;
 async function autoRef(){if(refBusy)return;refBusy=true;try{const r=await API('/api/proxima-ref');const el=$('f_ref');if(r&&r.ref&&el&&!el.value){el.value=r.ref;if(typeof seoPrev==='function')seoPrev()}}catch(e){}finally{refBusy=false}}
 function urlsDe(k){const v=$('f_'+k).value;return k==='plantas'?linesPlantas(v).map(p=>typeof p==='object'?p.url:p):lines(v)}
@@ -788,7 +809,7 @@ const TP_CAMPOS=[['nome','ex.: Apartamento'],['area','ex.: 98 m²'],['dorm','2']
 function renderTips(){
   $('tipos-box').innerHTML=`<div class="tp-row tp-cab"><span>Tipo</span><span>Área</span><span>Dorm.</span><span>Suítes</span><span>Banh.</span><span>Vagas</span><span>A partir de</span><span></span></div>`
     +TIPS.map((t,k)=>`<div class="tp-row">${TP_CAMPOS.map(([col,ph])=>`<input data-k="${k}" data-c="${col}" value="${esc(t[col]||'')}" placeholder="${ph}" aria-label="${col}">`).join('')}<button type="button" class="btn danger sm" data-rm="${k}">Remover</button></div>`).join('')
-    +`<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:6px"><button type="button" class="btn ghost sm" id="tp-add">Adicionar tipologia</button><span class="dica">Imóveis da Órulo já trazem essas linhas. Para AoCubo e cadastro manual, preencha aqui.</span></div>`;
+    +`<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:6px"><button type="button" class="btn ghost sm" id="tp-add">Adicionar tipologia</button><button type="button" class="btn ghost sm" id="tpAuto">Buscar metragens e valores na origem</button><span class="dica">Automático: ao importar o link da Órulo ou do AoCubo, as tipologias (metragem, dormitórios, suítes, banheiros, vagas e valor) e as informações técnicas entram sozinhas e são atualizadas a cada 6 h. Só preencha à mão se a origem não trouxer.</span></div>`;
 }
 document.addEventListener('input',e=>{const k=e.target.dataset&&e.target.dataset.k;if(k===undefined)return;TIPS[+k][e.target.dataset.c]=e.target.value;pend()});
 document.addEventListener('click',e=>{
@@ -1119,15 +1140,26 @@ caracteristicasUnidade:['Varanda','Varanda Gourmet','Sacada com Churrasqueira','
 proximidades:['Açougue, Feiras e Supermercados','Padaria','Restaurantes','Escolas Particulares','Escolas Públicas','Faculdade','Farmácia','Hospital','Estação de Metrô','Estação de Trem','Ponto de Ônibus','Parque','Praça','Shopping','Posto de Gasolina','Banco','Academia','Aeroporto']};
 const norm=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
 try{const sv=JSON.parse(localStorage.getItem('jb_catalogo')||'{}');Object.keys(sv).forEach(k=>{if(CAT[k])CAT[k]=[...CAT[k],...sv[k].filter(v=>!CAT[k].some(c=>norm(c)===norm(v)))]})}catch(e){}
+let REMOV={};try{REMOV=JSON.parse(localStorage.getItem('jb_removidos')||'{}')}catch(e){}
+const removido=(k,t)=>(REMOV[k]||[]).some(x=>norm(x)===norm(t));
 function lembrarCat(k,extras){
-  if(!extras.length)return;CAT[k]=[...(CAT[k]||[]),...extras];
+  if(k==='proximidades')return; // proximidades são particulares de cada imóvel: não entram no catálogo
+  extras=extras.filter(v=>!(CAT[k]||[]).some(c=>norm(c)===norm(v)));if(!extras.length)return;CAT[k]=[...(CAT[k]||[]),...extras];
   try{const sv=JSON.parse(localStorage.getItem('jb_catalogo')||'{}');sv[k]=[...new Set([...(sv[k]||[]),...extras])];localStorage.setItem('jb_catalogo',JSON.stringify(sv))}catch(e){}
 }
 function setChk(k,vals){
-  const marcados=new Set((vals||[]).map(norm)),cat=CAT[k]||[],extras=(vals||[]).filter(v=>String(v||'').trim()&&!cat.some(c=>norm(c)===norm(v)));
-  lembrarCat(k,[...new Set(extras)]);
-  $('f_'+k).innerHTML=[...cat,...extras].map(t=>`<label><input type="checkbox" value="${esc(t)}" ${marcados.has(norm(t))?'checked':''}>${esc(t)}</label>`).join('');
+  const marcados=new Set((vals||[]).map(norm)),cat=(CAT[k]||[]).filter(c=>!removido(k,c)),extras=[...new Set((vals||[]).filter(v=>String(v||'').trim()&&!cat.some(c=>norm(c)===norm(v))))];
+  lembrarCat(k,extras);
+  $('f_'+k).innerHTML=[...cat,...extras].map(t=>`<label><input type="checkbox" value="${esc(t)}" ${marcados.has(norm(t))?'checked':''}><span>${esc(t)}</span><button type="button" class="chk-x" data-rmchk="${k}" data-v="${esc(t)}" title="Remover esta opção da lista" aria-label="Remover ${esc(t)}">remover</button></label>`).join('');
 }
+document.addEventListener('click',e=>{
+  const k=e.target.dataset&&e.target.dataset.rmchk;if(!k)return;
+  e.preventDefault();e.stopPropagation();const v=e.target.dataset.v;
+  REMOV[k]=[...new Set([...(REMOV[k]||[]),v])];
+  CAT[k]=(CAT[k]||[]).filter(c=>norm(c)!==norm(v));
+  try{localStorage.setItem('jb_removidos',JSON.stringify(REMOV));const sv=JSON.parse(localStorage.getItem('jb_catalogo')||'{}');if(sv[k]){sv[k]=sv[k].filter(c=>norm(c)!==norm(v));localStorage.setItem('jb_catalogo',JSON.stringify(sv))}}catch(x){}
+  const marcados=getChk(k).filter(c=>norm(c)!==norm(v));setChk(k,marcados);aviso('Opção removida da lista. Clique em Salvar para confirmar no imóvel.');
+},true);
 const getChk=k=>[...document.querySelectorAll('#f_'+k+' input:checked')].map(i=>i.value);
 const setTG=vals=>{const m=new Set(vals||[]);document.querySelectorAll('#f_destaques input').forEach(i=>{i.checked=m.has(i.value)})};
 document.addEventListener('change',e=>{if(e.target.closest&&e.target.closest('#f_destaques')&&e.target.checked&&getChk('destaques').length>3){e.target.checked=false;aviso('Máximo de 3 tarjas por imóvel.')}});
@@ -1137,31 +1169,42 @@ document.addEventListener('click',e=>{
   const atual=getChk(k);atual.push(v);const todos=[...document.querySelectorAll('#f_'+k+' input')].map(i=>i.value);
   CAT[k]=[...new Set([...(CAT[k]||[]),...todos])];setChk(k,atual);inp.value='';
 });
-// ---------- PROXIMIDADES PELO ENDEREÇO ----------
+// ---------- PROXIMIDADES AUTOMÁTICAS (pelo nome do empreendimento e endereço) ----------
 (function(){
   const f=$('f_proximidades'),box=f&&f.closest('.f');if(!box)return;
   const d=document.createElement('div');d.className='linha-up';
-  d.innerHTML='<button type="button" class="btn ghost sm" id="proxBuscar">📍 Buscar o que tem perto pelo endereço</button><span class="dica">Localiza o endereço no mapa gratuito (OpenStreetMap) e marca sozinho o que existir por perto. Quanto mais completo o logradouro e o número, mais preciso. Confira antes de salvar.</span><div id="proxRes" style="width:100%;margin-top:6px;font-size:13px;line-height:1.7"></div>';
+  d.innerHTML='<button type="button" class="btn ghost sm" id="proxBuscar">📍 Buscar de novo o que tem perto</button><span class="dica">Automático: ao abrir o imóvel, o sistema acha o local pelo nome do empreendimento (ou pelo endereço) e marca o que existe por perto. Confira antes de salvar.</span><div id="proxRes" style="width:100%;margin-top:6px;font-size:13px;line-height:1.7"></div>';
   box.appendChild(d);
 })();
-document.addEventListener('click',async e=>{
-  if(e.target.id!=='proxBuscar')return;
-  const btn=e.target,res=$('proxRes'),v=id=>($('f_'+id)?$('f_'+id).value.trim():'');
-  const bairro=v('localizacao'),endereco=[[v('logradouro'),v('numero')].filter(Boolean).join(', '),bairro,v('cep')].filter(Boolean).join(', ');
-  if(!bairro&&!v('logradouro')&&!(v('lat')&&v('lng'))){aviso('Preencha o endereço (ou bairro e cidade) na aba Dados do imóvel.');return}
-  const t0=btn.textContent;btn.disabled=true;btn.textContent='Consultando o mapa…';res.textContent='';
+const PROX_TENTADO=new Set();
+async function buscarProx(auto){
+  const btn=$('proxBuscar'),res=$('proxRes');if(!btn||btn.disabled)return;
+  const v=id=>($('f_'+id)?$('f_'+id).value.trim():'');
+  const bairro=v('localizacao'),nome=v('titulo');
+  if(!nome&&!bairro&&!v('logradouro')&&!(v('lat')&&v('lng'))){if(!auto)aviso('Preencha o nome do empreendimento e o bairro.');return}
+  const endereco=v('logradouro')?[[v('logradouro'),v('numero')].filter(Boolean).join(', '),bairro,v('cep')].filter(Boolean).join(', '):'';
+  const t0=btn.textContent;btn.disabled=true;btn.textContent='Procurando…';res.innerHTML='<span class="dica">'+(auto?'Buscando automaticamente o que tem perto, pelo nome do empreendimento…':'Consultando o mapa…')+'</span>';
   try{
-    const r=await API('/api/proximidades',{method:'POST',body:JSON.stringify({endereco,localizacao:bairro,lat:v('lat'),lng:v('lng')})});
+    const r=await API('/api/proximidades',{method:'POST',body:JSON.stringify({nome,endereco,localizacao:bairro,lat:v('lat'),lng:v('lng')})});
     if(!r||!r.success){res.innerHTML='<span style="color:var(--red)">'+esc((r&&r.error)||'Não consegui buscar.')+'</span>';return}
     const novos=r.detalhes.map(x=>x.categoria),atual=getChk('proximidades');
     setChk('proximidades',[...new Set([...atual,...novos])]);
     if($('f_lat')&&!$('f_lat').value)$('f_lat').value=r.lat;if($('f_lng')&&!$('f_lng').value)$('f_lng').value=r.lng;
     const perto=r.detalhes.filter(x=>/Metrô|Trem/.test(x.categoria)).sort((a,b)=>a.metros-b.metros)[0];
     if(perto&&$('f_proximidade')&&!$('f_proximidade').value){$('f_proximidade').value=(/Metrô/.test(perto.categoria)?'Metrô ':'Trem ')+(perto.nome||'')+' a '+perto.metros+' m (cerca de '+Math.max(1,Math.round(perto.metros/80))+' min a pé)'}
-    res.innerHTML=(r.detalhes.length?r.detalhes.map(x=>'✓ <b>'+esc(x.categoria)+'</b>'+(x.nome?' — '+esc(x.nome):'')+' · '+x.metros+' m').join('<br>'):'Nada encontrado nos raios de busca.')+(v('logradouro')?'':'<br><span class="dica">Sem logradouro, a busca usou só o bairro: resultado aproximado.</span>');
+    const como={'coordenadas':'pelas coordenadas informadas','endereço':'pelo endereço','nome do empreendimento':'pelo nome do empreendimento','bairro':'pelo centro do bairro (aproximado: preencha logradouro e número para ficar exato)'}[r.como]||'';
+    res.innerHTML='<span class="dica">Local encontrado '+como+'.</span><br>'+(r.detalhes.length?r.detalhes.map(x=>'✓ <b>'+esc(x.categoria)+'</b>'+(x.nome?' — '+esc(x.nome):'')+' · '+x.metros+' m').join('<br>'):'Nada encontrado nos raios de busca.');
     aviso('Proximidades marcadas. Confira e clique em Salvar.');
-  }finally{btn.disabled=false;btn.textContent=t0}
-});
+  }catch(e){res.innerHTML='<span style="color:var(--red)">Não consegui consultar o mapa agora. Tente o botão de novo em alguns minutos.</span>'}
+  finally{btn.disabled=false;btn.textContent=t0}
+}
+// roda sozinho uma vez por imóvel quando ainda não há nada marcado em "O que tem perto?"
+function autoProx(){
+  if(!$('f_proximidades')||getChk('proximidades').length)return;
+  const chave=($('f_titulo').value.trim()+'|'+$('f_localizacao').value.trim()).toLowerCase();
+  if(chave==='|'||PROX_TENTADO.has(chave))return;PROX_TENTADO.add(chave);buscarProx(true);
+}
+document.addEventListener('click',e=>{if(e.target.id==='proxBuscar')buscarProx(false)});
 // ---------- FORMAS DE CADASTRO ----------
 let MODO='manual';
 function setModo(m){

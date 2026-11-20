@@ -35,13 +35,31 @@ function urlDe(item) {
 }
 const ESTAGIOS = [[/pronto|entregue/i, 'prontos'], [/constru|obra/i, 'construcao'], [/lan[cç]amento|breve|planta/i, 'lancamentos']];
 
-function mapear(b, imgs, plantas) {
+const K_AREA = ['private_area', 'useful_area', 'area', 'min_area', 'total_area'];
+const K_PRECO = ['min_price', 'price', 'initial_price', 'sale_price', 'value', 'total_price'];
+const K_BANH = ['bathrooms', 'bathroom', 'toilets', 'lavatories'];
+const K_VAGA = ['parking', 'parking_spaces', 'garage', 'vacancies', 'parking_lots'];
+// Quando o empreendimento não traz tipologias prontas, agrupa as unidades (mesma metragem e dormitórios) e usa o menor preço
+function agruparUnidades(us) {
+  const m = new Map();
+  us.forEach(u => {
+    const a = num(pega(u, ...K_AREA)), d = pega(u, 'bedrooms', 'dorms'), su = pega(u, 'suites'), bn = pega(u, ...K_BANH), vg = pega(u, ...K_VAGA), pr = num(pega(u, ...K_PRECO));
+    if (!a && !d) return;
+    const k = [a, d, su, bn, vg].join('|'), x = m.get(k);
+    if (!x) m.set(k, { name: texto(pega(u, 'typology', 'type', 'name', 'title')), private_area: a || '', bedrooms: d, suites: su, bathrooms: bn, parking: vg, min_price: pr || '' });
+    else if (pr && (!x.min_price || pr < x.min_price)) x.min_price = pr;
+  });
+  return [...m.values()];
+}
+function mapear(b, imgs, plantas, tipsApi, unidades) {
   const end = b.address || {};
-  const tip = lista(b.typologies || b.types || []);
+  let tip = lista(b.typologies || b.types || []);
+  if (!tip.length) tip = lista(tipsApi, 'typologies', 'items', 'results', 'data');
+  if (!tip.length) tip = agruparUnidades(lista(unidades, 'units', 'items', 'results', 'data'));
   const dorms = [num(b.bedrooms), ...tip.map(t => num(t.bedrooms))].filter(n => n != null);
-  const areas = [num(b.min_area), num(b.max_area), ...tip.map(t => num(pega(t, 'private_area', 'area', 'min_area')))].filter(n => n != null && n > 0);
-  const precos = [num(pega(b, 'min_price', 'price')), ...tip.map(t => num(pega(t, 'min_price', 'price')))].filter(n => n != null && n > 0);
-  const vagasN = [num(pega(b, 'parking', 'parking_spaces', 'garage')), ...tip.map(t => num(pega(t, 'parking', 'parking_spaces', 'garage')))].filter(n => n != null && n > 0);
+  const areas = [num(b.min_area), num(b.max_area), ...tip.map(t => num(pega(t, ...K_AREA)))].filter(n => n != null && n > 0);
+  const precos = [num(pega(b, 'min_price', 'price')), ...tip.map(t => num(pega(t, ...K_PRECO)))].filter(n => n != null && n > 0);
+  const vagasN = [num(pega(b, 'parking', 'parking_spaces', 'garage')), ...tip.map(t => num(pega(t, ...K_VAGA)))].filter(n => n != null && n > 0);
   const faixa = (arr, fmt, un) => { if (!arr.length) return ''; const a = Math.min(...arr), z = Math.max(...arr); return a === z ? fmt(a) + un : `${fmt(a)} a ${fmt(z)}${un}`; };
   const estTxt = texto(pega(b, 'status', 'stage', 'construction_status', 'situation'));
   const estagio = (ESTAGIOS.find(([re]) => re.test(estTxt)) || [])[1] || '';
@@ -60,10 +78,12 @@ function mapear(b, imgs, plantas) {
   if (torres) info.push({ k: 'Número de torres', v: String(torres) });
   if (unid) info.push({ k: 'Total de unidades', v: String(unid) });
   const est = pega(b, 'stock', 'available_units', 'units_available'); if (est) info.push({ k: 'Estoque', v: String(est) });
+  const extra = [['Andares', 'floors', 'number_of_floors', 'total_floors'], ['Unidades por andar', 'units_per_floor', 'apartments_per_floor'], ['Área do terreno', 'land_area', 'ground_area', 'terrain_area'], ['Lançamento', 'launch_date', 'launched_at'], ['Início das obras', 'construction_start', 'work_start_date', 'start_date'], ['Andamento da obra', 'progress', 'construction_progress', 'work_progress']];
+  extra.forEach(([rot, ...ks]) => { const v = texto(pega(b, ...ks)); if (v) info.push({ k: rot, v: /area/i.test(ks[0]) && num(v) ? fmtN(num(v)) + ' m²' : /progress/i.test(ks[0]) && num(v) != null && !/%/.test(v) ? v + '%' : v }); });
   const dmin = dorms.length ? Math.min(...dorms) : 0, dmax = dorms.length ? Math.max(...dorms) : 0;
   // valor por m²: usa o campo do Órulo se existir; senão calcula pelo tipo de menor preço (preço ÷ área)
   let pm2 = num(pega(b, 'min_price_per_square_meter', 'price_per_square_meter', 'price_per_m2', 'square_meter_price'));
-  if (!pm2) { const c = tip.map(t => ({ p: num(pega(t, 'min_price', 'price')), a: num(pega(t, 'private_area', 'area', 'min_area')) })).filter(x => x.p > 0 && x.a > 0).sort((x, y) => x.p - y.p)[0]; if (c) pm2 = c.p / c.a; }
+  if (!pm2) { const c = tip.map(t => ({ p: num(pega(t, ...K_PRECO)), a: num(pega(t, ...K_AREA)) })).filter(x => x.p > 0 && x.a > 0).sort((x, y) => x.p - y.p)[0]; if (c) pm2 = c.p / c.a; }
   const dados = {
     titulo: texto(b.name),
     preco: precos.length ? brl(Math.min(...precos)) : '',
@@ -77,7 +97,10 @@ function mapear(b, imgs, plantas) {
     lazer: lista(b.features).map(texto).filter(Boolean).slice(0, 60),
     infoTecnica: info,
     apresentacao: texto(pega(b, 'description', 'presentation')).slice(0, 3000),
-    tipologias: tip.map(t => ({ nome: texto(pega(t, 'name', 'title')), area: pega(t, 'private_area', 'area', 'min_area') ? fmtN(num(pega(t, 'private_area', 'area', 'min_area'))) + ' m²' : '', dorm: String(pega(t, 'bedrooms')), suites: String(pega(t, 'suites')), banh: String(pega(t, 'bathrooms', 'bathroom', 'toilets')), vagas: String(pega(t, 'parking', 'parking_spaces')), preco: num(pega(t, 'min_price', 'price')) ? brl(num(pega(t, 'min_price', 'price'))) : '' })).filter(t => t.nome).slice(0, 40)
+    tipologias: tip.map(t => {
+      const area = num(pega(t, ...K_AREA)), preco = num(pega(t, ...K_PRECO)), dorm = String(pega(t, 'bedrooms', 'dorms'));
+      return { nome: texto(pega(t, 'name', 'title', 'typology', 'type', 'description')) || (dorm ? `${dorm} dormitório${dorm === '1' ? '' : 's'}` : 'Apartamento'), area: area ? fmtN(area) + ' m²' : '', dorm, suites: String(pega(t, 'suites')), banh: String(pega(t, ...K_BANH)), vagas: String(pega(t, ...K_VAGA)), preco: preco ? brl(preco) : '' };
+    }).filter(t => t.area || t.preco || t.dorm).slice(0, 40)
   };
   const diag = `campos do empreendimento: ${Object.keys(b).join(', ')} | imagens: ${fotos.length} | plantas: ${pl.length}`;
   return { dados, diag };
@@ -85,11 +108,13 @@ function mapear(b, imgs, plantas) {
 
 async function importar(id) {
   const b = await chamar('/buildings/' + id);
-  const [imgs, plantas] = await Promise.all([
+  const [imgs, plantas, tipsApi, unidades] = await Promise.all([
     chamar(`/buildings/${id}/images`, { width: 1200, height: 900 }).catch(() => []),
-    chamar(`/buildings/${id}/floor_plans`, { width: 1200, height: 900 }).catch(() => [])
+    chamar(`/buildings/${id}/floor_plans`, { width: 1200, height: 900 }).catch(() => []),
+    lista(b.typologies || b.types || []).length ? null : chamar(`/buildings/${id}/typologies`).catch(() => null),
+    lista(b.typologies || b.types || []).length ? null : chamar(`/buildings/${id}/units`, { results_per_page: 200 }).catch(() => null)
   ]);
-  return mapear(b, imgs, plantas);
+  return mapear(b, imgs, plantas, tipsApi, unidades);
 }
 // Lista empreendimentos com filtros. Os filtros vão para a API e também são aplicados aqui, porque os nomes
 // dos parâmetros aceitos dependem da sua conta Órulo (confira em documento.orulo.com.br).
