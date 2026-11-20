@@ -63,9 +63,10 @@
 <header>
     <div class="logo-container">
         <a href="/" class="logo">
-            <img id="dyn-logo-img" src="/logo-joildo-header.svg" alt="Joildo Brokers - Inteligência Imobiliária" class="logo-img" onerror="this.style.display='none';document.getElementById('dyn-logo-text').style.display='inline';">
+            <img id="dyn-logo-img" src="/logo-joildo-header.svg" alt="Joildo Brokers - Inteligência Imobiliária" class="logo-img" onerror="this.style.display='none';document.getElementById('dyn-logo-text').style.display='inline';document.getElementById('dyn-slogan').style.display='';">
             <span id="dyn-logo-text" style="display:none;">JOILDO <span>BROKERS</span></span>
         </a>
+        <span class="logo-tagline" id="dyn-slogan">Ética e dedicação para tornar seus sonhos realidade</span>
     </div>
     <nav aria-label="Menu principal">
         <ul>
@@ -610,9 +611,12 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
                 document.getElementById('dyn-logo-img').src = '/logo-joildo-header.svg';
                 document.getElementById('dyn-logo-img').style.display = 'block';
                 document.getElementById('dyn-logo-text').style.display = 'none';
+                document.getElementById('dyn-slogan').style.display = 'none';
             }
 
-            // o topo mostra apenas a logo; o slogan não aparece ali
+            if (configGeral.slogan) {
+                document.getElementById('dyn-slogan').innerText = configGeral.slogan;
+            }
 
             const ldOrg = document.getElementById('ld-org');
             if (ldOrg) {
