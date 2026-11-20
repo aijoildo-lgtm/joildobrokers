@@ -403,13 +403,38 @@ function mesclarExtracao(base, s5, ia) {
     infoTecnica: arr(s5.infoTecnica, ia.infoTecnica).map(x => ({ k: s2(x.k, 80), v: s2(x.v, 200) })).filter(x => x.k).slice(0, 40)
   };
 }
-app.post('/api/extrair-texto', exigirLogin, ah(async (req, res) => {
-  const texto = String((req.body || {}).texto || '').slice(0, 30000);
+async function extrairDadosDoTexto(textoBruto) {
+  const texto = String(textoBruto || '').slice(0, 30000);
   const base = extrairDoTexto(texto), s5 = extrairSecao5(texto);
   const falta = !s5.tipologias.length || !s5.lazer.length || !s5.infoTecnica.length || !base.titulo || !base.preco;
   const ia = (falta && texto.trim().length > 80) ? await extrairComIA(texto) : {};
-  res.json({ success: true, dados: mesclarExtracao(base, s5, ia), porIA: Object.keys(ia).length > 0 });
+  return { dados: mesclarExtracao(base, s5, ia), porIA: Object.keys(ia).length > 0 };
+}
+app.post('/api/extrair-texto', exigirLogin, ah(async (req, res) => {
+  const r = await extrairDadosDoTexto((req.body || {}).texto);
+  res.json({ success: true, ...r });
 }));
+
+// ROTA ALTERNATIVA: PDF do empreendimento (salvo da página da Órulo ou baixado nela) -> texto -> mesmo extrator do Assistente
+app.post('/api/extrair-pdf', exigirLogin, async (req, res) => {
+  try {
+    const b64 = String((req.body || {}).pdf || '').replace(/^data:application\/pdf;base64,/, '');
+    if (!b64) return res.json({ success: false, error: 'Envie o arquivo PDF.' });
+    const buf = Buffer.from(b64, 'base64');
+    if (buf.slice(0, 5).toString() !== '%PDF-') return res.json({ success: false, error: 'Esse arquivo não é um PDF válido.' });
+    const { PDFParse } = require('pdf-parse');
+    const leitor = new PDFParse({ data: buf });
+    let lido;
+    try { lido = await leitor.getText(); } finally { await leitor.destroy().catch(() => {}); }
+    const texto = String(lido.text || '').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+    if (texto.length < 80) return res.json({ success: false, error: 'O PDF não tem texto legível (parece ser imagem escaneada). Salve a página da Órulo como PDF pelo navegador (Ctrl+P, Salvar como PDF) ou use o texto copiado.' });
+    const r = await extrairDadosDoTexto(texto);
+    res.json({ success: true, paginas: lido.total, ...r });
+  } catch (e) {
+    console.error('Erro PDF:', e.message);
+    res.json({ success: false, error: 'Não consegui ler esse PDF (' + (e.message || 'erro') + ').' });
+  }
+});
 
 // SESSÃO DO ÓRULO (cookie guardado só no servidor, nunca enviado ao navegador)
 app.post('/api/orulo-sessao', exigirLogin, (req, res) => {
@@ -447,7 +472,7 @@ app.post(['/api/minerar-orulo', '/api/importar-link'], exigirLogin, async (req, 
   const m = String(url).match(/buildings\/(\d+)/i);
   if (!m) return res.json({ success: false, precisaTexto: true, error: 'Não achei o número do empreendimento no link (modelo: orulo.com.br/buildings/83363).' });
   if (!process.env.ORULO_CLIENT_ID || !process.env.ORULO_CLIENT_SECRET)
-    return res.json({ success: false, precisaTexto: true, error: 'Falta ligar a API da Órulo: defina ORULO_CLIENT_ID e ORULO_CLIENT_SECRET no Render. Enquanto isso, use a aba Assistente IA e cole o texto da página.' });
+    return res.json({ success: false, precisaTexto: true, error: 'Falta ligar a API da Órulo: defina ORULO_CLIENT_ID e ORULO_CLIENT_SECRET no Render. Enquanto isso, envie o PDF do empreendimento (botão abaixo) ou cole o texto da página.' });
   try {
     const { dados, diag } = await orulo.importar(m[1]);
     console.log('ORULO API:', diag);
