@@ -308,44 +308,73 @@ app.get('/api/admin/leads', exigirLogin, ah(async (req, res) =>
 const rad = (g) => g * Math.PI / 180;
 const distM = (a, b, c, d) => { const x = rad(c - a), y = rad(d - b), h = Math.sin(x / 2) ** 2 + Math.cos(rad(a)) * Math.cos(rad(c)) * Math.sin(y / 2) ** 2; return 6371000 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h)); };
 const UA_OSM = { 'User-Agent': 'JoildoBrokers/1.0 (joildo.contato@gmail.com)', 'Accept-Language': 'pt-BR' };
+const semAcento = (t) => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const pausa = (ms) => new Promise(r => setTimeout(r, ms));
+const ehPublica = (t) => t['operator:type'] === 'public' || /^(e\.?\s?m\.?|e\.?\s?e\.?|emei|emef|ceu|escola (municipal|estadual))\b/i.test(t.name || '');
+// [categoria, raio em metros, seletores Overpass, teste final]
 const REGRAS_PROX = [
-  ['Açougue, Feiras e Supermercados', 1000, t => t.shop === 'supermarket' || t.shop === 'butcher' || t.shop === 'greengrocer' || t.amenity === 'marketplace'],
-  ['Padaria', 800, t => t.shop === 'bakery'],
-  ['Restaurantes', 800, t => t.amenity === 'restaurant'],
-  ['Escolas Públicas', 1200, t => t.amenity === 'school' && (t['operator:type'] === 'public' || /^(e\.?\s?m\.?|e\.?\s?e\.?|emei|emef|ceu|escola (municipal|estadual))\b/i.test(t.name || ''))],
-  ['Escolas Particulares', 1200, t => t.amenity === 'school' && (t['operator:type'] === 'private' || /col[eé]gio|externato|instituto/i.test(t.name || '')) && !/^(e\.?\s?m\.?|e\.?\s?e\.?|emei|emef)\b/i.test(t.name || '')],
-  ['Faculdade', 2000, t => t.amenity === 'university' || t.amenity === 'college'],
-  ['Farmácia', 800, t => t.amenity === 'pharmacy'],
-  ['Hospital', 2500, t => t.amenity === 'hospital'],
-  ['Estação de Metrô', 1500, t => (t.railway === 'station' && (t.station === 'subway' || t.subway === 'yes')) || t.railway === 'subway_entrance'],
-  ['Estação de Trem', 2000, t => t.railway === 'station' && t.station !== 'subway' && t.subway !== 'yes'],
-  ['Ponto de Ônibus', 400, t => t.highway === 'bus_stop'],
-  ['Parque', 1500, t => t.leisure === 'park'],
-  ['Praça', 800, t => t.place === 'square' || /^pra[çc]a\b/i.test(t.name || '')],
-  ['Shopping', 2500, t => t.shop === 'mall'],
-  ['Posto de Gasolina', 1000, t => t.amenity === 'fuel'],
-  ['Banco', 800, t => t.amenity === 'bank'],
-  ['Academia', 1000, t => t.leisure === 'fitness_centre']
+  ['Açougue, Feiras e Supermercados', 1000, ['[shop~"^(supermarket|butcher|greengrocer)$"]', '[amenity=marketplace]'], () => true],
+  ['Padaria', 800, ['[shop=bakery]'], () => true],
+  ['Restaurantes', 800, ['[amenity=restaurant]'], () => true],
+  ['Escolas Públicas', 1200, ['[amenity=school]'], t => ehPublica(t)],
+  ['Escolas Particulares', 1200, ['[amenity=school]'], t => t['operator:type'] === 'private' || (/col[eé]gio|externato|instituto/i.test(t.name || '') && !ehPublica(t))],
+  ['Faculdade', 2000, ['[amenity~"^(university|college)$"]'], () => true],
+  ['Farmácia', 800, ['[amenity=pharmacy]'], () => true],
+  ['Hospital', 2500, ['[amenity=hospital]'], () => true],
+  ['Estação de Metrô', 1500, ['[railway=station]', '[railway=subway_entrance]'], t => (t.railway === 'station' && (t.station === 'subway' || t.subway === 'yes')) || t.railway === 'subway_entrance'],
+  ['Estação de Trem', 2000, ['[railway=station]'], t => t.railway === 'station' && t.station !== 'subway' && t.subway !== 'yes'],
+  ['Ponto de Ônibus', 400, ['[highway=bus_stop]'], () => true],
+  ['Parque', 1500, ['[leisure=park]'], () => true],
+  ['Praça', 800, ['[place=square]', '[leisure=park][name~"^Pra[çc]a"]'], t => t.place === 'square' || /^pra[çc]a\b/i.test(t.name || '')],
+  ['Shopping', 2500, ['[shop=mall]'], () => true],
+  ['Posto de Gasolina', 1000, ['[amenity=fuel]'], () => true],
+  ['Banco', 800, ['[amenity=bank]'], () => true],
+  ['Academia', 1000, ['[leisure=fitness_centre]'], () => true],
+  ['Aeroporto', 25000, ['[aeroway=aerodrome][iata]'], () => true]
 ];
+const OVERPASS = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter', 'https://overpass.private.coffee/api/interpreter'];
+async function consultarOverpass(q) {
+  let ultimo;
+  for (const url of OVERPASS) {
+    try {
+      const r = await axios.post(url, new URLSearchParams({ data: q }).toString(), { headers: { ...UA_OSM, 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 35000 });
+      if (r.data && Array.isArray(r.data.elements)) return r.data.elements;
+      ultimo = new Error('resposta inesperada');
+    } catch (e) { ultimo = e; console.error('Overpass', url, e.response ? 'HTTP ' + e.response.status : e.message); }
+  }
+  throw new Error('Overpass: ' + (ultimo && ultimo.response ? 'HTTP ' + ultimo.response.status : (ultimo && ultimo.message) || 'sem resposta'));
+}
+// Acha o ponto do imóvel: coordenadas > endereço > NOME do empreendimento > centro do bairro
+async function localizarImovel(b) {
+  const lat0 = parseFloat(String(b.lat || '').replace(',', '.')), lng0 = parseFloat(String(b.lng || '').replace(',', '.'));
+  if (Number.isFinite(lat0) && Number.isFinite(lng0)) return { lat: lat0, lng: lng0, como: 'coordenadas' };
+  const loc = s2(b.localizacao, 200).trim(), nome = s2(b.nome, 200).trim().replace(/\s*\([^)]*\)\s*$/, ''), rua = s2(b.endereco, 250).trim();
+  const partes = loc.split(',').map(x => x.trim()), bairro = partes[0] || '', cidade = (partes[1] || 'São Paulo').split(' - ')[0].trim();
+  const tentativas = [];
+  if (rua) tentativas.push(['endereço', rua]);
+  if (nome) { tentativas.push(['nome do empreendimento', `${nome}, ${bairro}, ${cidade}`]); tentativas.push(['nome do empreendimento', `${nome}, ${cidade}`]); }
+  if (bairro) tentativas.push(['bairro', `${bairro}, ${cidade}`]);
+  let erroRede = '';
+  for (const [como, q] of tentativas) {
+    try {
+      const g = await axios.get('https://nominatim.openstreetmap.org/search', { params: { format: 'json', limit: 3, countrycodes: 'br', q: /brasil/i.test(q) ? q : q + ', Brasil' }, headers: UA_OSM, timeout: 15000 });
+      const ok = (g.data || []).find(x => !cidade || semAcento(x.display_name).includes(semAcento(cidade)));
+      if (ok) return { lat: parseFloat(ok.lat), lng: parseFloat(ok.lon), como, achado: ok.display_name };
+    } catch (e) { erroRede = 'Nominatim: ' + (e.response ? 'HTTP ' + e.response.status : e.message); console.error(erroRede); }
+    await pausa(1100); // regra do serviço gratuito: no máximo 1 consulta por segundo
+  }
+  if (erroRede) throw new Error(erroRede);
+  return null;
+}
 app.post('/api/proximidades', exigirLogin, async (req, res) => {
   try {
-    const b = req.body || {};
-    let lat = parseFloat(String(b.lat || '').replace(',', '.')), lng = parseFloat(String(b.lng || '').replace(',', '.'));
-    let achado = '';
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-      const consultas = [b.endereco, b.localizacao].map(x => s2(x, 250).trim()).filter(Boolean);
-      for (const q of consultas) {
-        const g = await axios.get('https://nominatim.openstreetmap.org/search', { params: { format: 'json', limit: 1, countrycodes: 'br', q: /brasil|brazil/i.test(q) ? q : q + ', Brasil' }, headers: UA_OSM, timeout: 15000 });
-        if (g.data && g.data[0]) { lat = parseFloat(g.data[0].lat); lng = parseFloat(g.data[0].lon); achado = g.data[0].display_name || q; break; }
-      }
-    }
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return res.status(404).json({ success: false, error: 'Não consegui localizar esse endereço no mapa. Confira logradouro, número e bairro (ou preencha latitude e longitude).' });
-    const maior = Math.max(...REGRAS_PROX.map(r => r[1]));
-    const q = `[out:json][timeout:25];(nwr(around:${maior},${lat},${lng})[shop~"^(supermarket|butcher|greengrocer|bakery|mall)$"];nwr(around:${maior},${lat},${lng})[amenity~"^(marketplace|restaurant|school|university|college|pharmacy|hospital|fuel|bank)$"];nwr(around:${maior},${lat},${lng})[railway~"^(station|subway_entrance)$"];nwr(around:${maior},${lat},${lng})[highway=bus_stop];nwr(around:${maior},${lat},${lng})[leisure~"^(park|fitness_centre)$"];nwr(around:${maior},${lat},${lng})[place=square];);out center tags 1500;`;
-    const o = await axios.post('https://overpass-api.de/api/interpreter', 'data=' + encodeURIComponent(q), { headers: { ...UA_OSM, 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 40000 });
-    const els = (o.data && o.data.elements) || [];
+    const pt = await localizarImovel(req.body || {});
+    if (!pt) return res.status(404).json({ success: false, error: 'Não consegui achar o local no mapa pelo nome nem pelo bairro. Preencha o logradouro e o número, ou a latitude e longitude, e tente de novo.' });
+    const { lat, lng } = pt, vistos = new Set(), clausulas = [];
+    REGRAS_PROX.forEach(([, raio, sels]) => sels.forEach(sel => { const c = `nwr(around:${raio},${lat},${lng})${sel};`; if (!vistos.has(c)) { vistos.add(c); clausulas.push(c); } }));
+    const els = await consultarOverpass(`[out:json][timeout:30];(${clausulas.join('')});out center tags 2500;`);
     const detalhes = [];
-    for (const [nome, raio, teste] of REGRAS_PROX) {
+    for (const [nome, raio, , teste] of REGRAS_PROX) {
       let melhor = null;
       for (const e of els) {
         const t = e.tags || {}; if (!teste(t)) continue;
@@ -356,10 +385,10 @@ app.post('/api/proximidades', exigirLogin, async (req, res) => {
       }
       if (melhor) detalhes.push({ categoria: nome, nome: melhor.nome, metros: Math.round(melhor.d) });
     }
-    res.json({ success: true, lat: +lat.toFixed(6), lng: +lng.toFixed(6), enderecoAchado: achado, detalhes });
+    res.json({ success: true, lat: +lat.toFixed(6), lng: +lng.toFixed(6), como: pt.como, enderecoAchado: pt.achado || '', detalhes });
   } catch (e) {
     console.error('Erro em proximidades:', e.message);
-    res.status(502).json({ success: false, error: 'Não consegui consultar o mapa agora (serviço gratuito do OpenStreetMap ocupado ou fora do ar). Tente de novo em alguns minutos ou marque à mão.' });
+    res.status(502).json({ success: false, error: 'Não consegui consultar o mapa agora (' + e.message + '). Os serviços gratuitos do OpenStreetMap às vezes ficam ocupados: tente de novo em alguns minutos ou marque à mão.' });
   }
 });
 
