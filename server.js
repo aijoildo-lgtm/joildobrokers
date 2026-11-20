@@ -189,7 +189,7 @@ function limpar(b) {
   o.privado = {}; ['proprietario','corretor','exclusividade','autorizacao','averbado','escriturado','placa','chave','ondeChave','obs'].forEach(k => { o.privado[k] = s2(pv[k], k === 'obs' ? 2000 : 200); });
   o.espelharMidia = b.espelharMidia !== false;
   o.caracteristicasUnidade = (Array.isArray(b.caracteristicasUnidade) ? b.caracteristicasUnidade : []).map(x => s2(x, 80)).filter(Boolean).slice(0, 60);
-  o.tipologias = (Array.isArray(b.tipologias) ? b.tipologias : []).slice(0, 40).map(t => ({ nome: s2(t.nome, 80), area: s2(t.area, 40), dorm: s2(t.dorm, 20), suites: s2(t.suites, 20), vagas: s2(t.vagas, 20), preco: s2(t.preco, 40) })).filter(t => t.nome);
+  o.tipologias = (Array.isArray(b.tipologias) ? b.tipologias : []).slice(0, 40).map(t => ({ nome: s2(t.nome, 80), area: s2(t.area, 40), dorm: s2(t.dorm, 20), suites: s2(t.suites, 20), banh: s2(t.banh, 20), vagas: s2(t.vagas, 20), preco: s2(t.preco, 40) })).filter(t => t.nome);
   o.infoTecnica = (Array.isArray(b.infoTecnica) ? b.infoTecnica : []).slice(0, 40).map(x => ({ k: s2(x.k, 80), v: s2(x.v, 200) })).filter(x => x.k);
   o.emDestaque = b.emDestaque === true;
   o.sincronizar = b.sincronizar !== false;
@@ -201,7 +201,13 @@ function limpar(b) {
   o.destaque = o.destaques[0] || 'none';
   return o;
 }
-const novaRef = () => `REF-${Math.floor(100000 + Math.random() * 900000)}`;
+// Código de referência automático e sequencial: REF_JC-0001, REF_JC-0002...
+const proximaRef = async () => {
+  let max = 0;
+  (await getImoveis()).forEach(i => { const m = /^REF_JC-(\d+)$/i.exec(String(i.ref || '').trim()); if (m) max = Math.max(max, parseInt(m[1], 10)); });
+  return 'REF_JC-' + String(max + 1).padStart(4, '0');
+};
+app.get('/api/proxima-ref', exigirLogin, ah(async (req, res) => res.json({ success: true, ref: await proximaRef() })));
 
 const escA = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const slug = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 80);
@@ -267,16 +273,99 @@ app.post('/api/cadastro-cliente', ah(async (req, res) => {
   });
   if (/youtu/i.test(video)) i.youtube = video.slice(0, 500); else if (video) i.tour360 = video.slice(0, 500);
   const agora = new Date().toISOString();
-  i.id = Date.now(); i.ref = novaRef(); i.estagio = 'usados'; i.transacao = 'Vender Imóvel'; i.categoria = 'Residencial';
+  i.id = Date.now(); i.ref = await proximaRef(); i.estagio = 'usados'; i.transacao = 'Vender Imóvel'; i.categoria = 'Residencial';
   i.origem = 'cliente'; i.pendente = true; i.autorizacaoRecebida = false; i.ativo = false; i.criadoEm = agora; i.atualizadoEm = agora;
   i.privado = { proprietario: nome, corretor: '', exclusividade: 'Não', autorizacao: 'Não', averbado: '', escriturado: '', placa: '', chave: '', ondeChave: '',
     obs: `WhatsApp: ${tel}${email ? ` · E-mail: ${email}` : ''}${b.fotos ? `\nFotos informadas: ${s2(b.fotos, 500)}` : ''}` };
   await addImovel(i);
   res.json({ success: true, ref: i.ref });
 }));
+
+// ===== CONTATOS DO SITE: "Receba a tabela de preços e as plantas" =====
+const LEADS_FILE = path.join(__dirname, 'leads.json');
+const leadFreio = new Map();
+app.post('/api/lead', ah(async (req, res) => {
+  const b = req.body || {};
+  const nome = s2(b.nome, 120).trim(), tel = s2(b.whatsapp, 30).replace(/[^\d+() -]/g, '').trim(), email = s2(b.email, 120).trim();
+  if (!nome || tel.replace(/\D/g, '').length < 10) return res.status(400).json({ success: false, error: 'Informe seu nome e um WhatsApp com DDD.' });
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ success: false, error: 'O e-mail parece incorreto. Corrija ou deixe em branco.' });
+  if (b.aceite !== true) return res.status(400).json({ success: false, error: 'Marque a concordância com o tratamento dos dados.' });
+  const ip = String(req.headers['x-forwarded-for'] || req.ip || '').split(',')[0].trim(), agora = Date.now();
+  const f = (leadFreio.get(ip) || []).filter(t => agora - t < 3600e3);
+  if (f.length >= 8) return res.status(429).json({ success: false, error: 'Muitos envios seguidos. Tente de novo mais tarde.' });
+  f.push(agora); leadFreio.set(ip, f);
+  const l = { id: agora, em: new Date(agora).toISOString(), tipo: s2(b.tipo, 30) || 'tabela-plantas', nome, whatsapp: tel, email, imovelRef: s2(b.imovelRef, 40), imovelTitulo: s2(b.imovelTitulo, 200), aceite: true };
+  if (db) await db.collection('leads').insertOne({ ...l });
+  else { const arr = lerJson(LEADS_FILE, []); arr.unshift(l); gravarJson(LEADS_FILE, arr.slice(0, 2000)); }
+  res.json({ success: true });
+}));
+app.get('/api/admin/leads', exigirLogin, ah(async (req, res) =>
+  res.json(db ? await db.collection('leads').find({}, { projection: { _id: 0 } }).sort({ id: -1 }).limit(500).toArray() : lerJson(LEADS_FILE, []))));
+
+
+// ===== PROXIMIDADES PELO ENDEREÇO (OpenStreetMap: Nominatim + Overpass, gratuito, sem chave) =====
+// A IA de texto não enxerga mapas. Aqui o servidor localiza o endereço e consulta o que existe ao redor.
+const rad = (g) => g * Math.PI / 180;
+const distM = (a, b, c, d) => { const x = rad(c - a), y = rad(d - b), h = Math.sin(x / 2) ** 2 + Math.cos(rad(a)) * Math.cos(rad(c)) * Math.sin(y / 2) ** 2; return 6371000 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h)); };
+const UA_OSM = { 'User-Agent': 'JoildoBrokers/1.0 (joildo.contato@gmail.com)', 'Accept-Language': 'pt-BR' };
+const REGRAS_PROX = [
+  ['Açougue, Feiras e Supermercados', 1000, t => t.shop === 'supermarket' || t.shop === 'butcher' || t.shop === 'greengrocer' || t.amenity === 'marketplace'],
+  ['Padaria', 800, t => t.shop === 'bakery'],
+  ['Restaurantes', 800, t => t.amenity === 'restaurant'],
+  ['Escolas Públicas', 1200, t => t.amenity === 'school' && (t['operator:type'] === 'public' || /^(e\.?\s?m\.?|e\.?\s?e\.?|emei|emef|ceu|escola (municipal|estadual))\b/i.test(t.name || ''))],
+  ['Escolas Particulares', 1200, t => t.amenity === 'school' && (t['operator:type'] === 'private' || /col[eé]gio|externato|instituto/i.test(t.name || '')) && !/^(e\.?\s?m\.?|e\.?\s?e\.?|emei|emef)\b/i.test(t.name || '')],
+  ['Faculdade', 2000, t => t.amenity === 'university' || t.amenity === 'college'],
+  ['Farmácia', 800, t => t.amenity === 'pharmacy'],
+  ['Hospital', 2500, t => t.amenity === 'hospital'],
+  ['Estação de Metrô', 1500, t => (t.railway === 'station' && (t.station === 'subway' || t.subway === 'yes')) || t.railway === 'subway_entrance'],
+  ['Estação de Trem', 2000, t => t.railway === 'station' && t.station !== 'subway' && t.subway !== 'yes'],
+  ['Ponto de Ônibus', 400, t => t.highway === 'bus_stop'],
+  ['Parque', 1500, t => t.leisure === 'park'],
+  ['Praça', 800, t => t.place === 'square' || /^pra[çc]a\b/i.test(t.name || '')],
+  ['Shopping', 2500, t => t.shop === 'mall'],
+  ['Posto de Gasolina', 1000, t => t.amenity === 'fuel'],
+  ['Banco', 800, t => t.amenity === 'bank'],
+  ['Academia', 1000, t => t.leisure === 'fitness_centre']
+];
+app.post('/api/proximidades', exigirLogin, async (req, res) => {
+  try {
+    const b = req.body || {};
+    let lat = parseFloat(String(b.lat || '').replace(',', '.')), lng = parseFloat(String(b.lng || '').replace(',', '.'));
+    let achado = '';
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      const consultas = [b.endereco, b.localizacao].map(x => s2(x, 250).trim()).filter(Boolean);
+      for (const q of consultas) {
+        const g = await axios.get('https://nominatim.openstreetmap.org/search', { params: { format: 'json', limit: 1, countrycodes: 'br', q: /brasil|brazil/i.test(q) ? q : q + ', Brasil' }, headers: UA_OSM, timeout: 15000 });
+        if (g.data && g.data[0]) { lat = parseFloat(g.data[0].lat); lng = parseFloat(g.data[0].lon); achado = g.data[0].display_name || q; break; }
+      }
+    }
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return res.status(404).json({ success: false, error: 'Não consegui localizar esse endereço no mapa. Confira logradouro, número e bairro (ou preencha latitude e longitude).' });
+    const maior = Math.max(...REGRAS_PROX.map(r => r[1]));
+    const q = `[out:json][timeout:25];(nwr(around:${maior},${lat},${lng})[shop~"^(supermarket|butcher|greengrocer|bakery|mall)$"];nwr(around:${maior},${lat},${lng})[amenity~"^(marketplace|restaurant|school|university|college|pharmacy|hospital|fuel|bank)$"];nwr(around:${maior},${lat},${lng})[railway~"^(station|subway_entrance)$"];nwr(around:${maior},${lat},${lng})[highway=bus_stop];nwr(around:${maior},${lat},${lng})[leisure~"^(park|fitness_centre)$"];nwr(around:${maior},${lat},${lng})[place=square];);out center tags 1500;`;
+    const o = await axios.post('https://overpass-api.de/api/interpreter', 'data=' + encodeURIComponent(q), { headers: { ...UA_OSM, 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 40000 });
+    const els = (o.data && o.data.elements) || [];
+    const detalhes = [];
+    for (const [nome, raio, teste] of REGRAS_PROX) {
+      let melhor = null;
+      for (const e of els) {
+        const t = e.tags || {}; if (!teste(t)) continue;
+        const la = e.lat != null ? e.lat : e.center && e.center.lat, lo = e.lon != null ? e.lon : e.center && e.center.lon;
+        if (la == null || lo == null) continue;
+        const d = distM(lat, lng, la, lo);
+        if (d <= raio && (!melhor || d < melhor.d)) melhor = { d, nome: t.name || '' };
+      }
+      if (melhor) detalhes.push({ categoria: nome, nome: melhor.nome, metros: Math.round(melhor.d) });
+    }
+    res.json({ success: true, lat: +lat.toFixed(6), lng: +lng.toFixed(6), enderecoAchado: achado, detalhes });
+  } catch (e) {
+    console.error('Erro em proximidades:', e.message);
+    res.status(502).json({ success: false, error: 'Não consegui consultar o mapa agora (serviço gratuito do OpenStreetMap ocupado ou fora do ar). Tente de novo em alguns minutos ou marque à mão.' });
+  }
+});
+
 app.post('/api/adicionar-imovel', exigirLogin, ah(async (req, res) => {
   const i = limpar(req.body || {}), agora = new Date().toISOString();
-  i.id = Date.now(); i.ref = i.ref || novaRef(); i.criadoEm = agora; i.atualizadoEm = agora;
+  i.id = Date.now(); const jaTem = i.ref && (await getImoveis()).some(x => String(x.ref).toLowerCase() === String(i.ref).toLowerCase()); if (!i.ref || jaTem) i.ref = await proximaRef(); i.criadoEm = agora; i.atualizadoEm = agora;
   await addImovel(i);
   res.json({ success: true, ref: i.ref });
 }));
@@ -313,7 +402,7 @@ app.post('/api/duplicar-imovel/:id', exigirLogin, ah(async (req, res) => {
   if (!o) return res.status(404).json({ success: false, error: 'Imóvel não encontrado.' });
   const agora = new Date().toISOString(), c = { ...o };
   delete c._id; delete c.demo; delete c.acessos; delete c.sincronizadoEm;
-  Object.assign(c, { id: Date.now(), ref: novaRef(), titulo: `${o.titulo} (cópia)`, ativo: false, emDestaque: false, criadoEm: agora, atualizadoEm: agora });
+  Object.assign(c, { id: Date.now(), ref: await proximaRef(), titulo: `${o.titulo} (cópia)`, ativo: false, emDestaque: false, criadoEm: agora, atualizadoEm: agora });
   await addImovel(c);
   res.json({ success: true, ref: c.ref });
 }));
@@ -691,6 +780,7 @@ function diferencas(i, novo) {
   const set = {}, campos = [...CAMPOS_SYNC, ...CAMPOS_LISTA, ...(i.espelharMidia === false ? [] : CAMPOS_MIDIA)];
   campos.forEach(k => {
     if (vazio(novo[k])) return;                       // origem sem o dado: nunca apaga o que já existe
+    if (k === 'tipologias' && (i.tipologias || []).some(t => t.preco) && novo[k].every(t => !t.preco)) return; // AoCubo traz só as plantas, sem preço por tipo: não apaga os valores já cadastrados
     const v = k === 'plantas' ? mesclarPlantas(novo[k], i[k]) : novo[k];
     if (JSON.stringify(v) !== JSON.stringify(i[k] == null ? (Array.isArray(v) ? [] : '') : i[k])) set[k] = v;
   });

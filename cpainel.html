@@ -131,7 +131,7 @@ tbody tr:last-child td{border-bottom:0}
 /* ---------- FORMULÁRIO DE IMÓVEL ---------- */
 .gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-top:8px}
 .gal img{width:100%;height:80px;object-fit:cover;border-radius:8px;background:var(--line)}
-.tp-row{display:grid;grid-template-columns:1.6fr .9fr .7fr .7fr .7fr 1.2fr auto;gap:8px;align-items:center;margin-bottom:8px}
+.tp-row{display:grid;grid-template-columns:1.6fr .9fr .7fr .7fr .7fr .7fr 1.2fr auto;gap:8px;align-items:center;margin-bottom:8px}
 .tp-cab{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);font-weight:700}
 .tp-row input{padding:8px 10px}
 .passos{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 18px}
@@ -368,7 +368,7 @@ aside::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border:0}
         <button class="btn" id="fSalvar">Salvar alterações</button>
       </div>
       <div class="panel"><h3 style="font-size:19px;margin-bottom:14px">Onde aparece</h3><div id="fExibe" class="g"></div></div>
-      <div class="panel"><h3 style="font-size:19px;margin-bottom:6px">Bancos e taxas</h3><p class="dica" style="margin-bottom:14px">Atualize as taxas quando o mercado mudar. O banco de menor taxa ganha o selo "Menor taxa" e já vem selecionado. Logo é opcional.</p><div id="fBancosTxt" class="g"></div><div id="fBancos"></div><div class="linha-up"><button type="button" class="btn ghost sm" id="fBancoAdd">Adicionar banco</button></div></div>
+      <div class="panel"><h3 style="font-size:19px;margin-bottom:6px">Bancos e taxas</h3><p class="dica" style="margin-bottom:14px">Atualize as taxas quando o mercado mudar. O banco de menor taxa ganha o selo "Menor taxa" e já vem selecionado. Logo é opcional: ideal 240 × 80 px (horizontal) ou 200 × 200 px (quadrada), PNG com fundo transparente, até 100 KB.</p><div id="fBancosTxt" class="g"></div><div id="fBancos"></div><div class="linha-up"><button type="button" class="btn ghost sm" id="fBancoAdd">Adicionar banco</button></div></div>
       <div class="panel"><h3 style="font-size:19px;margin-bottom:14px">Valores do simulador</h3><div id="fValores" class="g"></div></div>
       <div class="panel"><h3 style="font-size:19px;margin-bottom:6px">Custos de compra e renda</h3><p class="dica" style="margin-bottom:14px">Percentuais sobre o valor do imóvel. Servem para calcular "Para começar, separe cerca de" e a renda familiar sugerida.</p><div id="fCustos" class="g"></div></div>
       <div class="panel"><h3 style="font-size:19px;margin-bottom:14px">Textos</h3><div id="fTextos" class="g"></div></div>
@@ -421,19 +421,19 @@ const DEF={transacao:'Vender Imóvel',categoria:'Residencial',destaque:'none',vi
 const NOMES={titulo:'título',preco:'preço',area:'área',dormitorios:'dormitórios',foto:'foto'};
 const SIMNAO=['Não','Sim'];
 const CAMPOS=[
-['S','Dados do imóvel'],['titulo','Título (nome do empreendimento) *'],['ref','Código de referência'],['construtora','Construtora / incorporadora'],
+['S','Dados do imóvel'],['titulo','Título (nome do empreendimento) *'],['ref','Código de referência (gerado automático: REF_JC-0000)'],['construtora','Construtora / incorporadora'],
 ['transacao','Finalidade',['Vender Imóvel','Alugar Imóvel']],['categoria','Categoria',['Residencial','Comercial']],
 ['cadastradoPor','Cadastrado por','Q'],
-['tipo','Tipo de imóvel','L'],['estagio','Estágio (situação)',ESTAGIOS],['destaques','Tarjas no site (até 3)','TG'],
+['tipo','Tipo de imóvel','L'],['estagio','Estágio (situação) — automático quando o imóvel vem do AoCubo/Órulo',ESTAGIOS],['destaques','Tarjas no site (até 3)','TG'],
 ['S','Localização'],['localizacao','Bairro, cidade - UF *'],['cep','CEP'],['logradouro','Logradouro'],['numero','Número'],['complemento','Complemento'],
 ['visibilidade','Visibilidade no site',[['bairro','Mostrar só o bairro'],['endereco','Mostrar endereço completo']]],['proximidade','Proximidade (ex.: 5 min do metrô)'],['lat','Latitude (opcional, para o mapa)'],['lng','Longitude (opcional)'],
 ['S','Valores'],['preco','Valor a partir de *'],['precoM2','Valor por m² (ex.: R$ 11.040)'],['condominio','Condomínio'],['iptu','IPTU'],['taxas','Taxas'],['obsValores','Observação sobre os valores'],
 ['S','Medidas'],['area','Área útil (ex.: 142m²) *'],['areaTotal','Área total'],['areaPrivativa','Área privativa'],['areaConstruida','Área construída'],
-['S','Características'],['perfil','Perfil',['','Novo','Usado','Na planta']],['mobilia','Mobília',['','Não mobiliado','Semimobiliado','Mobiliado']],['dormitorios','Dormitórios (ex.: 3 Suítes) *'],['suites','Suítes'],['banheiros','Banheiros'],['salas','Salas'],['lavabos','Lavabos'],['vagas','Vagas (ex.: 2 vagas)'],['diferencial','Diferencial'],
+['S','Características'],['perfil','Perfil',['','Novo','Em construção','Usado','Na planta']],['mobilia','Mobília',['','Não mobiliado','Semimobiliado','Mobiliado']],['dormitorios','Dormitórios (ex.: 3 Suítes) *'],['suites','Suítes'],['banheiros','Banheiros'],['salas','Salas'],['lavabos','Lavabos'],['vagas','Vagas (ex.: 2 vagas)'],['diferencial','Diferencial'],
 ['lazer','Lazer e características do condomínio','C'],['caracteristicasUnidade','Características da unidade','C'],['proximidades','O que tem perto?','C'],
 ['S','Informações técnicas e tipologias'],['infoTecnica','Informações técnicas (uma por linha: item: valor)','X'],
-['S','Fotos do condomínio e do apartamento'],['foto','Foto de capa (vazio usa a primeira da galeria)'],['fotos','Galeria: um link por linha (ou envie do computador)','A'],
-['S','Plantas'],['plantas','Plantas: uma por linha, no formato Nome | Metragem | link  (ex.: Planta 01 | 84 m² | https://...)','P'],
+['S','Fotos do condomínio e do apartamento'],['foto','Foto de capa — ideal 1600 × 1067 px (horizontal 3:2), JPG ou WebP até 500 KB. Vazio usa a primeira da galeria'],['fotos','Galeria — ideal 1600 × 1067 px (horizontal 3:2), JPG até 500 KB cada; mínimo 1200 px de largura. Um link por linha (ou envie do computador)','A'],
+['S','Plantas'],['plantas','Plantas: uma por linha, no formato Nome | Metragem | link  (ex.: Planta 01 | 84 m² | https://...). Imagem JPG ou PNG com 1200 px de largura, até 400 KB','P'],
 ['S','Atualização automática'],['linkOrigem','Link de origem (AoCubo ou Órulo)'],
 ['S','Descrição e vídeo'],['apresentacao','Texto de apresentação','T'],['youtube','Vídeo do YouTube'],['videoArquivo','Vídeo enviado do computador (link)'],['tour360','Tour virtual 360°'],
 ['S','Título e descrição no Google (SEO)'],['seoTitulo','Título no Google (até 80 caracteres)'],['seoDescricao','Descrição no Google (até 160 caracteres)','D'],['seoPalavras','Palavras-chave, separadas por vírgula (até 120)'],['seoPrev','','V'],
@@ -452,7 +452,7 @@ $('fImovel').innerHTML=CAMPOS.map(([k,l,x])=>{
     :x==='D'?`<textarea id="f_${k}" rows="3" maxlength="160"></textarea>`:x==='TG'?`<div class="chk" id="f_destaques">${TARJAS.map(([v,t])=>`<label><input type="checkbox" value="${v}">${t}</label>`).join('')}</div><p class="ajuda">Escolha até 3 tarjas. Elas aparecem no canto da foto do imóvel.</p>`:x==='C'?`<div class="chk" id="f_${k}"></div><div class="linha-up"><input id="n_${k}" placeholder="Outra opção" style="max-width:240px"><button type="button" class="btn ghost sm" data-addchk="${k}">Adicionar</button></div>`:x==='T'?`<textarea id="f_${k}" rows="5"></textarea>`
     :`<input id="f_${k}"${x==='L'?' list="tipos"':x==='Q'?' list="pessoas" placeholder="Seu nome ou de quem cadastrou"':''}>`;
   return `<div class="f${['A','T','P','X','D','C','TG'].includes(x)?' full':''}" ${att()}><label for="f_${k}">${l}</label>${ctl}${upl(k)}${(x==='A'||x==='P')?`<div class="gal" id="g_${k}"></div>`:''}</div>`;
-}).join('')+`<div class="sec" data-s="1">Tipologias e valores</div><div class="full" data-s="1" id="tipos-box"></div><div class="sec" data-s="4">Publicação</div><div class="f full" data-s="4" style="display:flex;gap:28px;flex-wrap:wrap"><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_emDestaque" style="width:auto">Destacar na página inicial</label><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_ativo" style="width:auto" checked>Publicado no site</label><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_sincronizar" style="width:auto" checked>Atualizar preço, condições e tipologias pelo link</label><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_espelharMidia" style="width:auto" checked>Espelhar fotos e plantas do portal</label></div>`;
+}).join('')+`<div class="sec" data-s="1">Tipologias e valores</div><div class="full" data-s="1" id="tipos-box"></div><div class="sec" data-s="4">Publicação</div><div class="f full" data-s="4" style="display:flex;gap:28px;flex-wrap:wrap"><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_emDestaque" style="width:auto">Destacar na página inicial</label><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_ativo" style="width:auto" checked>Publicado no site</label><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_sincronizar" style="width:auto" checked>Atualizar sozinho preço, estágio, condições e tipologias pelo link (a cada 6 h)</label><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_espelharMidia" style="width:auto" checked>Espelhar fotos e plantas do portal</label></div>`;
 
 let IM=[],CUR=null,BASE={},timer=null;
 const lines=s=>s.split('\n').map(x=>x.trim()).filter(x=>/^https?:\/\//i.test(x));
@@ -681,7 +681,10 @@ function editar(id){abrir(IM.find(x=>x.id==id))}
 function preencher(d){
   CAMPOS.forEach(([k,,x])=>{if(k==='S'||x==='V')return;if(x==='TG'){setTG(d.destaques||(d.destaque&&d.destaque!=='none'?[d.destaque]:[]));return}if(x==='C'){setChk(k,d[k]||[]);return}if(k.startsWith('pv_')){$('f_'+k).value=(d.privado||{})[k.slice(3)]||'';return}const el=$('f_'+k);el.value=x==='P'?(d[k]||[]).map(p=>typeof p==='object'?`${p.nome||''} | ${p.area||''} | ${p.url}`:p).join('\n'):(x==='A'||x==='X')?(d[k]||[]).map(y=>(y&&typeof y==='object')?(y.k+': '+y.v):y).join('\n'):(d[k]??DEF[k]??'');if(x==='A'||x==='P')galeria(k)});
   $('f_emDestaque').checked=d.emDestaque===true;$('f_ativo').checked=d.ativo!==false;$('f_sincronizar').checked=d.sincronizar!==false;$('f_espelharMidia').checked=d.espelharMidia!==false;TIPS=(d.tipologias||[]).map(t=>({...t}));renderTips();pend();
+  if(!CUR&&!d.ref)autoRef();
 }
+let refBusy=false;
+async function autoRef(){if(refBusy)return;refBusy=true;try{const r=await API('/api/proxima-ref');const el=$('f_ref');if(r&&r.ref&&el&&!el.value){el.value=r.ref;if(typeof seoPrev==='function')seoPrev()}}catch(e){}finally{refBusy=false}}
 function urlsDe(k){const v=$('f_'+k).value;return k==='plantas'?linesPlantas(v).map(p=>typeof p==='object'?p.url:p):lines(v)}
 function galeria(k){
   const us=k==='plantas'?linesPlantas($('f_plantas').value).map(p=>typeof p==='object'?p:{url:p}):urlsDe(k).map(u=>({url:u}));
@@ -781,9 +784,9 @@ document.addEventListener('change',e=>{
   if(t.dataset&&t.dataset.alvo){subirImagem(t.dataset.alvo);return}
   if(t.id==='c_tipo')cnMostraCampos();
 });
-const TP_CAMPOS=[['nome','ex.: Apartamento'],['area','ex.: 98 m²'],['dorm','2'],['suites','1'],['vagas','1'],['preco','R$ 890.000']];
+const TP_CAMPOS=[['nome','ex.: Apartamento'],['area','ex.: 98 m²'],['dorm','2'],['suites','1'],['banh','1'],['vagas','1'],['preco','R$ 890.000']];
 function renderTips(){
-  $('tipos-box').innerHTML=`<div class="tp-row tp-cab"><span>Tipo</span><span>Área</span><span>Dorm.</span><span>Suítes</span><span>Vagas</span><span>A partir de</span><span></span></div>`
+  $('tipos-box').innerHTML=`<div class="tp-row tp-cab"><span>Tipo</span><span>Área</span><span>Dorm.</span><span>Suítes</span><span>Banh.</span><span>Vagas</span><span>A partir de</span><span></span></div>`
     +TIPS.map((t,k)=>`<div class="tp-row">${TP_CAMPOS.map(([col,ph])=>`<input data-k="${k}" data-c="${col}" value="${esc(t[col]||'')}" placeholder="${ph}" aria-label="${col}">`).join('')}<button type="button" class="btn danger sm" data-rm="${k}">Remover</button></div>`).join('')
     +`<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:6px"><button type="button" class="btn ghost sm" id="tp-add">Adicionar tipologia</button><span class="dica">Imóveis da Órulo já trazem essas linhas. Para AoCubo e cadastro manual, preencha aqui.</span></div>`;
 }
@@ -877,7 +880,7 @@ function cnForm(c){
     <div class="f" data-tipos="blog noticia"><label for="c_titulo">Título *</label><input id="c_titulo" value="${esc(v.titulo||'')}"></div>
     <div class="f" data-tipos="blog noticia"><label for="c_categoria">Categoria (ex.: Investimento, Joildo Informa)</label><input id="c_categoria" value="${esc(v.categoria||'')}"></div>
     <div class="f" data-tipos="blog noticia"><label for="c_link">Link do texto completo (opcional)</label><input id="c_link" value="${esc(v.link||'')}" placeholder="https://..."></div>
-    <div class="f" data-tipos="blog noticia"><label for="c_imagem">Imagem de capa (link)</label><input id="c_imagem" value="${esc(v.imagem||'')}" placeholder="https://...">${upBtn('c_imagem')}</div>
+    <div class="f" data-tipos="blog noticia"><label for="c_imagem">Imagem de capa (link ou enviar) — ideal 1200 × 800 px (horizontal 3:2), JPG até 300 KB</label><input id="c_imagem" value="${esc(v.imagem||'')}" placeholder="https://...">${upBtn('c_imagem')}</div>
     <div class="f full" data-tipos="depoimento"><label for="c_autor">Autor (nome e perfil)</label><input id="c_autor" value="${esc(v.autor||'')}" placeholder="Ex.: Carlos M., Investidor"></div>
     <div class="f" data-tipos="depoimento"><label for="c_estrelas">Avaliação</label><select id="c_estrelas">${[5,4,3,2,1].map(n=>`<option value="${n}" ${+v.estrelas===n?'selected':''}>${n} estrela${n>1?'s':''}</option>`).join('')}</select></div>
     <div class="f full"><label for="c_texto" id="c_texto_l">Texto</label><textarea id="c_texto" rows="5">${esc(v.texto||'')}</textarea><p class="ajuda" data-tipos="blog noticia">Pode ser um resumo. Se houver link, o card abre o texto completo.</p></div>
@@ -923,7 +926,7 @@ async function loadMarca(){
     <div style="margin-top:10px;display:flex;gap:14px;align-items:center;flex-wrap:wrap"><div style="background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 14px"><img id="m_logoPrev" src="${esc(c.logoUrl||'/logo-joildo-header.svg')}" alt="Prévia da logo" style="height:58px;width:auto;max-width:320px;object-fit:contain;display:block"></div><span class="dica" id="m_logoMed">Prévia no tamanho do site (58 px de altura).</span><button type="button" class="btn ghost sm" id="m_logoPadrao" style="width:auto">Voltar para a logo padrão</button></div></div>`
     +MARCA_CAMPOS.map(([k,l])=>`<div class="f"><label for="m_${k}">${l}</label><input id="m_${k}" value="${esc(c[k]||'')}"></div>`).join('');
   $('qCampos').innerHTML=QS_CAMPOS.map(([k,l])=>`<div class="f ${['p1','p2'].includes(k)?'full':''}"><label for="q_${k}">${l}</label>${['p1','p2'].includes(k)?`<textarea id="q_${k}" rows="4">${esc(q[k]||'')}</textarea>`:`<input id="q_${k}" value="${esc(q[k]||'')}">`}</div>`).join('')
-    +`<div class="f full"><label for="q_foto">Foto do consultor (link)</label><input id="q_foto" value="${esc(q.foto||'')}" placeholder="https://...">${upBtn('q_foto')}</div>`
+    +`<div class="f full"><label for="q_foto">Foto do consultor (link ou enviar) — ideal 1000 × 900 px (quase quadrada, rosto no centro), JPG até 400 KB</label><input id="q_foto" value="${esc(q.foto||'')}" placeholder="https://...">${upBtn('q_foto')}</div>`
     +`<div class="f full"><label for="q_equipe">Outras pessoas da equipe (opcional) — uma por linha: Nome | Cargo | Foto (link) | LinkedIn (link)</label><textarea id="q_equipe" rows="4" placeholder="Ex.: Ana Silva | Corretora Associada | https://... | https://linkedin.com/in/...">${esc(equipeParaTexto(q.equipe))}</textarea><p class="dica">Deixe em branco para mostrar só você. Foto e LinkedIn são opcionais — pode deixar vazio entre as barras (|).</p></div>`;
   $('aCampos').innerHTML=`<div class="f full"><label for="a_foto">Foto ao lado do texto "Conte o que procura" (link ou enviar do computador)</label><input id="a_foto" value="${esc(c.atendimentoFoto||'')}" placeholder="https://...">${upBtn('a_foto')}<p class="dica">Aparece no espaço azul à direita. Deixe vazio para não mostrar foto. Sugestão: imagem horizontal, proporção 4:3.</p></div>`;
   PARC=(c.parceiros||[]).filter(p=>p&&(p.nome||p.logo||p.link)).map(p=>({nome:p.nome||'',logo:p.logo||'',link:p.link||''}));
@@ -1115,8 +1118,14 @@ lazer:['Academia','Brinquedoteca','Churrasqueira','Cinema','Coworking','Espaço 
 caracteristicasUnidade:['Varanda','Varanda Gourmet','Sacada com Churrasqueira','Suíte Master','Closet','Lavabo','Cozinha Americana','Cozinha Integrada','Área de Serviço','Dependência de Empregada','Ar-condicionado','Água Quente','Aquecimento a Gás','Armários Planejados','Home Office','Jardim Privativo','Terraço','Piso Porcelanato','Vista Panorâmica','Mobiliado'],
 proximidades:['Açougue, Feiras e Supermercados','Padaria','Restaurantes','Escolas Particulares','Escolas Públicas','Faculdade','Farmácia','Hospital','Estação de Metrô','Estação de Trem','Ponto de Ônibus','Parque','Praça','Shopping','Posto de Gasolina','Banco','Academia','Aeroporto']};
 const norm=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+try{const sv=JSON.parse(localStorage.getItem('jb_catalogo')||'{}');Object.keys(sv).forEach(k=>{if(CAT[k])CAT[k]=[...CAT[k],...sv[k].filter(v=>!CAT[k].some(c=>norm(c)===norm(v)))]})}catch(e){}
+function lembrarCat(k,extras){
+  if(!extras.length)return;CAT[k]=[...(CAT[k]||[]),...extras];
+  try{const sv=JSON.parse(localStorage.getItem('jb_catalogo')||'{}');sv[k]=[...new Set([...(sv[k]||[]),...extras])];localStorage.setItem('jb_catalogo',JSON.stringify(sv))}catch(e){}
+}
 function setChk(k,vals){
-  const marcados=new Set((vals||[]).map(norm)),cat=CAT[k]||[],extras=(vals||[]).filter(v=>!cat.some(c=>norm(c)===norm(v)));
+  const marcados=new Set((vals||[]).map(norm)),cat=CAT[k]||[],extras=(vals||[]).filter(v=>String(v||'').trim()&&!cat.some(c=>norm(c)===norm(v)));
+  lembrarCat(k,[...new Set(extras)]);
   $('f_'+k).innerHTML=[...cat,...extras].map(t=>`<label><input type="checkbox" value="${esc(t)}" ${marcados.has(norm(t))?'checked':''}>${esc(t)}</label>`).join('');
 }
 const getChk=k=>[...document.querySelectorAll('#f_'+k+' input:checked')].map(i=>i.value);
@@ -1127,6 +1136,31 @@ document.addEventListener('click',e=>{
   const inp=$('n_'+k),v=inp.value.trim();if(!v)return;
   const atual=getChk(k);atual.push(v);const todos=[...document.querySelectorAll('#f_'+k+' input')].map(i=>i.value);
   CAT[k]=[...new Set([...(CAT[k]||[]),...todos])];setChk(k,atual);inp.value='';
+});
+// ---------- PROXIMIDADES PELO ENDEREÇO ----------
+(function(){
+  const f=$('f_proximidades'),box=f&&f.closest('.f');if(!box)return;
+  const d=document.createElement('div');d.className='linha-up';
+  d.innerHTML='<button type="button" class="btn ghost sm" id="proxBuscar">📍 Buscar o que tem perto pelo endereço</button><span class="dica">Localiza o endereço no mapa gratuito (OpenStreetMap) e marca sozinho o que existir por perto. Quanto mais completo o logradouro e o número, mais preciso. Confira antes de salvar.</span><div id="proxRes" style="width:100%;margin-top:6px;font-size:13px;line-height:1.7"></div>';
+  box.appendChild(d);
+})();
+document.addEventListener('click',async e=>{
+  if(e.target.id!=='proxBuscar')return;
+  const btn=e.target,res=$('proxRes'),v=id=>($('f_'+id)?$('f_'+id).value.trim():'');
+  const bairro=v('localizacao'),endereco=[[v('logradouro'),v('numero')].filter(Boolean).join(', '),bairro,v('cep')].filter(Boolean).join(', ');
+  if(!bairro&&!v('logradouro')&&!(v('lat')&&v('lng'))){aviso('Preencha o endereço (ou bairro e cidade) na aba Dados do imóvel.');return}
+  const t0=btn.textContent;btn.disabled=true;btn.textContent='Consultando o mapa…';res.textContent='';
+  try{
+    const r=await API('/api/proximidades',{method:'POST',body:JSON.stringify({endereco,localizacao:bairro,lat:v('lat'),lng:v('lng')})});
+    if(!r||!r.success){res.innerHTML='<span style="color:var(--red)">'+esc((r&&r.error)||'Não consegui buscar.')+'</span>';return}
+    const novos=r.detalhes.map(x=>x.categoria),atual=getChk('proximidades');
+    setChk('proximidades',[...new Set([...atual,...novos])]);
+    if($('f_lat')&&!$('f_lat').value)$('f_lat').value=r.lat;if($('f_lng')&&!$('f_lng').value)$('f_lng').value=r.lng;
+    const perto=r.detalhes.filter(x=>/Metrô|Trem/.test(x.categoria)).sort((a,b)=>a.metros-b.metros)[0];
+    if(perto&&$('f_proximidade')&&!$('f_proximidade').value){$('f_proximidade').value=(/Metrô/.test(perto.categoria)?'Metrô ':'Trem ')+(perto.nome||'')+' a '+perto.metros+' m (cerca de '+Math.max(1,Math.round(perto.metros/80))+' min a pé)'}
+    res.innerHTML=(r.detalhes.length?r.detalhes.map(x=>'✓ <b>'+esc(x.categoria)+'</b>'+(x.nome?' — '+esc(x.nome):'')+' · '+x.metros+' m').join('<br>'):'Nada encontrado nos raios de busca.')+(v('logradouro')?'':'<br><span class="dica">Sem logradouro, a busca usou só o bairro: resultado aproximado.</span>');
+    aviso('Proximidades marcadas. Confira e clique em Salvar.');
+  }finally{btn.disabled=false;btn.textContent=t0}
 });
 // ---------- FORMAS DE CADASTRO ----------
 let MODO='manual';
@@ -1155,7 +1189,7 @@ function seoAuto(d,forcar){
 }
 function seoPrev(){
   const t=$('f_seoTitulo').value||$('f_titulo').value||'Título do imóvel',d=$('f_seoDescricao').value||'A descrição aparece aqui.';
-  $('seoPrev').innerHTML=`<div class="gt">${esc(t)}</div><div class="gu">${esc(location.origin)}/imovel/${esc($('f_ref').value||'REF-000000')}</div><div class="gd">${esc(d)}</div><p class="dica" style="margin-top:8px">${t.length}/60 · ${d.length}/160 · ${$('f_seoPalavras').value.length}/120</p>`;
+  $('seoPrev').innerHTML=`<div class="gt">${esc(t)}</div><div class="gu">${esc(location.origin)}/imovel/${esc($('f_ref').value||'REF_JC-0000')}</div><div class="gd">${esc(d)}</div><p class="dica" style="margin-top:8px">${t.length}/60 · ${d.length}/160 · ${$('f_seoPalavras').value.length}/120</p>`;
 }
 $('f_seoTitulo').maxLength=60;$('f_seoPalavras').maxLength=120;
 document.addEventListener('click',e=>{if(e.target.id!=='seoGerar')return;const d=coleta();seoAuto(d,true);['seoTitulo','seoDescricao','seoPalavras'].forEach(k=>$('f_'+k).value=d[k]);seoPrev()});

@@ -74,6 +74,22 @@ function extrairAoCubo(html, urlPagina) {
   let apresentacao = '';
   if (iMorar >= 0 && iLazer > iMorar) { const t = linhas.slice(iMorar + 1, iLazer).join(' '); if (t.length > 60) apresentacao = t.slice(0, 3000); }
 
+  // "Opções de planta": 37 m² · 2 Quartos · 0 vagas · 1 banheiros (cada grupo começa pela metragem)
+  const tipologias = [];
+  const iPl = linhas.findIndex(l => /^Op[çc][õo]es de planta$/i.test(l));
+  if (iPl >= 0) {
+    let atual = null;
+    for (const l of linhas.slice(iPl + 1, iPl + 25)) {
+      const a = l.match(/^(\d{1,4}(?:[.,]\d+)?)\s*m²$/i), q = l.match(/^(\d+)\s*quartos?$/i), v = l.match(/^(\d+)\s*vagas?$/i), b = l.match(/^(\d+)\s*banheiros?$/i), su = l.match(/^(\d+)\s*su[ií]tes?$/i);
+      if (a) { if (atual) tipologias.push(atual); atual = { nome: tipo || 'Apartamento', area: `${a[1]} m²`, dorm: '', suites: '', banh: '', vagas: '', preco: '' }; }
+      else if (atual && q) atual.dorm = q[1];
+      else if (atual && su) atual.suites = su[1];
+      else if (atual && v) atual.vagas = v[1];
+      else if (atual && b) atual.banh = b[1];
+      else if (atual) break;
+    }
+    if (atual) tipologias.push(atual);
+  }
   const img = imagens(html, urlPagina);
   const infoTecnica = [];
   if (entrega && estagio && estagio !== 'prontos') infoTecnica.push({ k: 'Previsão de entrega', v: entrega });
@@ -85,7 +101,7 @@ function extrairAoCubo(html, urlPagina) {
     vagas: vagas && vagas !== '0' ? `${vagas} vaga${+vagas > 1 ? 's' : ''}` : '',
     localizacao, estagio, tipo, categoria: tipo ? 'Residencial' : '',
     foto: img.fotos[0] || img.og || '', fotos: img.fotos, plantas: img.plantas,
-    lazer, infoTecnica, apresentacao
+    lazer, infoTecnica, apresentacao, tipologias
   };
 }
 module.exports = { extrairAoCubo };

@@ -15,6 +15,24 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
 .tip-bloco .tip-cab,.tip-bloco .tip-linha{display:grid;grid-template-columns:1.5fr .8fr .7fr .7fr .7fr;align-items:center;gap:8px}
+.tip-bloco.com-banh .tip-cab,.tip-bloco.com-banh .tip-linha{grid-template-columns:1.5fr .8fr .65fr .65fr .65fr .65fr}
+.cap-form{background:#FAFAF8;border:1px solid #E5E7EB;border-radius:12px;padding:22px;margin-bottom:22px}
+.cap-form h4{font-family:'Playfair Display',serif;font-size:1.25rem;color:var(--primary);margin:0 0 4px}
+.cap-sub{font-size:.8rem;color:var(--text-muted);margin:0 0 14px}
+.cap-form input[type=text],.cap-form input[type=tel],.cap-form input[type=email]{width:100%;padding:12px 14px;border:1px solid #D9DEE7;border-radius:6px;background:#fff;font-size:.9rem;font-family:inherit;margin-bottom:10px}
+.cap-linha{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cap-ok{display:flex;gap:8px;align-items:flex-start;font-size:.74rem;color:var(--text-muted);line-height:1.5;margin:2px 0 12px}
+.cap-ok input{margin-top:3px}.cap-ok a{color:var(--primary);text-decoration:underline}
+.cap-priv{font-size:.74rem;color:var(--text-muted);background:#fff;border:1px solid #E5E7EB;border-radius:6px;padding:10px 12px;margin:0 0 12px;line-height:1.55}
+.cap-btn{background:var(--primary);color:#fff;border:none;border-radius:6px;padding:13px 22px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:inherit}
+.cap-btn:disabled{opacity:.6;cursor:wait}
+.cap-msg{font-size:.84rem;margin:10px 0 0;min-height:1.2em}.cap-msg.ok{color:#15803D;font-weight:600}.cap-msg.erro{color:#B91C1C;font-weight:600}
+.cap-banner{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;background:var(--primary);color:#fff;border-radius:12px;padding:24px 26px;margin-bottom:10px}
+.cap-banner h4{font-family:'Playfair Display',serif;font-size:1.3rem;margin:0 0 6px;color:#fff}
+.cap-banner p{margin:0 0 4px;font-size:.86rem;color:#CBD5E1;line-height:1.5}.cap-banner b{color:var(--gold)}
+.cap-fone{font-size:.78rem!important}.cap-fone a{color:#fff;text-decoration:underline}
+.cap-agendar{background:var(--gold);color:var(--primary);font-weight:800;font-size:.9rem;padding:13px 26px;border-radius:6px;text-decoration:none;white-space:nowrap}
+@media(max-width:600px){.cap-linha{grid-template-columns:1fr;gap:0}.cap-banner{padding:20px}.cap-agendar{width:100%;text-align:center}}
 .tip-cab{font-size:.78rem;color:var(--text-muted);padding:10px 0;border-bottom:1px solid #E2E8F0}
 .tip-cab svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;display:block;margin:0 auto}
 .tip-num{text-align:center}
@@ -63,10 +81,9 @@
 <header>
     <div class="logo-container">
         <a href="/" class="logo">
-            <img id="dyn-logo-img" src="/logo-joildo-header.svg" alt="Joildo Brokers - Inteligência Imobiliária" class="logo-img" onerror="this.style.display='none';document.getElementById('dyn-logo-text').style.display='inline';document.getElementById('dyn-slogan').style.display='';">
+            <img id="dyn-logo-img" src="/logo-joildo-header.svg" alt="Joildo Brokers - Inteligência Imobiliária" class="logo-img" onerror="this.style.display='none';document.getElementById('dyn-logo-text').style.display='inline';">
             <span id="dyn-logo-text" style="display:none;">JOILDO <span>BROKERS</span></span>
         </a>
-        <span class="logo-tagline" id="dyn-slogan">Ética e dedicação para tornar seus sonhos realidade</span>
     </div>
     <nav aria-label="Menu principal">
         <ul>
@@ -611,12 +628,9 @@ document.getElementById('jbChat').addEventListener('click', e => { if (e.target.
                 document.getElementById('dyn-logo-img').src = '/logo-joildo-header.svg';
                 document.getElementById('dyn-logo-img').style.display = 'block';
                 document.getElementById('dyn-logo-text').style.display = 'none';
-                document.getElementById('dyn-slogan').style.display = 'none';
             }
 
-            if (configGeral.slogan) {
-                document.getElementById('dyn-slogan').innerText = configGeral.slogan;
-            }
+            // o topo mostra apenas a logo; o slogan não aparece ali
 
             const ldOrg = document.getElementById('ld-org');
             if (ldOrg) {
@@ -939,15 +953,16 @@ const tarjasDo = i => { const l = Array.isArray(i.destaques) ? i.destaques : (i.
     function blocoTipologias(lista, i) {
         TIP_SEL = null;
         const grupos = [...new Set(lista.map(t => t.nome || 'Tipologia'))];
-        const cab = `<div class="tip-cab"><span>A partir de</span><span class="tip-num">m²</span><span class="tip-num" title="Dormitórios">Dorm.</span><span class="tip-num" title="Suítes">Suítes</span><span class="tip-num" title="Vagas">Vagas</span></div>`;
+        const temBanh = lista.some(t => t.banh);
+        const cab = `<div class="tip-cab"><span>A partir de</span><span class="tip-num">m²</span><span class="tip-num" title="Dormitórios">Dorm.</span><span class="tip-num" title="Suítes">Suítes</span>${temBanh ? '<span class="tip-num" title="Banheiros">Banh.</span>' : ''}<span class="tip-num" title="Vagas">Vagas</span></div>`;
         const corpo = grupos.map(g => {
             const itens = lista.map((t, idx) => ({ t, idx })).filter(x => (x.t.nome || 'Tipologia') === g)
                 .sort((a, b) => precoNum(a.t.preco) - precoNum(b.t.preco));
             return `<div class="tip-grupo">${esc(g)}</div>` + itens.map(({ t, idx }) =>
                 `<div class="tip-linha" tabindex="0" onclick="escolherTip(this,${idx})" onkeydown="if(event.key==='Enter')escolherTip(this,${idx})">` +
-                `<b>${esc(t.preco || 'Consulte')}</b><span class="tip-num">${esc(t.area || '—')}</span><span class="tip-num">${esc(t.dorm || '0')}</span><span class="tip-num">${esc(t.suites || '0')}</span><span class="tip-num">${esc(t.vagas || '0')}</span></div>`).join('');
+                `<b>${esc(t.preco || 'Consulte')}</b><span class="tip-num">${esc(t.area || '—')}</span><span class="tip-num">${esc(t.dorm || '0')}</span><span class="tip-num">${esc(t.suites || '0')}</span>${temBanh ? `<span class="tip-num">${esc(t.banh || '—')}</span>` : ''}<span class="tip-num">${esc(t.vagas || '0')}</span></div>`).join('');
         }).join('');
-        return `<div class="info-block tip-bloco"><h4>Tipologias disponíveis</h4>${cab}${corpo}` +
+        return `<div class="info-block tip-bloco${temBanh ? ' com-banh' : ''}"><h4>Tipologias disponíveis</h4>${cab}${corpo}` +
             `<div class="tip-acao"><button type="button" onclick="enviarProposta('${esc(i.id)}')">Enviar proposta</button><p class="tip-dica">Toque em uma linha para escolher a tipologia.</p></div></div>`;
     }
     function escolherTip(el, idx) {
@@ -955,6 +970,43 @@ const tarjasDo = i => { const l = Array.isArray(i.destaques) ? i.destaques : (i.
         el.classList.add('sel'); TIP_SEL = idx;
         const t = ((window.IMV_ATUAL || {}).tipologias || [])[idx], m = t ? numM2(t.area) : null;
         if (m != null && galPlantas.some(p => p._m === m)) { plantaPorMetragem(m); const pl = document.getElementById('gal-palco'); if (pl) pl.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    }
+    function blocoCaptacao(i) {
+        const tel = String(configGeral.telefone || '').trim(), d = tel.replace(/\D/g, ''), href = 'tel:+' + (d.startsWith('55') && d.length > 11 ? d : '55' + d);
+        const zap = linkZap(`Olá! Quero agendar uma visita para ${i.titulo || 'o imóvel'} (cód. ${i.ref || ''}).`);
+        return `<div class="cap-form">
+  <h4>Receba a tabela de preços e as plantas</h4>
+  <p class="cap-sub">Enviamos no seu WhatsApp em minutos</p>
+  <form onsubmit="enviarTabela(event,'${esc(i.id)}')" novalidate>
+    <div class="cap-linha"><input id="rt_nome" type="text" placeholder="Nome" autocomplete="name"><input id="rt_tel" type="tel" placeholder="WhatsApp" autocomplete="tel" inputmode="tel"></div>
+    <input id="rt_email" type="email" placeholder="E-mail (opcional)" autocomplete="email">
+    <label class="cap-ok"><input id="rt_ok" type="checkbox"><span>Concordo com o tratamento dos meus dados conforme a <a href="#" onclick="verPrivacidade(event)">Política de Privacidade</a>.</span></label>
+    <p class="cap-priv" id="rt_priv" hidden>Usamos seu nome, WhatsApp e e-mail somente para enviar a tabela de preços e as plantas deste imóvel e para o contato de um consultor da Joildo Brokers. Não vendemos nem compartilhamos seus dados com terceiros. Para pedir a exclusão, escreva para ${esc(configGeral.email || 'o nosso e-mail de contato')}.</p>
+    <button type="submit" class="cap-btn" id="rt_btn">Receber tabela e plantas</button>
+    <p class="cap-msg" id="rt_msg" role="status"></p>
+  </form>
+</div>
+<div class="cap-banner">
+  <div><h4>Gostou do imóvel? Fale com um especialista</h4><p>Agende uma visita e receba atendimento personalizado sobre <b>${esc(i.titulo || 'este imóvel')}</b>.</p>${tel ? `<p class="cap-fone">Ou ligue: <a href="${href}">${esc(tel)}</a></p>` : ''}</div>
+  <a class="cap-agendar" href="${zap}" target="_blank" rel="noopener">Agendar visita</a>
+</div>`;
+    }
+    function verPrivacidade(e) { e.preventDefault(); const p = document.getElementById('rt_priv'); if (p) p.hidden = !p.hidden; }
+    async function enviarTabela(ev, id) {
+        ev.preventDefault();
+        const i = bancoImoveis.find(x => String(x.id) === String(id)) || {};
+        const g = k => document.getElementById(k), msg = g('rt_msg'), btn = g('rt_btn');
+        const fala = (t, ok) => { msg.textContent = t; msg.className = 'cap-msg ' + (ok ? 'ok' : 'erro'); };
+        if (!g('rt_nome').value.trim() || g('rt_tel').value.replace(/\D/g, '').length < 10) return fala('Informe seu nome e um WhatsApp com DDD.');
+        if (!g('rt_ok').checked) return fala('Marque a concordância com o tratamento dos dados para continuar.');
+        btn.disabled = true; btn.textContent = 'Enviando…';
+        try {
+            const r = await fetch('/api/lead', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nome: g('rt_nome').value.trim(), whatsapp: g('rt_tel').value.trim(), email: g('rt_email').value.trim(), aceite: true, tipo: 'tabela-plantas', imovelRef: i.ref || '', imovelTitulo: i.titulo || '' }) }).then(x => x.json());
+            if (!r.success) throw new Error(r.error || 'Não consegui enviar agora.');
+            fala('Pronto! Recebemos seu pedido. Enviaremos a tabela de preços e as plantas no seu WhatsApp em minutos.', true);
+            g('rt_nome').value = g('rt_tel').value = g('rt_email').value = ''; g('rt_ok').checked = false;
+        } catch (e) { fala((e.message || 'Não consegui enviar agora.') + ' Se preferir, fale direto pelo WhatsApp.'); }
+        finally { btn.disabled = false; btn.textContent = 'Receber tabela e plantas'; }
     }
     function enviarProposta(id) {
         const i = bancoImoveis.find(x => String(x.id) === String(id)) || {};
@@ -1094,6 +1146,8 @@ const tarjasDo = i => { const l = Array.isArray(i.destaques) ? i.destaques : (i.
           </div>`).join('')}
       </div>
     </div>` : ''}
+
+    ${blocoCaptacao(i)}
   </div>
 
   <!-- SIDEBAR STICKY -->

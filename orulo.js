@@ -77,7 +77,7 @@ function mapear(b, imgs, plantas) {
     lazer: lista(b.features).map(texto).filter(Boolean).slice(0, 60),
     infoTecnica: info,
     apresentacao: texto(pega(b, 'description', 'presentation')).slice(0, 3000),
-    tipologias: tip.map(t => ({ nome: texto(pega(t, 'name', 'title')), area: pega(t, 'private_area', 'area', 'min_area') ? fmtN(num(pega(t, 'private_area', 'area', 'min_area'))) + ' m²' : '', dorm: String(pega(t, 'bedrooms')), suites: String(pega(t, 'suites')), vagas: String(pega(t, 'parking', 'parking_spaces')), preco: num(pega(t, 'min_price', 'price')) ? brl(num(pega(t, 'min_price', 'price'))) : '' })).filter(t => t.nome).slice(0, 40)
+    tipologias: tip.map(t => ({ nome: texto(pega(t, 'name', 'title')), area: pega(t, 'private_area', 'area', 'min_area') ? fmtN(num(pega(t, 'private_area', 'area', 'min_area'))) + ' m²' : '', dorm: String(pega(t, 'bedrooms')), suites: String(pega(t, 'suites')), banh: String(pega(t, 'bathrooms', 'bathroom', 'toilets')), vagas: String(pega(t, 'parking', 'parking_spaces')), preco: num(pega(t, 'min_price', 'price')) ? brl(num(pega(t, 'min_price', 'price'))) : '' })).filter(t => t.nome).slice(0, 40)
   };
   const diag = `campos do empreendimento: ${Object.keys(b).join(', ')} | imagens: ${fotos.length} | plantas: ${pl.length}`;
   return { dados, diag };
