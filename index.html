@@ -1093,7 +1093,7 @@ const tarjasDo = i => { const l = Array.isArray(i.destaques) ? i.destaques : (i.
         const similares = bancoImoveis.filter(x => String(x.id) !== String(id) && (bairroDe(x.localizacao) === bairro || x.estagio === i.estagio)).slice(0, 3);
 
         document.getElementById('modal-details-box').innerHTML = `
-<div class="imv-topo"><div class="imv-esq"><button type="button" class="imv-voltar close-modal" onclick="fecharModal()">← Voltar aos imóveis</button><a class="imv-home close-modal" href="/" onclick="fecharModal();window.scrollTo(0,0);return false;" aria-label="Ir para a página principal"><span class="imv-home-ico">⌂</span><span class="imv-home-txt">Página principal</span></a></div><a class="imv-marca" href="/" onclick="fecharModal();window.scrollTo(0,0);return false;">Joildo Brokers</a><button type="button" class="imv-x close-modal" onclick="fecharModal()" aria-label="Fechar">&times;</button></div>
+<div class="imv-topo"><div class="imv-esq"><button type="button" class="imv-voltar" onclick="fecharModal()">← Voltar aos imóveis</button><a class="imv-home" href="/" onclick="fecharModal();window.scrollTo(0,0);return false;" aria-label="Ir para a Home (página principal)"><span class="imv-home-ico">⌂</span><span class="imv-home-txt">Home</span></a></div><a class="imv-marca" href="/" onclick="fecharModal();window.scrollTo(0,0);return false;">Joildo Brokers</a><button type="button" class="imv-x" onclick="fecharModal()" aria-label="Fechar">&times;</button></div>
 
 <!-- GALERIA PRINCIPAL: duas opções (Fotos do condomínio e apartamento | Plantas) -->
 <div style="background:#0a1128">
@@ -1135,10 +1135,10 @@ const tarjasDo = i => { const l = Array.isArray(i.destaques) ? i.destaques : (i.
 
     <!-- Atributos rápidos -->
     <div style="display:flex;flex-wrap:wrap;gap:20px;padding:18px 0;border-top:1px solid #E2E8F0;border-bottom:1px solid #E2E8F0;margin-bottom:28px">
-      ${i.area ? `<div><strong style="font-size:.95rem">${esc(i.area)}</strong><br><span style="font-size:.7rem;color:var(--text-muted)">Área útil</span></div></div>` : ''}
-      ${i.dormitorios ? `<div><strong style="font-size:.95rem">${esc(i.dormitorios)}</strong><br><span style="font-size:.7rem;color:var(--text-muted)">Dormitórios</span></div></div>` : ''}
-      ${i.vagas ? `<div><strong style="font-size:.95rem">${esc(i.vagas)}</strong><br><span style="font-size:.7rem;color:var(--text-muted)">Vagas</span></div></div>` : ''}
-      ${i.construtora ? `<div><strong style="font-size:.95rem">${esc(i.construtora)}</strong><br><span style="font-size:.7rem;color:var(--text-muted)">Construtora</span></div></div>` : ''}
+      ${i.area ? `<div><strong style="font-size:.95rem">${esc(i.area)}</strong><br><span style="font-size:.7rem;color:var(--text-muted)">Área útil</span></div>` : ''}
+      ${i.dormitorios ? `<div><strong style="font-size:.95rem">${esc(i.dormitorios)}</strong><br><span style="font-size:.7rem;color:var(--text-muted)">Dormitórios</span></div>` : ''}
+      ${i.vagas ? `<div><strong style="font-size:.95rem">${esc(i.vagas)}</strong><br><span style="font-size:.7rem;color:var(--text-muted)">Vagas</span></div>` : ''}
+      ${i.construtora ? `<div><strong style="font-size:.95rem">${esc(i.construtora)}</strong><br><span style="font-size:.7rem;color:var(--text-muted)">Construtora</span></div>` : ''}
     </div>
 
     <!-- Sobre o imóvel -->
