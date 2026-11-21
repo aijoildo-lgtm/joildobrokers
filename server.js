@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const axios = require('axios');
 const cheerio = require('cheerio');
 const cors = require('cors');
-const { extrairAoCubo, lerTipologias, linhasDoHtml } = require('./aocubo');
+const { extrairAoCubo, lerTipologias, linhasDoHtml, textoParaIA, normalizarData } = require('./aocubo');
 const orulo = require('./orulo');
 
 const app = express();
@@ -568,6 +568,44 @@ app.get('/api/orulo-sessao', exigirLogin, (req, res) => {
 // IMPORTAÇÃO POR LINK: AoCubo (leitura aberta) e Órulo (exige login)
 const CAMPOS_IMPORT = [['titulo','título'],['preco','preço'],['localizacao','localização'],['area','área'],['dormitorios','dormitórios'],['vagas','vagas'],['tipo','tipo'],['estagio','estágio'],['construtora','construtora'],['foto','foto de capa'],['apresentacao','apresentação'],['tipologias','tipologias e valores'],['lazer','lazer'],['infoTecnica','informações técnicas']];
 const camposFaltando = d => CAMPOS_IMPORT.filter(([k]) => !(Array.isArray(d[k]) ? d[k].length : d[k])).map(([, n]) => n);
+
+// Usa a IA (se houver chave) para completar o que a leitura direta não achou e para resumir a apresentação.
+// Regra: só aceita da IA números que realmente aparecem no texto da página (nada inventado).
+function resumoSimples(t, max = 600) {
+  t = String(t || '').replace(/\s+/g, ' ').trim(); if (t.length <= max) return t;
+  const c = t.slice(0, max), p = Math.max(c.lastIndexOf('. '), c.lastIndexOf('! '), c.lastIndexOf('? '));
+  return (p > 200 ? c.slice(0, p + 1) : c.replace(/\s+\S*$/, '') + '…');
+}
+async function completarComIA(dados, html) {
+  const texto = textoParaIA(html), notas = [];
+  dados.apresentacao = resumoSimples(dados.apresentacao);
+  if (!iaProvedor() || !iaDentroDoLimite()) return notas;
+  try {
+    const prompt = `Leia o texto da página de um empreendimento e responda APENAS um JSON válido, sem crases, com as chaves:
+"tipologias": lista de opções de planta, cada uma {"area":"24 m²","dorm":"1","suites":"","banh":"1","vagas":"0","preco":""} (uma por opção de planta listada; preco só se estiver escrito, senão ""),
+"entrega": data de entrega ou previsão de entrega como está na página (ex.: "12/2023"), ou "",
+"apresentacao": resumo de 2 a 3 frases sobre como é morar no empreendimento, usando SÓ o que está no texto, ou "".
+Use [] ou "" para o que não existir. Não invente nada.\nTEXTO:\n${texto}`;
+    const out = await chamarIA(IA_SISTEMA, prompt, 1500);
+    const j = JSON.parse((out.match(/\{[\s\S]*\}/) || ['{}'])[0]);
+    const soNum = texto.replace(/\s+/g, ' ');
+    if (!(dados.tipologias || []).length && Array.isArray(j.tipologias)) {
+      const ok = j.tipologias.filter(t => t && t.area && new RegExp('(^|\\D)' + String(t.area).replace(/[^\d,.]/g, '').replace(/[.,]/g, '[.,]') + '(\\D|$)').test(soNum)).slice(0, 40)
+        .map(t => ({ nome: dados.tipo || 'Apartamento', area: String(t.area), dorm: String(t.dorm || ''), suites: String(t.suites || ''), banh: String(t.banh || ''), vagas: String(t.vagas || ''), preco: String(t.preco || '') }));
+      if (ok.length) { dados.tipologias = ok; notas.push('tipologias lidas pela IA'); }
+    }
+    if (j.entrega && !(dados.infoTecnica || []).some(x => /entreg|previs/i.test(x.k))) {
+      const e = normalizarData(j.entrega);
+      const ano = (String(j.entrega).match(/\d{4}/) || [])[0];
+      if (e && ano && soNum.includes(ano)) {
+        dados.entrega = e; dados.infoTecnica = [...(dados.infoTecnica || []), { k: dados.estagio === 'prontos' ? 'Entregue em' : 'Previsão de entrega', v: e }];
+        notas.push('data de entrega lida pela IA');
+      }
+    }
+    if (j.apresentacao && String(j.apresentacao).length > 40) { dados.apresentacao = String(j.apresentacao).slice(0, 900); notas.push('apresentação resumida pela IA'); }
+  } catch (e) { console.error('IA no AoCubo:', e.message); }
+  return notas;
+}
 async function importarAoCubo(url, res) {
   try {
     const r = await axios.get(url, {
@@ -575,9 +613,10 @@ async function importarAoCubo(url, res) {
       timeout: 15000, maxRedirects: 3
     });
     const dados = extrairAoCubo(String(r.data), url);
+    const notasIA = (dados.titulo || dados.preco) ? await completarComIA(dados, String(r.data)) : [];
     if (!dados.titulo && !dados.preco) return res.json({ success: false, precisaTexto: true, error: 'Abri a página, mas não encontrei os dados do imóvel. Use a aba Assistente IA: cole o texto da página e a IA preenche o cadastro.' });
     const faltando = camposFaltando(dados);
-    res.json({ success: true, dados, faltando, precisaTexto: faltando.length > 0, fonte: 'AoCubo' });
+    res.json({ success: true, dados, faltando, precisaTexto: faltando.length > 0, fonte: 'AoCubo', notasIA });
   } catch (e) {
     res.json({ success: false, precisaTexto: true, error: `Não consegui abrir o link do AoCubo (${e.response ? 'HTTP ' + e.response.status : e.code || e.message}). Use a aba Assistente IA e cole o texto da página.` });
   }

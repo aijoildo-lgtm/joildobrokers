@@ -52,6 +52,46 @@ function lerTipologias(linhas, tipo) {
   return out.slice(0, 40);
 }
 
+const MESES = { janeiro: 1, fevereiro: 2, 'março': 3, marco: 3, abril: 4, maio: 5, junho: 6, julho: 7, agosto: 8, setembro: 9, outubro: 10, novembro: 11, dezembro: 12 };
+// "Dezembro de 2023", "dez/2023", "2023-12-01", "12/2023" -> "12/2023". Qualquer outro texto fica como veio.
+function normalizarData(t) {
+  t = String(t || '').trim(); if (!t) return '';
+  let m = t.match(/^(\d{4})-(\d{2})(?:-\d{2})?/); if (m) return `${m[2]}/${m[1]}`;
+  m = t.match(/(?:^|\D)(\d{1,2})\/(\d{4})\b/); if (m) return `${m[1].padStart(2, '0')}/${m[2]}`;
+  m = t.match(/\b([a-zçã]{3,9})\.?\s*(?:de|\/|-)?\s*(\d{4})\b/i);
+  if (m) { const k = Object.keys(MESES).find(n => n === m[1].toLowerCase() || (m[1].length === 3 && n.startsWith(m[1].toLowerCase()))); if (k) return `${String(MESES[k]).padStart(2, '0')}/${m[2]}`; }
+  return t.slice(0, 40);
+}
+
+// Plano B: algumas páginas trazem as opções de planta dentro de um JSON embutido (script) em vez de texto visível.
+// Procura objetos que tenham metragem + quartos e monta as tipologias, sem inventar nada.
+function tipologiasDeJson(html, tipo) {
+  const achados = [];
+  const blocos = [...html.matchAll(/<script[^>]*(?:type=["']application\/(?:ld\+)?json["']|id=["']__NEXT_DATA__["'])[^>]*>([\s\S]*?)<\/script>/gi)].map(m => m[1]);
+  const num = (v) => { const n = parseFloat(String(v).replace(',', '.')); return isNaN(n) ? null : n; };
+  const pick = (o, re) => { const k = Object.keys(o).find(x => re.test(x) && o[x] != null && typeof o[x] !== 'object' && o[x] !== ''); return k ? o[k] : null; };
+  const varre = (o, prof) => {
+    if (!o || typeof o !== 'object' || prof > 12) return;
+    if (!Array.isArray(o)) {
+      const a = pick(o, /^(private_?area|useful_?area|area|metragem|size|square_?meters?|area_?privativa)$/i), q = pick(o, /^(bedrooms?|quartos?|dormit[oó]rios?|rooms)$/i);
+      if (a != null && q != null && num(a) > 8 && num(a) < 2000 && num(q) >= 0 && num(q) < 12) {
+        const su = pick(o, /^(suites?|su[ií]tes?)$/i), bn = pick(o, /^(bathrooms?|banheiros?)$/i), v = pick(o, /^(parking(_spaces)?|garage|vagas?|parking_lots)$/i), pr = pick(o, /^(price|min_price|valor|preco|preço)$/i);
+        achados.push({ nome: tipo || 'Apartamento', area: `${String(num(a)).replace('.', ',')} m²`, dorm: String(q), suites: su != null ? String(su) : '', banh: bn != null ? String(bn) : '', vagas: v != null ? String(v) : '', preco: pr && num(pr) > 50000 ? 'R$ ' + Number(num(pr)).toLocaleString('pt-BR', { maximumFractionDigits: 0 }) : '' });
+      }
+    }
+    (Array.isArray(o) ? o : Object.values(o)).forEach(x => varre(x, prof + 1));
+  };
+  blocos.forEach(b => { try { varre(JSON.parse(b), 0); } catch (e) {} });
+  const vistos = new Set();
+  return achados.filter(t => { const k = [t.area, t.dorm, t.suites, t.banh, t.vagas].join('|'); if (vistos.has(k)) return false; vistos.add(k); return true; }).slice(0, 40);
+}
+
+// Texto limpo da página (da ficha até antes dos "imóveis semelhantes"), para a IA ler quando a leitura direta falha
+function textoParaIA(html) {
+  const l = linhasDoHtml(html), fim = l.findIndex(x => /^(Im[óo]veis Semelhantes|Gostou do im[óo]vel)/i.test(x));
+  return (fim > 0 ? l.slice(0, fim) : l).join('\n').slice(0, 9000);
+}
+
 function extrairAoCubo(html, urlPagina) {
   const linhas = linhasDoHtml(html);
   const fim = linhas.findIndex(l => /^(Im[óo]veis Semelhantes|Gostou do im[óo]vel)/i.test(l));
@@ -81,7 +121,9 @@ function extrairAoCubo(html, urlPagina) {
 
   const estagioTxt = depois('Estágio da Obra');
   const estagio = (ESTAGIOS.find(([re]) => re.test(estagioTxt)) || [])[1] || '';
-  const entrega = depois('Entrega estimada');
+  const entregaTxt = depois('Entrega estimada') || depois('Entrega') || depois('Data de entrega');
+  const entrega = normalizarData(entregaTxt);
+  const endereco = depois('Endereço e localização') && !/^Conhe[çc]a/i.test(depois('Endereço e localização')) ? depois('Endereço e localização') : depois('Localização');
   const tipoM = (h1 || ogTitulo).match(new RegExp(`\\b(${Object.keys(TIPOS).join('|')})\\b`, 'i'));
   const tipo = tipoM ? TIPOS[tipoM[1].toLowerCase()] : '';
 
@@ -95,10 +137,12 @@ function extrairAoCubo(html, urlPagina) {
   let apresentacao = '';
   if (iMorar >= 0 && iLazer > iMorar) { const t = linhas.slice(iMorar + 1, iLazer).join(' '); if (t.length > 60) apresentacao = t.slice(0, 3000); }
 
-  const tipologias = lerTipologias(linhas, tipo);
+  let tipologias = lerTipologias(linhas, tipo);
+  if (!tipologias.length) tipologias = tipologiasDeJson(html, tipo);
   const img = imagens(html, urlPagina);
   const infoTecnica = [];
-  if (entrega && estagio && estagio !== 'prontos') infoTecnica.push({ k: 'Previsão de entrega', v: entrega });
+  // imóvel pronto: a data é a em que foi entregue; os demais, a previsão
+  if (entrega) infoTecnica.push({ k: estagio === 'prontos' ? 'Entregue em' : 'Previsão de entrega', v: entrega });
 
   return {
     titulo, preco: preco ? `R$ ${preco}` : '',
@@ -107,7 +151,7 @@ function extrairAoCubo(html, urlPagina) {
     vagas: vagas && vagas !== '0' ? `${vagas} vaga${+vagas > 1 ? 's' : ''}` : '',
     localizacao, estagio, tipo, categoria: tipo ? 'Residencial' : '',
     foto: img.fotos[0] || img.og || '', fotos: img.fotos, plantas: img.plantas,
-    lazer, infoTecnica, apresentacao, tipologias
+    lazer, infoTecnica, apresentacao, tipologias, endereco: endereco.slice(0, 200), entrega
   };
 }
-module.exports = { extrairAoCubo, lerTipologias, linhasDoHtml };
+module.exports = { extrairAoCubo, lerTipologias, linhasDoHtml, textoParaIA, normalizarData, tipologiasDeJson };

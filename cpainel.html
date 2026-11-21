@@ -754,7 +754,7 @@ async function importar(id='url'){
   const r=await API('/api/importar-link',{method:'POST',body:JSON.stringify({url})});
   if(!r.success){$('impMsg').textContent=r.error||'Não consegui ler esse link.';return}
   BASE={...BASE,...r.dados,linkOrigem:url,origem:r.fonte,sincronizar:true,modoCadastro:/rulo/i.test(r.fonte)?'orulo':'aocubo'};preencher(BASE);setModo(BASE.modoCadastro);
-  $('impMsg').textContent=`Extraído de ${r.fonte}: ${resumoExtraido(r.dados)}. Dados de ${r.fonte} preenchidos. Confira antes de salvar. A atualização automática fica ligada.`+(r.faltando&&r.faltando.length?` Não veio: ${r.faltando.map(k=>NOMES[k]||k).join(', ')}.`:'');
+  $('impMsg').textContent=`Extraído de ${r.fonte}: ${resumoExtraido(r.dados)}. Dados de ${r.fonte} preenchidos. Confira antes de salvar. A atualização automática fica ligada.`+(r.notasIA&&r.notasIA.length?` (${r.notasIA.join('; ')})`:'')+(r.faltando&&r.faltando.length?` Não veio: ${r.faltando.map(k=>NOMES[k]||k).join(', ')}.`:'');
 }
 
 $('sinc').onclick=async()=>{aviso('Consultando AoCubo e Órulo...');const r=await API('/api/sincronizar',{method:'POST'});aviso(r.success?`Pronto: ${r.atualizados} atualizado(s), ${r.pausados} pausado(s), ${r.erros.length} com erro.`:(r.error||'Não consegui sincronizar.'));await load()};
@@ -1203,7 +1203,7 @@ async function buscarProx(auto){
   const v=id=>($('f_'+id)?$('f_'+id).value.trim():'');
   const bairro=v('localizacao'),nome=v('titulo');
   if(!nome&&!bairro&&!v('logradouro')&&!(v('lat')&&v('lng'))){if(!auto)aviso('Preencha o nome do empreendimento e o bairro.');return}
-  const endereco=v('logradouro')?[[v('logradouro'),v('numero')].filter(Boolean).join(', '),bairro,v('cep')].filter(Boolean).join(', '):'';
+  const endereco=v('logradouro')?[[v('logradouro'),v('numero')].filter(Boolean).join(', '),bairro,v('cep')].filter(Boolean).join(', '):((BASE&&BASE.endereco)||'');
   const t0=btn.textContent;btn.disabled=true;btn.textContent='Procurando…';res.innerHTML='<span class="dica">'+(auto?'Buscando automaticamente o que tem perto, pelo nome do empreendimento…':'Consultando o mapa…')+'</span>';
   try{
     const r=await API('/api/proximidades',{method:'POST',body:JSON.stringify({nome,endereco,localizacao:bairro,lat:v('lat'),lng:v('lng')})});
