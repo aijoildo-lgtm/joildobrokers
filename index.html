@@ -50,19 +50,44 @@
 .planta-item{display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid #E2E8F0;text-decoration:none;color:var(--text-dark);font-size:.92rem}
 .planta-item img{width:76px;height:56px;object-fit:cover;border-radius:8px;border:1px solid #E2E8F0;background:#F1F5F9}
 .planta-item:hover span{color:var(--primary)}
-.gal-abas{display:flex;gap:6px;flex-wrap:wrap;max-width:1300px;margin:0 auto;padding:14px 24px 12px}
+.gal-abas{display:flex;gap:6px;flex-wrap:wrap;max-width:1240px;margin:0 auto;padding:14px clamp(16px,4vw,40px) 12px}
 .gal-aba{background:transparent;color:#C9D2E1;border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:8px 18px;font-weight:600;font-size:.82rem;font-family:inherit;cursor:pointer;transition:all .2s}
 .gal-aba:hover{border-color:var(--gold);color:#fff}
 .gal-aba.on{background:var(--gold);border-color:var(--gold);color:#0A1128}
-.gal-met{display:none;max-width:1300px;margin:0 auto;padding:0 24px 12px;gap:6px;flex-wrap:wrap;align-items:center;color:#C9D2E1;font-size:.78rem}
+.gal-met{display:none;max-width:1240px;margin:0 auto;padding:0 clamp(16px,4vw,40px) 12px;gap:6px;flex-wrap:wrap;align-items:center;color:#C9D2E1;font-size:.78rem}
 .gal-met.on{display:flex}
 .gal-chip{background:#fff;color:#0A1128;border:2px solid transparent;border-radius:6px;padding:6px 12px;font:600 .8rem inherit;font-family:inherit;cursor:pointer}
 .gal-chip.on{border-color:var(--gold);background:#FFF8E1}
-.gal-strip{display:flex;gap:6px;overflow-x:auto;padding:8px 24px 14px;max-width:1300px;margin:0 auto;scrollbar-width:thin}
+.gal-strip{display:flex;gap:6px;overflow-x:auto;padding:8px clamp(16px,4vw,40px) 14px;max-width:1240px;margin:0 auto;scrollbar-width:thin;position:relative}
 .gal-strip .gt{flex:0 0 96px;height:66px;border-radius:6px;overflow:hidden;cursor:pointer;opacity:.55;border:2px solid transparent;background:#E2E8F0}
 .gal-strip .gt.on{opacity:1;border-color:var(--gold)}
 .gal-strip .gt img{width:100%;height:100%;display:block}
 html.previa .close-modal{display:none!important}
+/* ===== PÁGINA DO IMÓVEL EM TELA CHEIA ===== */
+#propertyModal.modal{padding:0;align-items:stretch;justify-content:stretch;background:var(--bg-light);backdrop-filter:none}
+#propertyModal .modal-content{max-width:none;width:100%;height:100%;border-radius:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scroll-behavior:auto}
+.imv-topo{position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px clamp(16px,4vw,40px);background:rgba(10,17,40,.96);backdrop-filter:blur(6px);color:#fff}
+.imv-topo .imv-voltar{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:8px 18px;font:600 .84rem inherit;font-family:inherit;cursor:pointer;transition:all .2s}
+.imv-topo .imv-voltar:hover{border-color:var(--gold);color:var(--gold)}
+.imv-topo .imv-marca{font-family:'Playfair Display',serif;font-weight:700;letter-spacing:.5px;color:var(--gold)}
+.imv-topo .imv-x{background:rgba(255,255,255,.12);color:#fff;border:none;border-radius:50%;width:36px;height:36px;font-size:1.3rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.imv-topo .imv-x:hover{background:var(--gold);color:#0A1128}
+.imv-topo .imv-home{display:flex;align-items:center;gap:8px;background:var(--gold);color:#0A1128;border-radius:999px;padding:8px 18px;font:700 .84rem inherit;font-family:inherit;text-decoration:none;transition:filter .2s}
+.imv-topo .imv-home:hover{filter:brightness(1.08)}
+.imv-topo .imv-home-ico{font-size:1.05rem;line-height:1}
+.imv-topo .imv-marca{text-decoration:none}
+.imv-topo .imv-esq{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.imv-in{max-width:1240px;margin:0 auto;padding-left:clamp(16px,4vw,40px);padding-right:clamp(16px,4vw,40px)}
+.imv-corpo{max-width:1240px;margin:0 auto;padding:32px clamp(16px,4vw,40px) 130px;display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:40px;align-items:start}
+.imv-corpo > div{min-width:0}
+.imv-side{position:sticky;top:76px}
+.imv-mapa{width:100%;height:320px;border:0;border-radius:12px;background:#F1F5F9;display:block}
+.imv-mapa-link{display:inline-block;margin-top:8px;font-size:.82rem;color:var(--primary);font-weight:600;text-decoration:none}
+.imv-mapa-link:hover{color:var(--gold)}
+.imv-mapa-nota{font-size:.74rem;color:var(--text-muted);margin:6px 0 0}
+@media(max-width:900px){.imv-corpo{grid-template-columns:minmax(0,1fr);gap:28px;padding-top:24px}.imv-side{position:static}.imv-mapa{height:260px}.imv-topo .imv-marca{display:none}.imv-topo .imv-voltar{padding:8px 12px}.imv-topo .imv-home{padding:8px 14px}}
+html.previa .imv-topo{display:none}
+
 </style>
 </head>
 <body>
@@ -1068,7 +1093,7 @@ const tarjasDo = i => { const l = Array.isArray(i.destaques) ? i.destaques : (i.
         const similares = bancoImoveis.filter(x => String(x.id) !== String(id) && (bairroDe(x.localizacao) === bairro || x.estagio === i.estagio)).slice(0, 3);
 
         document.getElementById('modal-details-box').innerHTML = `
-<button class="close-modal" onclick="fecharModal()" aria-label="Fechar" style="position:fixed;top:18px;right:22px;z-index:10;background:rgba(10,17,40,.7);color:#fff;border:none;border-radius:50%;width:40px;height:40px;font-size:1.3rem;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)">&times;</button>
+<div class="imv-topo"><div class="imv-esq"><button type="button" class="imv-voltar close-modal" onclick="fecharModal()">← Voltar aos imóveis</button><a class="imv-home close-modal" href="/" onclick="fecharModal();window.scrollTo(0,0);return false;" aria-label="Ir para a página principal"><span class="imv-home-ico">⌂</span><span class="imv-home-txt">Página principal</span></a></div><a class="imv-marca" href="/" onclick="fecharModal();window.scrollTo(0,0);return false;">Joildo Brokers</a><button type="button" class="imv-x close-modal" onclick="fecharModal()" aria-label="Fechar">&times;</button></div>
 
 <!-- GALERIA PRINCIPAL: duas opções (Fotos do condomínio e apartamento | Plantas) -->
 <div style="background:#0a1128">
@@ -1077,7 +1102,7 @@ const tarjasDo = i => { const l = Array.isArray(i.destaques) ? i.destaques : (i.
     <button class="gal-aba" data-m="plantas" role="tab" aria-selected="false" onclick="galModoIr('plantas')">Plantas (${plantas.length})</button>
   </div>` : ''}
   <div class="gal-met" id="gal-metragens"></div>
-  <div style="max-width:1300px;margin:0 auto">
+  <div style="max-width:1240px;margin:0 auto;padding:0 clamp(0px,4vw,40px)">
     <div style="display:block">
       <!-- Foto principal -->
       <div id="gal-palco" style="position:relative;overflow:hidden;cursor:pointer;height:min(62vw,540px)" onclick="galProx()" ontouchstart="window._tx=event.touches[0].clientX" ontouchend="const d=event.changedTouches[0].clientX-window._tx;if(Math.abs(d)>40){d<0?galProx():galAnter()}">
@@ -1095,7 +1120,7 @@ const tarjasDo = i => { const l = Array.isArray(i.destaques) ? i.destaques : (i.
 </div>
 
 <!-- CORPO DO MODAL -->
-<div style="max-width:1300px;margin:0 auto;padding:28px 24px;display:grid;grid-template-columns:1fr 340px;gap:40px;align-items:start">
+<div class="imv-corpo">
   <!-- COLUNA ESQUERDA -->
   <div>
     <!-- Breadcrumb -->
@@ -1137,7 +1162,14 @@ const tarjasDo = i => { const l = Array.isArray(i.destaques) ? i.destaques : (i.
       <h4 style="font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--primary);margin-bottom:12px">Viver em <em style="color:var(--gold)">${esc(bairro || 'São Paulo')}</em></h4>
       ${(i.visibilidade === 'endereco' && i.logradouro) ? `<p style="margin:0 0 10px;font-size:.88rem">${esc([i.logradouro, i.numero, i.complemento].filter(Boolean).join(', '))}${i.cep ? ' · CEP ' + esc(i.cep) : ''}</p>` : ''}
       ${i.proximidade ? `<div style="display:flex;align-items:center;gap:8px;padding:12px 16px;background:#F8FAFC;border-radius:8px;border-left:3px solid var(--gold);margin-bottom:12px"><span style="font-size:.88rem;color:var(--text-dark)">${esc(i.proximidade)}</span></div>` : ''}
-      <div style="background:#F1F5F9;border-radius:12px;height:200px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:.85rem;flex-direction:column;gap:6px">Localização em ${esc(i.localizacao)}</div>
+      ${(() => {
+        const comEnd = i.visibilidade === 'endereco' && i.logradouro;
+        const q = comEnd ? [i.logradouro, i.numero, bairro, rxCidade(i.localizacao) || 'São Paulo', 'Brasil'].filter(Boolean).join(', ') : [i.localizacao, 'Brasil'].filter(Boolean).join(', ');
+        const qs = encodeURIComponent(q);
+        return `<iframe class="imv-mapa" src="https://maps.google.com/maps?q=${qs}&hl=pt-BR&z=${comEnd ? 16 : 14}&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Mapa: ${esc(i.localizacao)}"></iframe>
+        <a class="imv-mapa-link" href="https://www.google.com/maps/search/?api=1&query=${qs}" target="_blank" rel="noopener">Abrir no Google Maps \u2197</a>
+        ${comEnd ? '' : '<p class="imv-mapa-nota">Localização aproximada, pelo bairro.</p>'}`;
+      })()}
     </div>
 
     <!-- Vídeo -->
@@ -1166,7 +1198,7 @@ const tarjasDo = i => { const l = Array.isArray(i.destaques) ? i.destaques : (i.
   </div>
 
   <!-- SIDEBAR STICKY -->
-  <div style="position:sticky;top:80px">
+  <div class="imv-side">
     <div style="background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:26px;box-shadow:0 4px 24px rgba(10,17,40,.10)">
       <div style="font-size:.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Venda · Cód. ${esc(i.ref)}</div>
       ${i.preco ? `<div style="font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px">A partir de</div>` : ''}<div style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:var(--primary);line-height:1.1">${esc(i.preco)}</div>${i.precoM2 ? `<div style="font-size:.85rem;color:var(--text-muted);margin:4px 0 14px">${esc(i.precoM2)}/m²</div>` : '<div style="margin-bottom:14px"></div>'}${(i.condominio || i.iptu) ? `<div style="font-size:.8rem;color:var(--text-muted);margin:-6px 0 14px">${[i.condominio && 'Condomínio ' + esc(i.condominio), i.iptu && 'IPTU ' + esc(i.iptu)].filter(Boolean).join(' · ')}</div>` : ''}
@@ -1197,6 +1229,7 @@ const tarjasDo = i => { const l = Array.isArray(i.destaques) ? i.destaques : (i.
         m.classList.remove('saindo');
         m.style.display = 'flex';
         document.body.style.overflow = 'hidden';
+        document.getElementById('modal-details-box').scrollTop = 0;
         galThumbs();
         iniciarFinanc(i);
         document.title = i.seoTitulo || `${i.titulo} | Joildo Brokers`;
@@ -1428,7 +1461,8 @@ const tarjasDo = i => { const l = Array.isArray(i.destaques) ? i.destaques : (i.
         const img = document.getElementById('gal-img-modal');
         const cnt = document.getElementById('gal-contador');
         if (img) { img.style.opacity = 0; setTimeout(() => { img.src = galFotos[galAtual]; img.style.opacity = 1; }, 200); }
-        document.querySelectorAll('#gal-thumbs .gt').forEach((t, n) => { t.classList.toggle('on', n === galAtual); if (n === galAtual && t.scrollIntoView) t.scrollIntoView({ block: 'nearest', inline: 'center' }); });
+        const faixa = document.getElementById('gal-thumbs');
+        document.querySelectorAll('#gal-thumbs .gt').forEach((t, n) => { t.classList.toggle('on', n === galAtual); if (n === galAtual && faixa) faixa.scrollTo({ left: Math.max(0, t.offsetLeft - (faixa.clientWidth - t.offsetWidth) / 2), behavior: 'smooth' }); });
         if (galModo === 'plantas') galMetragens();
         if (cnt) cnt.textContent = (galModo === 'plantas' && galPlantas[galAtual] && galPlantas[galAtual].nome ? galPlantas[galAtual].nome + ' · ' : '') + (galAtual + 1) + ' / ' + galFotos.length;
     }
