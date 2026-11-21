@@ -763,19 +763,20 @@ const iaProvedores = () => {
 const iaProvedor = () => iaProvedores()[0] || '';
 const NOME_IA = { gemini: 'Gemini', deepseek: 'DeepSeek', qwen: 'Qwen', claude: 'Claude' };
 // Descobre sozinho qual modelo Gemini a sua chave pode usar (o Google aposenta modelos com frequência).
-const geminiCache = { modelo: '', ate: 0 };
-async function modeloGemini(chave, forcar) {
-  if (!forcar && geminiCache.modelo && geminiCache.ate > Date.now()) return geminiCache.modelo;
+const geminiCache = { lista: [], ate: 0 };
+async function modelosGemini(chave, forcar) {
+  if (!forcar && geminiCache.lista.length && geminiCache.ate > Date.now()) return geminiCache.lista;
   const r = await axios.get('https://generativelanguage.googleapis.com/v1beta/models', { params: { pageSize: 200 }, headers: { 'x-goog-api-key': chave }, timeout: 20000 });
   const nomes = (r.data.models || []).filter(m => (m.supportedGenerationMethods || []).includes('generateContent')).map(m => String(m.name).replace(/^models\//, ''));
   const versao = (n) => { const m = n.match(/gemini-(\d+(?:\.\d+)?)/); return m ? parseFloat(m[1]) : 0; };
   const base = nomes.filter(n => /^gemini-\d/.test(n) && !/image|tts|live|audio|embed|omni|robotics|computer|customtools|exp|thinking|preview|latest/i.test(n));
-  const rank = (lista) => lista.sort((a, b) => versao(b) - versao(a) || a.length - b.length)[0];
-  const escolhido = rank(base.filter(n => /flash/.test(n) && !/lite/.test(n))) || rank(base.filter(n => /flash/.test(n))) || rank(base) || rank(nomes.filter(n => /^gemini-/.test(n)));
-  if (!escolhido) throw new Error('A chave do Gemini não tem nenhum modelo liberado');
-  console.log('Gemini: usando o modelo', escolhido);
-  geminiCache.modelo = escolhido; geminiCache.ate = Date.now() + 6 * 3600 * 1000;
-  return escolhido;
+  const ord = (l) => l.sort((a, b) => versao(b) - versao(a) || a.length - b.length);
+  // ordem: os Flash mais novos, depois os Flash-Lite (mais leves, costumam estar menos lotados), depois os demais
+  const lista = [...new Set([...ord(base.filter(n => /flash/.test(n) && !/lite/.test(n))).slice(0, 2), ...ord(base.filter(n => /flash-lite/.test(n))).slice(0, 2), ...ord(base.filter(n => !/flash/.test(n))).slice(0, 1)])];
+  if (!lista.length) throw new Error('A chave do Gemini não tem nenhum modelo liberado');
+  console.log('Gemini: modelos em ordem de uso:', lista.join(', '));
+  geminiCache.lista = lista; geminiCache.ate = Date.now() + 6 * 3600 * 1000;
+  return lista;
 }
 async function chamarProvedor(prov, system, prompt, maxTokens) {
   if (prov === 'gemini') {
@@ -790,11 +791,24 @@ async function chamarProvedor(prov, system, prompt, maxTokens) {
       return partes.filter(p => !p.thought).map(p => p.text || '').join('').trim();
     };
     if (process.env.GEMINI_MODEL) return chamar(process.env.GEMINI_MODEL);   // modelo fixado por você no Render
-    for (let t = 0; t < 2; t++) {
-      const modelo = await modeloGemini(chave, t === 1);
-      try { const txt = await chamar(modelo); if (txt) return txt; }
-      catch (e) { if (!(e.response && e.response.status === 404 && t === 0)) throw e; geminiCache.modelo = ''; }  // modelo saiu do ar: descobre outro e tenta de novo
+    // 503/429/500 = Google sobrecarregado: espera e tenta de novo; depois passa para o próximo modelo da lista. 404 = modelo saiu do ar.
+    let ultimo, lista = await modelosGemini(chave, false);
+    for (let r = 0; r < 2; r++) {
+      for (const modelo of lista) {
+        for (let t = 0; t < 2; t++) {
+          try { const txt = await chamar(modelo); if (txt) return txt; break; }
+          catch (e) {
+            ultimo = e; const st = e.response && e.response.status;
+            if (st === 404) { geminiCache.lista = []; break; }
+            if ([429, 500, 502, 503, 504].includes(st) && t === 0) { await new Promise(ok => setTimeout(ok, 2500)); continue; }
+            if ([429, 500, 502, 503, 504].includes(st)) break;
+            throw e;
+          }
+        }
+      }
+      if (r === 0) lista = await modelosGemini(chave, true);
     }
+    if (ultimo) throw ultimo;
     throw new Error('Gemini sem modelo disponível');
   }
   if (prov === 'deepseek' || prov === 'qwen') {
