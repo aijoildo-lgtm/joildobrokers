@@ -393,6 +393,14 @@ app.post('/api/proximidades', exigirLogin, async (req, res) => {
   }
 });
 
+// Pré-visualização: normaliza os dados do formulário do mesmo jeito do salvamento, mas NÃO grava nada e tira os dados privados
+app.post('/api/imoveis/preview', exigirLogin, (req, res) => {
+  const b = req.body || {}, { privado, linkOrigem, origem, sincronizar, espelharMidia, historico, sincronizadoEm, ...r } = limpar(b);
+  r.id = String(b.id || 'previa').replace(/[^\w-]/g, '').slice(0, 40) || 'previa';
+  r.ref = r.ref || 'PRÉVIA'; r.ativo = true;
+  res.json({ success: true, imovel: r });
+});
+
 app.post('/api/adicionar-imovel', exigirLogin, ah(async (req, res) => {
   const i = limpar(req.body || {}), agora = new Date().toISOString();
   i.id = Date.now(); const jaTem = i.ref && (await getImoveis()).some(x => String(x.ref).toLowerCase() === String(i.ref).toLowerCase()); if (!i.ref || jaTem) i.ref = await proximaRef(); i.criadoEm = agora; i.atualizadoEm = agora;
@@ -748,22 +756,32 @@ app.patch('/api/conteudos/:id', exigirLogin, ah(async (req, res) => res.json({ s
 app.delete('/api/conteudos/:id', exigirLogin, ah(async (req, res) => res.json({ success: await cDel(req.params.id) })));
 
 // ===== ASSISTENTE DE IA =====
-// Provedores de IA: Gemini (GEMINI_API_KEY), DeepSeek (DEEPSEEK_API_KEY), Qwen (QWEN_API_KEY ou DASHSCOPE_API_KEY) e Claude (ANTHROPIC_API_KEY).
-// Ordem de uso: o de IA_PROVEDOR primeiro (gemini, deepseek, qwen ou claude); depois os outros que tiverem chave.
+// Provedores de IA: Gemini (GEMINI_API_KEY), Groq (GROQ_API_KEY), OpenRouter (OPENROUTER_API_KEY), NVIDIA NIM (NVIDIA_API_KEY),
+// DeepSeek (DEEPSEEK_API_KEY), Qwen (QWEN_API_KEY ou DASHSCOPE_API_KEY) e Claude (ANTHROPIC_API_KEY).
+// Ordem de uso: o de IA_PROVEDOR primeiro; depois gemini, groq, openrouter, nvidia, deepseek, qwen e claude (só os que tiverem chave).
 // Se um falhar (limite, saldo, instabilidade), o sistema tenta o próximo automaticamente. As chaves ficam SÓ no Render > Environment.
 const IA_MODELO = process.env.ANTHROPIC_MODEL || 'claude-sonnet-5-5';
 const DEEPSEEK_MODELO = process.env.DEEPSEEK_MODEL || 'deepseek-chat';
 const QWEN_MODELO = process.env.QWEN_MODEL || 'qwen-plus';
 const QWEN_URL = process.env.QWEN_BASE_URL || 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1'; // conta da China: https://dashscope.aliyuncs.com/compatible-mode/v1
+const GROQ_MODELOS = (process.env.GROQ_MODEL || 'llama-3.3-70b-versatile,llama-3.1-8b-instant').split(',').map(x => x.trim()).filter(Boolean);
+const OPENROUTER_MODELOS = (process.env.OPENROUTER_MODEL || 'openrouter/free,meta-llama/llama-3.3-70b-instruct:free').split(',').map(x => x.trim()).filter(Boolean);
+const NVIDIA_MODELOS = (process.env.NVIDIA_MODEL || 'meta/llama-3.3-70b-instruct,meta/llama-3.1-70b-instruct').split(',').map(x => x.trim()).filter(Boolean);
+// Provedores no formato OpenAI (mesma chamada, muda só o endereço, a chave e a lista de modelos; se um modelo falhar, tenta o próximo da lista)
+const COMPAT = {
+  groq: { url: 'https://api.groq.com/openai/v1/chat/completions', chave: () => process.env.GROQ_API_KEY, modelos: GROQ_MODELOS },
+  openrouter: { url: 'https://openrouter.ai/api/v1/chat/completions', chave: () => process.env.OPENROUTER_API_KEY, modelos: OPENROUTER_MODELOS, extra: { 'HTTP-Referer': process.env.SITE_URL || 'https://joildobrokers.onrender.com', 'X-Title': 'Joildo Brokers' } },
+  nvidia: { url: 'https://integrate.api.nvidia.com/v1/chat/completions', chave: () => process.env.NVIDIA_API_KEY, modelos: NVIDIA_MODELOS }
+};
 const chaveQwen = () => process.env.QWEN_API_KEY || process.env.DASHSCOPE_API_KEY || '';
-const TEM_CHAVE = { gemini: () => process.env.GEMINI_API_KEY, deepseek: () => process.env.DEEPSEEK_API_KEY, qwen: chaveQwen, claude: () => process.env.ANTHROPIC_API_KEY };
+const TEM_CHAVE = { gemini: () => process.env.GEMINI_API_KEY, groq: COMPAT.groq.chave, openrouter: COMPAT.openrouter.chave, nvidia: COMPAT.nvidia.chave, deepseek: () => process.env.DEEPSEEK_API_KEY, qwen: chaveQwen, claude: () => process.env.ANTHROPIC_API_KEY };
 const iaProvedores = () => {
   const pref = String(process.env.IA_PROVEDOR || '').toLowerCase();
-  const ordem = [pref, 'gemini', 'deepseek', 'qwen', 'claude'].filter((p, i, a) => TEM_CHAVE[p] && a.indexOf(p) === i);
+  const ordem = [pref, 'gemini', 'groq', 'openrouter', 'nvidia', 'deepseek', 'qwen', 'claude'].filter((p, i, a) => TEM_CHAVE[p] && a.indexOf(p) === i);
   return ordem.filter(p => String(TEM_CHAVE[p]() || '').trim());
 };
 const iaProvedor = () => iaProvedores()[0] || '';
-const NOME_IA = { gemini: 'Gemini', deepseek: 'DeepSeek', qwen: 'Qwen', claude: 'Claude' };
+const NOME_IA = { gemini: 'Gemini', groq: 'Groq', openrouter: 'OpenRouter', nvidia: 'NVIDIA', deepseek: 'DeepSeek', qwen: 'Qwen', claude: 'Claude' };
 // Descobre sozinho qual modelo Gemini a sua chave pode usar (o Google aposenta modelos com frequência).
 const geminiCache = { lista: [], ate: 0 };
 async function modelosGemini(chave, forcar) {
@@ -813,6 +831,23 @@ async function chamarProvedor(prov, system, prompt, maxTokens) {
     if (ultimo) throw ultimo;
     throw new Error('Gemini sem modelo disponível');
   }
+  if (COMPAT[prov]) {
+    const c = COMPAT[prov], chave = String(c.chave()).trim();
+    let ultimo;
+    for (const modelo of c.modelos) {
+      try {
+        const r = await axios.post(c.url, { model: modelo, max_tokens: maxTokens * 2, temperature: 0.7, messages: [{ role: 'system', content: system }, { role: 'user', content: prompt }] },
+          { headers: { Authorization: 'Bearer ' + chave, 'content-type': 'application/json', ...(c.extra || {}) }, timeout: 60000 });
+        const txt = String((((r.data.choices || [])[0] || {}).message || {}).content || '').replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+        if (txt) return txt;
+        ultimo = new Error(modelo + ' devolveu resposta vazia');
+      } catch (e) {
+        ultimo = e; const st = e.response && e.response.status;
+        if (st === 401 || st === 403) throw e;   // chave inválida: não adianta tentar outro modelo do mesmo provedor
+      }
+    }
+    throw ultimo || new Error(NOME_IA[prov] + ' sem modelo disponível');
+  }
   if (prov === 'deepseek' || prov === 'qwen') {
     const url = prov === 'deepseek' ? 'https://api.deepseek.com/chat/completions' : QWEN_URL.replace(/\/$/, '') + '/chat/completions';
     const chave = String(prov === 'deepseek' ? process.env.DEEPSEEK_API_KEY : chaveQwen()).trim();
@@ -831,7 +866,7 @@ async function chamarIA(system, prompt, maxTokens = 1800) {
   let ultimo;
   for (const prov of lista) {
     try { const t = await chamarProvedor(prov, system, prompt, maxTokens); if (t) return t; ultimo = new Error(NOME_IA[prov] + ' devolveu resposta vazia'); }
-    catch (e) { ultimo = e; console.error(`IA ${NOME_IA[prov]} falhou:`, e.response ? JSON.stringify(e.response.data).slice(0, 300) : e.message); }
+    catch (e) { ultimo = e; console.error(`IA ${NOME_IA[prov]} falhou:`, e.response ? String(JSON.stringify(e.response.data) || 'HTTP ' + e.response.status).slice(0, 300) : e.message); }
   }
   throw ultimo;
 }
@@ -869,8 +904,27 @@ function iaDentroDoLimite() {
   return ++iaUso.n <= (+process.env.IA_LIMITE_HORA || 120);
 }
 app.get('/api/ia/status', exigirLogin, (req, res) => res.json({ ativa: !!iaProvedor(), provedor: iaProvedor(), provedores: iaProvedores() }));
+
+// Teste de conexão: chama cada provedor que tem chave com uma pergunta curta e informa quem respondeu (usado pelo botão "Testar IA" do painel)
+app.post('/api/ia/teste', exigirLogin, async (req, res) => {
+  const lista = iaProvedores();
+  const todos = Object.keys(TEM_CHAVE);
+  const sem = todos.filter(p => !lista.includes(p)).map(p => ({ provedor: NOME_IA[p], ok: false, motivo: 'sem chave no Render' }));
+  const resultados = await Promise.all(lista.map(async (p) => {
+    const ini = Date.now();
+    try {
+      const t = await Promise.race([chamarProvedor(p, 'Responda em português, só com a palavra pedida.', 'Responda apenas: OK', 20), new Promise((_, no) => setTimeout(() => no(new Error('tempo esgotado (40s)')), 40000))]);
+      return { provedor: NOME_IA[p], ok: !!t, resposta: String(t || '').slice(0, 40), ms: Date.now() - ini, motivo: t ? '' : 'resposta vazia' };
+    } catch (e) {
+      const st = e.response && e.response.status;
+      const motivo = st === 401 || st === 403 ? 'chave recusada (HTTP ' + st + ')' : st === 429 ? 'limite atingido (HTTP 429)' : st ? 'erro HTTP ' + st : e.message;
+      return { provedor: NOME_IA[p], ok: false, motivo, ms: Date.now() - ini };
+    }
+  }));
+  res.json({ success: true, ordem: lista.map(p => NOME_IA[p]), resultados: [...resultados, ...sem] });
+});
 app.post('/api/ia', exigirLogin, async (req, res) => {
-  if (!iaProvedor()) return res.status(503).json({ success: false, error: 'IA não configurada. No Render > Environment, adicione GEMINI_API_KEY (ou DEEPSEEK_API_KEY, QWEN_API_KEY, ANTHROPIC_API_KEY) e faça o deploy.' });
+  if (!iaProvedor()) return res.status(503).json({ success: false, error: 'IA não configurada. No Render > Environment, adicione GEMINI_API_KEY (ou GROQ_API_KEY, OPENROUTER_API_KEY, NVIDIA_API_KEY, DEEPSEEK_API_KEY, QWEN_API_KEY, ANTHROPIC_API_KEY) e faça o deploy.' });
   if (!iaDentroDoLimite()) return res.status(429).json({ success: false, error: 'Limite de pedidos por hora atingido. Tente mais tarde.' });
   const { tarefa, dados, instrucao } = req.body || {};
   const ctx = String(JSON.stringify(dados || {})).slice(0, 8000);

@@ -212,6 +212,19 @@ aside::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border:0}
   .aviso{left:16px;right:16px;max-width:none;bottom:16px}
 }
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.prev-ov{position:fixed;inset:0;z-index:60;display:flex;justify-content:flex-end}
+.prev-bg{position:absolute;inset:0;background:rgba(10,17,40,.55)}
+.prev-box{position:relative;width:min(1180px,94vw);height:100%;background:#fff;display:flex;flex-direction:column;box-shadow:-12px 0 40px rgba(0,0,0,.25)}
+.prev-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--line)}
+.prev-top .dica{margin-left:6px}
+.prev-top .btn.on{background:var(--navy);color:#fff}
+.prev-check{padding:8px 16px;font-size:13px;line-height:1.6;border-bottom:1px solid var(--line);background:var(--paper)}
+.prev-check .ok{color:var(--ok);font-weight:600}.prev-check .fl{color:var(--warn);font-weight:600}.prev-check .sg{color:var(--mut)}
+.prev-frame{flex:1;min-height:0;background:#E7EBF2;display:flex;justify-content:center;overflow:auto}
+.prev-frame iframe{border:0;background:#fff;width:100%;height:100%}
+.prev-frame.cel iframe{width:390px;max-width:100%;margin:14px 0;height:calc(100% - 28px);border-radius:22px;box-shadow:0 8px 30px rgba(0,0,0,.25)}
+@media(max-width:700px){.prev-box{width:100vw}}
 </style>
 </head>
 <body>
@@ -348,7 +361,7 @@ aside::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border:0}
         <button class="passo" data-sub="plantas">Plantas</button>
       </div>
       <div class="panel"><div id="fImovel" class="g"></div><p class="pend" id="pend"></p></div>
-      <div class="barra"><button class="btn ghost" data-v="lista">Cancelar</button><button class="btn ghost" id="ant">Anterior</button><button class="btn ghost" id="prox">Próximo</button><button class="btn ghost hidden" id="syncUm">Sincronizar este imóvel agora</button><button class="btn" id="salvar">Salvar imóvel</button></div>
+      <div class="barra"><button class="btn ghost" data-v="lista">Cancelar</button><button class="btn ghost" id="ant">Anterior</button><button class="btn ghost" id="prox">Próximo</button><button class="btn ghost" id="previa">👁 Pré-visualizar</button><button class="btn ghost hidden" id="syncUm">Sincronizar este imóvel agora</button><button class="btn" id="salvar">Salvar imóvel</button></div>
     </section>
 
     <section id="v-conteudos" class="hidden">
@@ -864,6 +877,45 @@ $('extrairPdf').onclick=async()=>{
   BASE={...BASE,...limpo};preencher(BASE);
   $('impMsg').textContent='Extraído do PDF ('+(r.paginas||'?')+' página(s)): '+resumoExtraido(limpo)+'. Confira antes de salvar.';
 };
+// ---------- PRÉ-VISUALIZAR ANTES DE SALVAR ----------
+// Mostra a página do imóvel como o visitante vai ver, com o que está no formulário agora. Não salva nada.
+const PREV={carregado:false};
+function checklistPrevia(d){
+  const falta=[],dica=[];
+  [['título',d.titulo],['preço',d.preco],['localização',d.localizacao],['área',d.area],['dormitórios',d.dormitorios]].forEach(([n,v])=>{if(!v)falta.push(n)});
+  if(!d.foto&&!(d.fotos||[]).length)falta.push('foto');
+  [['texto de apresentação',d.apresentacao],['tipologias e valores',(d.tipologias||[]).length],['plantas',(d.plantas||[]).length],['lazer',(d.lazer||[]).length],['o que tem perto',(d.proximidades||[]).length],['vídeo ou tour',d.youtube||d.tour360||d.videoArquivo],['descrição do Google',d.seoDescricao],['tarjas de destaque',(d.destaques||[]).length]].forEach(([n,v])=>{if(!v)dica.push(n)});
+  return{falta,dica};
+}
+function montarPrevia(){
+  if($('prevOv'))return;
+  const ov=document.createElement('div');ov.id='prevOv';ov.className='prev-ov hidden';
+  ov.innerHTML='<div class="prev-bg" id="prevBg"></div><div class="prev-box"><div class="prev-top"><div><b>Pré-visualização</b><span class="dica">Nada foi salvo ainda.</span></div><div><button type="button" class="btn ghost sm on" data-pm="pc">💻 Computador</button> <button type="button" class="btn ghost sm" data-pm="cel">📱 Celular</button></div><div><button type="button" class="btn ghost sm" id="prevVoltar">← Voltar e editar</button> <button type="button" class="btn sm" id="prevSalvar">Salvar imóvel</button></div></div><div class="prev-check" id="prevCheck"></div><div class="prev-frame" id="prevFrame"><iframe id="prevIf" title="Pré-visualização do imóvel"></iframe></div></div>';
+  document.body.appendChild(ov);
+  $('prevBg').onclick=$('prevVoltar').onclick=fecharPrevia;
+  $('prevSalvar').onclick=()=>{fecharPrevia();salvar()};
+  ov.querySelectorAll('[data-pm]').forEach(b=>b.onclick=()=>{ov.querySelectorAll('[data-pm]').forEach(x=>x.classList.toggle('on',x===b));$('prevFrame').classList.toggle('cel',b.dataset.pm==='cel')});
+}
+function fecharPrevia(){const ov=$('prevOv');if(ov)ov.classList.add('hidden');document.body.style.overflow=''}
+async function enviarPrevia(){
+  const d={...BASE,...coleta()};delete d.privado;d.id=CUR?String(CUR.id):'previa';
+  try{seoAuto(d)}catch(e){}
+  const r=await API('/api/imoveis/preview',{method:'POST',body:JSON.stringify(d)});
+  if(!r||!r.success){aviso('Não consegui montar a prévia. Tente de novo.');return}
+  const f=$('prevIf');if(f&&f.contentWindow)f.contentWindow.postMessage({tipo:'jb-previa',imovel:r.imovel},location.origin);
+}
+function abrirPrevia(){
+  const d={...BASE,...coleta()};
+  if(!d.titulo){aviso('Preencha ao menos o título para ver a prévia.');$('f_titulo').focus();return}
+  montarPrevia();$('prevOv').classList.remove('hidden');document.body.style.overflow='hidden';
+  const{falta,dica}=checklistPrevia(d);
+  $('prevCheck').innerHTML=(falta.length?'<span class="fl">⚠ Falta preencher: '+falta.join(', ')+'.</span>':'<span class="ok">✓ O essencial está preenchido.</span>')+(dica.length?'<br><span class="sg">Você ainda pode acrescentar: '+dica.join(', ')+'.</span>':'');
+  const f=$('prevIf');
+  if(PREV.carregado)enviarPrevia();else if(!f.getAttribute('src'))f.src='/?preview=1';
+}
+window.addEventListener('message',e=>{if(e.origin===location.origin&&e.data&&e.data.tipo==='jb-previa-pronta'){PREV.carregado=true;enviarPrevia()}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('prevOv')&&!$('prevOv').classList.contains('hidden'))fecharPrevia()});
+$('previa').onclick=abrirPrevia;
 $('salvar').onclick=salvar;
 $('testarIA').onclick=async()=>{const b=$('testarIA');b.disabled=true;aviso('Testando as IAs, aguarde...');try{const r=await API('/api/ia/teste',{method:'POST',body:'{}'});if(!r||!r.resultados){aviso('Não foi possível testar.');return}alert('Ordem de uso: '+(r.ordem.join(' > ')||'nenhuma')+'\n\n'+r.resultados.map(x=>(x.ok?'✅ ':'❌ ')+x.provedor+': '+(x.ok?'funcionando ('+x.ms+' ms)':x.motivo)).join('\n'))}catch(e){aviso('Erro no teste: '+e.message)}b.disabled=false};
 $('sair').onclick=()=>{sessionStorage.removeItem('cp_tk');location.reload()};
