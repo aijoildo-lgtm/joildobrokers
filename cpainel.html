@@ -263,6 +263,7 @@ aside::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border:0}
 <button class="nav" data-v="financ"><svg class="ico" aria-hidden="true"><use href="#i-calc"/></svg><span>Financiamento</span></button>
 <button class="nav" data-v="raiox"><svg class="ico" aria-hidden="true"><use href="#i-chart"/></svg><span>Raio-X do preço</span></button>
 <div class="aside-foot">
+<button class="nav" id="testarIA"><svg class="ico" aria-hidden="true"><use href="#i-chart"/></svg><span>Testar IA</span></button>
 <a href="/" target="_blank" rel="noopener"><svg class="ico" aria-hidden="true"><use href="#i-ext"/></svg><span>Ver o site</span></a>
 <button class="nav sair" id="sair"><svg class="ico" aria-hidden="true"><use href="#i-out"/></svg><span>Sair</span></button>
 </div>
@@ -438,7 +439,7 @@ const CAMPOS=[
 ['S','Plantas'],['plantas','Plantas: uma por linha, no formato Nome | Metragem | link  (ex.: Planta 01 | 84 m² | https://...). Imagem JPG ou PNG com 1200 px de largura, até 400 KB','P'],
 ['S','Atualização automática'],['linkOrigem','Link de origem (AoCubo ou Órulo)'],
 ['S','Descrição e vídeo'],['apresentacao','Texto de apresentação','T'],['youtube','Vídeo do YouTube'],['videoArquivo','Vídeo enviado do computador (link)'],['tour360','Tour virtual 360°'],
-['S','Título e descrição no Google (SEO)'],['seoTitulo','Título no Google (até 80 caracteres)'],['seoDescricao','Descrição no Google (até 160 caracteres)','D'],['seoPalavras','Palavras-chave, separadas por vírgula (até 120)'],['seoPrev','','V'],
+['S','Título e descrição no Google (SEO)'],['seoTitulo','Título no Google (até 60 caracteres) — a IA preenche sozinha'],['seoDescricao','Descrição no Google (até 160 caracteres) — a IA preenche sozinha','D'],['seoPalavras','Palavras-chave, separadas por vírgula (até 120)'],['seoPrev','','V'],
 ['S','Dados privativos (não aparecem no site)'],['pv_proprietario','Proprietário'],['pv_corretor','Corretor responsável'],['pv_exclusividade','Exclusividade',SIMNAO],['pv_autorizacao','Autorização formalizada',SIMNAO],['pv_averbado','Averbado',SIMNAO],['pv_escriturado','Escriturado',SIMNAO],['pv_placa','Com placa',SIMNAO],['pv_chave','Chave na imobiliária',SIMNAO],['pv_ondeChave','Onde pegar a chave'],['pv_obs','Outras informações','T']];
 
 const UPLOAD={fotos:[['Escolher fotos do computador','multiple'],['Enviar uma pasta inteira','webkitdirectory multiple']],plantas:[['Escolher plantas','multiple'],['Enviar uma pasta de plantas','webkitdirectory multiple']],videoArquivo:[['Escolher vídeo do computador','']]};
@@ -686,6 +687,7 @@ function preencher(d){
   if(!CUR&&!d.ref)autoRef();
   setTimeout(()=>{try{autoProx()}catch(e){}},500);
   setTimeout(()=>{try{autoTec()}catch(e){}},900);
+  setTimeout(()=>{try{autoSeo()}catch(e){}},2500);
 }
 const TEC_TENTADO=new Set();
 async function atualizarTecnico(silencioso){
@@ -755,6 +757,7 @@ async function importar(id='url'){
   if(!r.success){$('impMsg').textContent=r.error||'Não consegui ler esse link.';return}
   BASE={...BASE,...r.dados,linkOrigem:url,origem:r.fonte,sincronizar:true,modoCadastro:/rulo/i.test(r.fonte)?'orulo':'aocubo'};preencher(BASE);setModo(BASE.modoCadastro);
   $('impMsg').textContent=`Extraído de ${r.fonte}: ${resumoExtraido(r.dados)}. Dados de ${r.fonte} preenchidos. Confira antes de salvar. A atualização automática fica ligada.`+(r.notasIA&&r.notasIA.length?` (${r.notasIA.join('; ')})`:'')+(r.faltando&&r.faltando.length?` Não veio: ${r.faltando.map(k=>NOMES[k]||k).join(', ')}.`:'');
+  setTimeout(()=>{try{completarAnuncio(true)}catch(e){}},3500);
 }
 
 $('sinc').onclick=async()=>{aviso('Consultando AoCubo e Órulo...');const r=await API('/api/sincronizar',{method:'POST'});aviso(r.success?`Pronto: ${r.atualizados} atualizado(s), ${r.pausados} pausado(s), ${r.erros.length} com erro.`:(r.error||'Não consegui sincronizar.'));await load()};
@@ -862,6 +865,7 @@ $('extrairPdf').onclick=async()=>{
   $('impMsg').textContent='Extraído do PDF ('+(r.paginas||'?')+' página(s)): '+resumoExtraido(limpo)+'. Confira antes de salvar.';
 };
 $('salvar').onclick=salvar;
+$('testarIA').onclick=async()=>{const b=$('testarIA');b.disabled=true;aviso('Testando as IAs, aguarde...');try{const r=await API('/api/ia/teste',{method:'POST',body:'{}'});if(!r||!r.resultados){aviso('Não foi possível testar.');return}alert('Ordem de uso: '+(r.ordem.join(' > ')||'nenhuma')+'\n\n'+r.resultados.map(x=>(x.ok?'✅ ':'❌ ')+x.provedor+': '+(x.ok?'funcionando ('+x.ms+' ms)':x.motivo)).join('\n'))}catch(e){aviso('Erro no teste: '+e.message)}b.disabled=false};
 $('sair').onclick=()=>{sessionStorage.removeItem('cp_tk');location.reload()};
 ['fotos','plantas'].forEach(k=>$('f_'+k).addEventListener('input',()=>galeria(k)));
 $('fImovel').addEventListener('input',pend);
@@ -1297,6 +1301,60 @@ iaLinha('f_titulo',[['✨ Sugerir títulos','titulos']],'sug_titulo');
 iaLinha('f_diferencial',[['✨ Sugerir diferencial','diferencial']],'sug_diferencial');
 iaLinha('f_apresentacao',[['✨ Gerar apresentação','apresentacao'],['Revisar o meu texto','revisar']],'sug_apresentacao');
 (function(){const g=$('seoGerar');if(!g)return;const b=document.createElement('button');b.type='button';b.className=IA_BTN;b.dataset.ia='seo';b.textContent='✨ Gerar SEO com IA';g.insertAdjacentElement('afterend',b)})();
+
+// SEO automático: quando o imóvel tem título e os campos do Google estão vazios, a IA preenche sozinha (uma vez por imóvel).
+const SEO_TENTADO=new Set();
+async function autoSeo(){
+  if(!$('f_seoTitulo')||$('f_seoTitulo').value.trim()||$('f_seoDescricao').value.trim())return;
+  const d=dadosIA();if(!d.titulo||!d.localizacao)return;
+  const chave=(d.titulo+'|'+d.localizacao).toLowerCase();if(SEO_TENTADO.has(chave))return;SEO_TENTADO.add(chave);
+  try{
+    const r=await API('/api/ia',{method:'POST',body:JSON.stringify({tarefa:'seo',instrucao:'',dados:d})});
+    const j=r&&r.success!==false&&iaSeoJSON(String(r.texto||''));
+    if(j&&!$('f_seoTitulo').value.trim()){$('f_seoTitulo').value=String(j.seoTitulo||'').slice(0,60);$('f_seoDescricao').value=String(j.seoDescricao||'').slice(0,160);if(!$('f_seoPalavras').value.trim())$('f_seoPalavras').value=String(j.seoPalavras||'').slice(0,120);seoPrev();aviso('Título e descrição do Google gerados pela IA. Confira a prévia.')}
+  }catch(e){}
+}
+
+// ---------- COMPLETAR O ANÚNCIO (automático + botão) ----------
+// Só preenche campos VAZIOS (nunca sobrescreve o que você escreveu). Parte sem IA (cálculos) e parte com IA (textos).
+let COMPLETANDO=false;
+const num2=v=>{const n=parseFloat(String(v||'').replace(/\./g,'').replace(',','.').replace(/[^\d.-]/g,''));return isNaN(n)?null:n};
+const brl2=n=>'R$ '+Math.round(n).toLocaleString('pt-BR');
+async function completarAnuncio(auto){
+  if(COMPLETANDO)return;COMPLETANDO=true;
+  const btn=$('completarIA'),t0=btn?btn.textContent:'';if(btn){btn.disabled=true;btn.textContent='Completando…'}
+  const feitos=[],vazioEl=id=>$('f_'+id)&&!$('f_'+id).value.trim();
+  const poe=(id,v,nome)=>{if(v&&vazioEl(id)){$('f_'+id).value=v;feitos.push(nome);return true}return false};
+  try{
+    // 1) sem IA: tira do que já existe no cadastro
+    const tips=(TIPS||[]),col=k=>tips.map(x=>num2(x[k])).filter(n=>n!=null);
+    const faixa=a=>{if(!a.length)return '';const m=Math.min(...a),M=Math.max(...a);return m===M?String(m):m+' a '+M};
+    poe('perfil',{lancamentos:'Na planta',construcao:'Em construção',prontos:'Novo',usados:'Usado'}[$('f_estagio').value]||'','perfil');
+    poe('suites',faixa(col('suites').filter(n=>n>0)),'suítes');
+    poe('banheiros',faixa(col('banh').filter(n=>n>0)),'banheiros');
+    if(vazioEl('precoM2')){const c=tips.map(x=>({p:num2(x.preco),a:num2(x.area)})).filter(x=>x.p>0&&x.a>0).sort((a,b)=>a.p-b.p)[0];if(c)poe('precoM2',brl2(c.p/c.a),'valor por m²')}
+    // 2) com IA (se houver chave): só o que estiver vazio
+    const st=await API('/api/ia/status').catch(()=>null);
+    if(st&&st.ativa){
+      const d=dadosIA();
+      if(d.titulo&&d.localizacao){
+        const pede=async(tarefa)=>{const r=await API('/api/ia',{method:'POST',body:JSON.stringify({tarefa,instrucao:'',dados:dadosIA()})}).catch(()=>null);return r&&r.success!==false?String(r.texto||'').trim():''};
+        if(vazioEl('diferencial')){const x=await pede('diferencial');poe('diferencial',x.split('\n')[0].replace(/["“”]/g,'').slice(0,80),'diferencial')}
+        if(vazioEl('apresentacao')){const x=await pede('apresentacao');poe('apresentacao',x,'texto de apresentação')}
+        if(vazioEl('seoTitulo')&&vazioEl('seoDescricao')){await autoSeo();if(!vazioEl('seoTitulo'))feitos.push('título e descrição do Google')}
+      }
+    }else if(!auto)feitos.push('(a IA não está ligada: só os cálculos foram feitos)');
+    try{seoPrev();pend()}catch(e){}
+    if(!auto||feitos.length)aviso(feitos.length?'Completado: '+feitos.join(', ')+'. Confira antes de salvar.':'Nada a completar: os campos já estão preenchidos.');
+  }finally{COMPLETANDO=false;if(btn){btn.disabled=false;btn.textContent=t0}}
+}
+(function(){
+  const el=$('f_titulo');if(!el)return;const f=el.closest('.f');if(!f)return;
+  const d=document.createElement('div');d.className='f full';d.setAttribute('data-s',f.getAttribute('data-s')||'1');
+  d.innerHTML='<div class="linha-up"><button type="button" class="btn" id="completarIA">✨ Completar o anúncio com IA</button><span class="dica">Preenche sozinho o que estiver vazio: perfil, suítes, banheiros, valor por m², diferencial, texto de apresentação e título/descrição do Google. Nunca apaga o que você já escreveu. Roda sozinho depois de importar do AoCubo/Órulo.</span></div>';
+  f.insertAdjacentElement('beforebegin',d);
+})();
+document.addEventListener('click',e=>{if(e.target.id==='completarIA')completarAnuncio(false)});
 // Divulgação (redes e WhatsApp): painel simples logo abaixo do texto de apresentação
 (function(){const el=$('f_apresentacao');if(!el)return;const f=el.closest('.f');
   const d=document.createElement('div');d.className='f full';d.setAttribute('data-s',f.getAttribute('data-s')||'3');

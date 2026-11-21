@@ -277,8 +277,9 @@ app.post('/api/cadastro-cliente', ah(async (req, res) => {
   i.origem = 'cliente'; i.pendente = true; i.autorizacaoRecebida = false; i.ativo = false; i.criadoEm = agora; i.atualizadoEm = agora;
   i.privado = { proprietario: nome, corretor: '', exclusividade: 'Não', autorizacao: 'Não', averbado: '', escriturado: '', placa: '', chave: '', ondeChave: '',
     obs: `WhatsApp: ${tel}${email ? ` · E-mail: ${email}` : ''}${b.fotos ? `\nFotos informadas: ${s2(b.fotos, 500)}` : ''}` };
+  await seoAutomatico(i);
   await addImovel(i);
-  res.json({ success: true, ref: i.ref });
+  res.json({ success: true, ref: i.ref, seoTitulo: i.seoTitulo || '' });
 }));
 
 // ===== CONTATOS DO SITE: "Receba a tabela de preços e as plantas" =====
@@ -422,6 +423,7 @@ app.put('/api/imoveis/:id', exigirLogin, ah(async (req, res) => {
   set.demo = b.demo === true;
   set.atualizadoEm = new Date().toISOString();
   if (!set.ref) delete set.ref;
+  await seoAutomatico(set);
   const ok = await updImovel(req.params.id, set);
   res.status(ok ? 200 : 404).json(ok ? { success: true } : { success: false, error: 'Imóvel não encontrado.' });
 }));
@@ -833,6 +835,30 @@ async function chamarIA(system, prompt, maxTokens = 1800) {
   }
   throw ultimo;
 }
+
+// SEO do Google gerado pela IA: título (até 60), descrição (até 160) e palavras-chave. Usa só os dados do imóvel.
+function promptSEO(ctx) {
+  return `Gere o SEO do Google para este imóvel, usando SOMENTE os dados abaixo (nunca invente nada). Responda APENAS um JSON válido, sem crases, com as chaves:
+seoTitulo: até 60 caracteres. Nome do empreendimento + bairro + o ponto mais forte (ex.: "Heaven: Alto Padrão nos Jardins", "Próximo ao Pq. Ibirapuera - Torre Única no Itaim Bibi").
+seoDescricao: de 120 a 160 caracteres, convidativa. Cite o tipo, as metragens (ex.: "Aptos de 190 e 258m²"), dormitórios, localização/proximidade com referência conhecida e o maior diferencial ou o lazer. Sem preço exato, sem frases vazias como "o melhor".
+seoPalavras: 5 a 8 palavras-chave separadas por vírgula, até 120 caracteres.
+DADOS:\n${ctx}`;
+}
+const dadosParaSEO = (i) => { const o = {}; ['titulo', 'construtora', 'tipo', 'estagio', 'localizacao', 'proximidade', 'area', 'dormitorios', 'vagas', 'diferencial', 'lazer', 'proximidades', 'infoTecnica'].forEach(k => { if (!vazio(i[k])) o[k] = i[k]; });
+  if ((i.tipologias || []).length) o.tipologias = i.tipologias.map(t => [t.area, t.dorm && t.dorm + ' dorm.', t.suites && t.suites + ' suítes', t.vagas && t.vagas + ' vagas'].filter(Boolean).join(' '));
+  if (i.apresentacao) o.apresentacao = String(i.apresentacao).slice(0, 500); return o; };
+// preenche seoTitulo/seoDescricao/seoPalavras quando estão vazios; se a IA falhar, o site usa o texto padrão
+async function seoAutomatico(i) {
+  if (i.seoTitulo && i.seoDescricao) return;
+  if (!iaProvedor() || !i.titulo || !iaDentroDoLimite()) return;
+  try {
+    const t = await Promise.race([chamarIA(IA_SISTEMA, promptSEO(JSON.stringify(dadosParaSEO(i)).slice(0, 6000)), 900), new Promise((_, no) => setTimeout(() => no(new Error('tempo esgotado')), 25000))]);
+    const j = JSON.parse((String(t).replace(/```json|```/g, '').match(/\{[\s\S]*\}/) || ['{}'])[0]);
+    if (!i.seoTitulo && j.seoTitulo) i.seoTitulo = String(j.seoTitulo).slice(0, 60);
+    if (!i.seoDescricao && j.seoDescricao) i.seoDescricao = String(j.seoDescricao).slice(0, 160);
+    if (!i.seoPalavras && j.seoPalavras) i.seoPalavras = String(j.seoPalavras).slice(0, 120);
+  } catch (e) { console.error('SEO automático:', e.message); }
+}
 const IA_SISTEMA = 'Você é o assistente de conteúdo da Joildo Brokers, consultoria imobiliária de alto padrão em São Paulo (CRECI 200298). Escreva em português do Brasil, tom elegante, claro e confiável, sem exageros. REGRA ABSOLUTA: nunca invente preço, metragem, prazo de entrega, nome de construtora, endereço ou qualquer dado que não esteja no que foi informado. Se faltar informação, escreva sem ela. Responda só com o texto pedido, sem comentários antes ou depois.';
 
 // limite simples de uso por hora (protege seu crédito). Mude com IA_LIMITE_HORA.
@@ -855,7 +881,7 @@ app.post('/api/ia', exigirLogin, async (req, res) => {
     revisar: `Revise e melhore o texto abaixo (correção, clareza e tom profissional), mantendo todos os fatos. Devolva só o texto revisado.\n${ins}`,
     titulos: `Sugira 5 títulos curtos e atraentes para este conteúdo, um por linha, sem numeração, sem aspas.\n${ins}\n${ctx}`,
     diferencial: `Escreva UM diferencial curto (até 60 caracteres) que resuma o que há de mais forte neste imóvel, usando SOMENTE os dados abaixo. Só a frase, sem ponto final.\n${ctx}`,
-    seo: `Gere o SEO do Google para este imóvel, usando SOMENTE os dados abaixo. Responda APENAS um JSON válido, sem crases, com as chaves: seoTitulo (até 60 caracteres, pois o Google corta títulos maiores), seoDescricao (até 160 caracteres, convidativa, sem inventar nada) e seoPalavras (5 a 8 palavras-chave separadas por vírgula, até 120 caracteres).\n${ctx}`,
+    seo: promptSEO(ctx),
     social: `Escreva dois textos para divulgar este imóvel, usando SOMENTE os dados abaixo. Formato exato:\nINSTAGRAM:\n(legenda de 3 a 5 linhas, com 5 hashtags no final)\nWHATSAPP:\n(mensagem curta e cordial de 3 a 4 linhas, convidando para uma visita)\n${ctx}`,
     resposta: `Escreva uma resposta cordial e objetiva, em nome do corretor Joildo, para a mensagem de cliente abaixo. Use SOMENTE os dados do imóvel quando citar algo dele; se a pergunta exigir um dado que não está aí, diga que vai confirmar e retornar. Convide para uma conversa ou visita.\nMENSAGEM DO CLIENTE:\n${ins}\nDADOS DO IMÓVEL:\n${ctx}`,
     extrair: `Extraia do texto abaixo os dados do imóvel e responda APENAS um JSON válido, sem crases, com as chaves: titulo, preco, localizacao, area, dormitorios, vagas, diferencial, proximidade, apresentacao (resumo de 2 frases), lazer (array de strings). Use "" (ou []) para o que não estiver no texto. Não invente nada.\nTEXTO:\n${ins}`,
