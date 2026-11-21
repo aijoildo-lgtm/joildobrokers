@@ -136,4 +136,12 @@ async function listar(f) {
   if (+f.precoMax) itens = itens.filter(x => !x.preco || x.preco <= +f.precoMax);
   return { itens: itens.map(x => ({ ...x, precoTxt: x.preco ? brl(x.preco) : '' })), pagina: q.page };
 }
-module.exports = { importar, mapear, listar };
+// Diagnóstico: mostra o que a API devolve de verdade (nomes dos campos), para ajustar o mapeamento
+async function bruto(id) {
+  const erro = (e) => ({ erro: e.response ? 'HTTP ' + e.response.status : e.message });
+  const b = await chamar('/buildings/' + id);
+  const t = await chamar(`/buildings/${id}/typologies`).catch(erro);
+  const u = await chamar(`/buildings/${id}/units`, { results_per_page: 3 }).catch(erro);
+  return { campos_do_empreendimento: Object.keys(b), typologies_no_empreendimento: b.typologies || b.types || null, endpoint_typologies: t, endpoint_units_amostra: u };
+}
+module.exports = { importar, mapear, listar, bruto };

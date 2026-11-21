@@ -155,6 +155,7 @@ tbody tr:last-child td{border-bottom:0}
 .chk{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:6px 14px;border:1px solid #CBD5E1;border-radius:9px;padding:12px 14px;background:#fff}
 .chk label{display:flex;gap:8px;align-items:center;margin:0;font-weight:500;color:var(--ink);font-size:13px;cursor:pointer}
 .chk input{width:auto;accent-color:var(--navy)}
+.rm-box{margin-top:8px;border:1px solid #CBD5E1;border-radius:9px;background:#F8FAFC;padding:12px 14px;font-size:13px}.rm-box[hidden]{display:none}.rm-chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 10px}.rm-chip{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid #CBD5E1;border-radius:999px;padding:3px 4px 3px 10px}.rm-chip button{border:0;background:#FEE2E2;color:#B91C1C;border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:11px;line-height:1}.rm-chip button:hover{background:#B91C1C;color:#fff}
 .chk-x{margin-left:auto;border:0;background:none;color:#B91C1C;font-size:11px;cursor:pointer;opacity:.45;padding:0 2px;text-decoration:underline;font-family:inherit}.chk label:hover .chk-x{opacity:1}
 .th{position:relative}
 .th img{display:block}
@@ -450,7 +451,7 @@ $('fImovel').innerHTML=CAMPOS.map(([k,l,x])=>{
   if(k==='S'){ST=STEP[l]||ST;PP=l.startsWith('Fotos')?'fotos':l==='Plantas'?'plantas':'';return `<div class="sec" ${att()}>${l}</div>`}
   const ctl=Array.isArray(x)?`<select id="f_${k}">${x.map(o=>{const[v,t]=Array.isArray(o)?o:[o,o];return `<option value="${v}">${t}</option>`}).join('')}</select>`
     :x==='P'?`<textarea id="f_${k}" rows="4" placeholder="Planta 01 - 3 dorm 84m² | https://..."></textarea>`:x==='X'?`<textarea id="f_${k}" rows="4"></textarea>`:x==='A'?`<textarea id="f_${k}" rows="4" placeholder="https://..."></textarea>`
-    :x==='D'?`<textarea id="f_${k}" rows="3" maxlength="160"></textarea>`:x==='TG'?`<div class="chk" id="f_destaques">${TARJAS.map(([v,t])=>`<label><input type="checkbox" value="${v}">${t}</label>`).join('')}</div><p class="ajuda">Escolha até 3 tarjas. Elas aparecem no canto da foto do imóvel.</p>`:x==='C'?`<div class="chk" id="f_${k}"></div><div class="linha-up"><input id="n_${k}" placeholder="Outra opção" style="max-width:240px"><button type="button" class="btn ghost sm" data-addchk="${k}">Adicionar</button></div>`:x==='T'?`<textarea id="f_${k}" rows="5"></textarea>`
+    :x==='D'?`<textarea id="f_${k}" rows="3" maxlength="160"></textarea>`:x==='TG'?`<div class="chk" id="f_destaques">${TARJAS.map(([v,t])=>`<label><input type="checkbox" value="${v}">${t}</label>`).join('')}</div><p class="ajuda">Escolha até 3 tarjas. Elas aparecem no canto da foto do imóvel.</p>`:x==='C'?`<div class="chk" id="f_${k}"></div><div class="linha-up"><input id="n_${k}" placeholder="Outra opção" style="max-width:240px"><button type="button" class="btn ghost sm" data-addchk="${k}">Adicionar</button><button type="button" class="btn ghost sm" data-rmbox="${k}">Remover</button></div><div class="rm-box" id="rm_${k}" hidden></div>`:x==='T'?`<textarea id="f_${k}" rows="5"></textarea>`
     :`<input id="f_${k}"${x==='L'?' list="tipos"':x==='Q'?' list="pessoas" placeholder="Seu nome ou de quem cadastrou"':''}>`;
   return `<div class="f${['A','T','P','X','D','C','TG'].includes(x)?' full':''}" ${att()}><label for="f_${k}">${l}</label>${ctl}${upl(k)}${(x==='A'||x==='P')?`<div class="gal" id="g_${k}"></div>`:''}</div>`;
 }).join('')+`<div class="sec" data-s="1">Tipologias e valores</div><div class="full" data-s="1" id="tipos-box"></div><div class="sec" data-s="4">Publicação</div><div class="f full" data-s="4" style="display:flex;gap:28px;flex-wrap:wrap"><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_emDestaque" style="width:auto">Destacar na página inicial</label><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_ativo" style="width:auto" checked>Publicado no site</label><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_sincronizar" style="width:auto" checked>Atualizar sozinho preço, estágio, condições e tipologias pelo link (a cada 6 h)</label><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink);font-size:13px"><input type="checkbox" id="f_espelharMidia" style="width:auto" checked>Espelhar fotos e plantas do portal</label></div>`;
@@ -695,7 +696,7 @@ async function atualizarTecnico(silencioso){
   if(!r||!r.success){if(!silencioso)aviso((r&&r.error)||'Não consegui ler o link.');return}
   const d=r.dados,novo={};
   ['preco','precoM2','area','dormitorios','vagas','estagio','tipologias','infoTecnica'].forEach(k=>{const v=d[k];if(Array.isArray(v)?v.length:v)novo[k]=v});
-  if(!Object.keys(novo).length){if(!silencioso)aviso('A origem não trouxe tipologias nem informações técnicas para este imóvel.');return}
+  if(!Object.keys(novo).length||!novo.tipologias){if(!silencioso)aviso('A origem não trouxe as tipologias deste imóvel. Clique em "Diagnóstico da origem" para ver o que ela entrega.');if(!Object.keys(novo).length)return}
   BASE={...coleta(),...novo,linkOrigem:link};preencher(BASE);
   aviso('Metragens, valores e informações técnicas preenchidos pela origem. Confira e clique em Salvar.');
 }
@@ -703,7 +704,16 @@ function autoTec(){
   const link=(CUR&&CUR.linkOrigem)||BASE.linkOrigem;if(!link||TIPS.length)return;
   if(TEC_TENTADO.has(link))return;TEC_TENTADO.add(link);atualizarTecnico(true);
 }
-document.addEventListener('click',e=>{if(e.target.id==='tpAuto')atualizarTecnico(false)});
+document.addEventListener('click',async e=>{
+  if(e.target.id==='tpAuto')atualizarTecnico(false);
+  if(e.target.id==='tpDiag'){
+    const link=(CUR&&CUR.linkOrigem)||BASE.linkOrigem||$('url').value.trim(),out=$('tpDiagOut');
+    if(!link){aviso('Esse imóvel não tem link da Órulo/AoCubo.');return}
+    out.hidden=false;out.textContent='Consultando a origem...';
+    const r=await API('/api/diagnostico-link',{method:'POST',body:JSON.stringify({url:link})});
+    out.textContent=r&&r.success?'Origem: '+r.fonte+'\nLink: '+link+'\n\n'+r.texto+'\n\n(Copie este texto e envie ao suporte para ajustar a leitura.)':((r&&r.error)||'Não consegui consultar.');
+  }
+});
 let refBusy=false;
 async function autoRef(){if(refBusy)return;refBusy=true;try{const r=await API('/api/proxima-ref');const el=$('f_ref');if(r&&r.ref&&el&&!el.value){el.value=r.ref;if(typeof seoPrev==='function')seoPrev()}}catch(e){}finally{refBusy=false}}
 function urlsDe(k){const v=$('f_'+k).value;return k==='plantas'?linesPlantas(v).map(p=>typeof p==='object'?p.url:p):lines(v)}
@@ -809,7 +819,7 @@ const TP_CAMPOS=[['nome','ex.: Apartamento'],['area','ex.: 98 m²'],['dorm','2']
 function renderTips(){
   $('tipos-box').innerHTML=`<div class="tp-row tp-cab"><span>Tipo</span><span>Área</span><span>Dorm.</span><span>Suítes</span><span>Banh.</span><span>Vagas</span><span>A partir de</span><span></span></div>`
     +TIPS.map((t,k)=>`<div class="tp-row">${TP_CAMPOS.map(([col,ph])=>`<input data-k="${k}" data-c="${col}" value="${esc(t[col]||'')}" placeholder="${ph}" aria-label="${col}">`).join('')}<button type="button" class="btn danger sm" data-rm="${k}">Remover</button></div>`).join('')
-    +`<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:6px"><button type="button" class="btn ghost sm" id="tp-add">Adicionar tipologia</button><button type="button" class="btn ghost sm" id="tpAuto">Buscar metragens e valores na origem</button><span class="dica">Automático: ao importar o link da Órulo ou do AoCubo, as tipologias (metragem, dormitórios, suítes, banheiros, vagas e valor) e as informações técnicas entram sozinhas e são atualizadas a cada 6 h. Só preencha à mão se a origem não trouxer.</span></div>`;
+    +`<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:6px"><button type="button" class="btn ghost sm" id="tp-add">Adicionar tipologia</button><button type="button" class="btn ghost sm" id="tpAuto">Buscar metragens e valores na origem</button><button type="button" class="btn ghost sm" id="tpDiag">Diagnóstico da origem</button><pre id="tpDiagOut" hidden style="width:100%;max-height:260px;overflow:auto;background:#0F172A;color:#E2E8F0;padding:12px;border-radius:8px;font-size:12px;white-space:pre-wrap;margin-top:8px"></pre><span class="dica">Automático: ao importar o link da Órulo ou do AoCubo, as tipologias (metragem, dormitórios, suítes, banheiros, vagas e valor) e as informações técnicas entram sozinhas e são atualizadas a cada 6 h. Só preencha à mão se a origem não trouxer.</span></div>`;
 }
 document.addEventListener('input',e=>{const k=e.target.dataset&&e.target.dataset.k;if(k===undefined)return;TIPS[+k][e.target.dataset.c]=e.target.value;pend()});
 document.addEventListener('click',e=>{
@@ -1150,15 +1160,25 @@ function lembrarCat(k,extras){
 function setChk(k,vals){
   const marcados=new Set((vals||[]).map(norm)),cat=(CAT[k]||[]).filter(c=>!removido(k,c)),extras=[...new Set((vals||[]).filter(v=>String(v||'').trim()&&!cat.some(c=>norm(c)===norm(v))))];
   lembrarCat(k,extras);
-  $('f_'+k).innerHTML=[...cat,...extras].map(t=>`<label><input type="checkbox" value="${esc(t)}" ${marcados.has(norm(t))?'checked':''}><span>${esc(t)}</span><button type="button" class="chk-x" data-rmchk="${k}" data-v="${esc(t)}" title="Remover esta opção da lista" aria-label="Remover ${esc(t)}">remover</button></label>`).join('');
+  $('f_'+k).innerHTML=[...cat,...extras].map(t=>`<label><input type="checkbox" value="${esc(t)}" ${marcados.has(norm(t))?'checked':''}>${esc(t)}</label>`).join('');
 }
+function montarRm(k){
+  const box=$('rm_'+k);if(!box)return;
+  const itens=[...document.querySelectorAll('#f_'+k+' input')].map(i=>i.value);
+  box.innerHTML='<b>Clique no ✕ da opção que deseja apagar da lista:</b><div class="rm-chips">'+(itens.length?itens.map(t=>`<span class="rm-chip">${esc(t)}<button type="button" data-rmchk="${k}" data-v="${esc(t)}" title="Apagar" aria-label="Apagar ${esc(t)}">✕</button></span>`).join(''):'<span class="dica">Não há opções na lista.</span>')+'</div><button type="button" class="btn ghost sm" data-rmfechar="'+k+'">Fechar</button>';
+}
+document.addEventListener('click',e=>{
+  const d=e.target.dataset||{};
+  if(d.rmbox){const b=$('rm_'+d.rmbox);if(b.hidden){montarRm(d.rmbox);b.hidden=false}else b.hidden=true}
+  if(d.rmfechar)$('rm_'+d.rmfechar).hidden=true;
+});
 document.addEventListener('click',e=>{
   const k=e.target.dataset&&e.target.dataset.rmchk;if(!k)return;
   e.preventDefault();e.stopPropagation();const v=e.target.dataset.v;
   REMOV[k]=[...new Set([...(REMOV[k]||[]),v])];
   CAT[k]=(CAT[k]||[]).filter(c=>norm(c)!==norm(v));
   try{localStorage.setItem('jb_removidos',JSON.stringify(REMOV));const sv=JSON.parse(localStorage.getItem('jb_catalogo')||'{}');if(sv[k]){sv[k]=sv[k].filter(c=>norm(c)!==norm(v));localStorage.setItem('jb_catalogo',JSON.stringify(sv))}}catch(x){}
-  const marcados=getChk(k).filter(c=>norm(c)!==norm(v));setChk(k,marcados);aviso('Opção removida da lista. Clique em Salvar para confirmar no imóvel.');
+  const marcados=getChk(k).filter(c=>norm(c)!==norm(v));setChk(k,marcados);montarRm(k);aviso('Opção apagada da lista. Clique em Salvar para confirmar no imóvel.');
 },true);
 const getChk=k=>[...document.querySelectorAll('#f_'+k+' input:checked')].map(i=>i.value);
 const setTG=vals=>{const m=new Set(vals||[]);document.querySelectorAll('#f_destaques input').forEach(i=>{i.checked=m.has(i.value)})};
@@ -1166,6 +1186,7 @@ document.addEventListener('change',e=>{if(e.target.closest&&e.target.closest('#f
 document.addEventListener('click',e=>{
   const k=e.target.dataset&&e.target.dataset.addchk;if(!k)return;
   const inp=$('n_'+k),v=inp.value.trim();if(!v)return;
+  if(REMOV[k]){REMOV[k]=REMOV[k].filter(x=>norm(x)!==norm(v));try{localStorage.setItem('jb_removidos',JSON.stringify(REMOV))}catch(x){}}
   const atual=getChk(k);atual.push(v);const todos=[...document.querySelectorAll('#f_'+k+' input')].map(i=>i.value);
   CAT[k]=[...new Set([...(CAT[k]||[]),...todos])];setChk(k,atual);inp.value='';
 });

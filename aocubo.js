@@ -31,6 +31,27 @@ function imagens(html, urlPagina) {
 const ESTAGIOS = [[/pronto/i, 'prontos'], [/constru|obra/i, 'construcao'], [/lan[cç]amento|breve/i, 'lancamentos'], [/usado/i, 'usados']];
 const TIPOS = { studio: 'Studio', apartamento: 'Apartamento', cobertura: 'Cobertura', loft: 'Loft', flat: 'Flat', kitnet: 'Kitnet', duplex: 'Duplex', garden: 'Garden', casa: 'Casa', sobrado: 'Sobrado' };
 
+
+// "Opções de planta": cada opção começa pela metragem e traz quartos, suítes, vagas, banheiros (e valor, se houver).
+// Funciona com as informações em linhas separadas ou juntas na mesma linha.
+function lerTipologias(linhas, tipo) {
+  const i = linhas.findIndex(l => /^Op[çc][õo]es de planta/i.test(l));
+  if (i < 0) return [];
+  const f = linhas.findIndex((l, k) => k > i && /^(Descri[çc][ãa]o|[ÁA]reas de Conv|Como [ée] morar|Endere[çc]o|Localiza[çc]|Entrega|Im[óo]veis Semelhantes|Gostou|Est[áa]gio|Informa[çc][õo]es)/i.test(l));
+  const bloco = linhas.slice(i + 1, f > 0 ? f : i + 45).join(' | ');
+  const out = [], vistos = new Set();
+  bloco.split(/(?<![\d.,])(?=\d{1,4}(?:[.,]\d+)?\s*m[²2](?!\d))/).forEach(parte => {
+    const a = parte.match(/^(\d{1,4}(?:[.,]\d+)?)\s*m[²2](?!\d)/);
+    if (!a) return;
+    const q = parte.match(/(\d+)\s*quartos?/i), su = parte.match(/(\d+)\s*su[ií]tes?/i), v = parte.match(/(\d+)\s*vagas?/i), bn = parte.match(/(\d+)\s*banheiros?/i), pr = parte.match(/R\$\s*([\d.]+(?:,\d{2})?)/);
+    if (!q && !v && !bn) return;
+    const t = { nome: tipo || 'Apartamento', area: `${a[1]} m²`, dorm: q ? q[1] : '', suites: su ? su[1] : '', banh: bn ? bn[1] : '', vagas: v ? v[1] : '', preco: pr ? `R$ ${pr[1]}` : '' };
+    const k = [t.area, t.dorm, t.suites, t.banh, t.vagas].join('|');
+    if (!vistos.has(k)) { vistos.add(k); out.push(t); }
+  });
+  return out.slice(0, 40);
+}
+
 function extrairAoCubo(html, urlPagina) {
   const linhas = linhasDoHtml(html);
   const fim = linhas.findIndex(l => /^(Im[óo]veis Semelhantes|Gostou do im[óo]vel)/i.test(l));
@@ -74,22 +95,7 @@ function extrairAoCubo(html, urlPagina) {
   let apresentacao = '';
   if (iMorar >= 0 && iLazer > iMorar) { const t = linhas.slice(iMorar + 1, iLazer).join(' '); if (t.length > 60) apresentacao = t.slice(0, 3000); }
 
-  // "Opções de planta": 37 m² · 2 Quartos · 0 vagas · 1 banheiros (cada grupo começa pela metragem)
-  const tipologias = [];
-  const iPl = linhas.findIndex(l => /^Op[çc][õo]es de planta$/i.test(l));
-  if (iPl >= 0) {
-    let atual = null;
-    for (const l of linhas.slice(iPl + 1, iPl + 25)) {
-      const a = l.match(/^(\d{1,4}(?:[.,]\d+)?)\s*m²$/i), q = l.match(/^(\d+)\s*quartos?$/i), v = l.match(/^(\d+)\s*vagas?$/i), b = l.match(/^(\d+)\s*banheiros?$/i), su = l.match(/^(\d+)\s*su[ií]tes?$/i);
-      if (a) { if (atual) tipologias.push(atual); atual = { nome: tipo || 'Apartamento', area: `${a[1]} m²`, dorm: '', suites: '', banh: '', vagas: '', preco: '' }; }
-      else if (atual && q) atual.dorm = q[1];
-      else if (atual && su) atual.suites = su[1];
-      else if (atual && v) atual.vagas = v[1];
-      else if (atual && b) atual.banh = b[1];
-      else if (atual) break;
-    }
-    if (atual) tipologias.push(atual);
-  }
+  const tipologias = lerTipologias(linhas, tipo);
   const img = imagens(html, urlPagina);
   const infoTecnica = [];
   if (entrega && estagio && estagio !== 'prontos') infoTecnica.push({ k: 'Previsão de entrega', v: entrega });
@@ -104,4 +110,4 @@ function extrairAoCubo(html, urlPagina) {
     lazer, infoTecnica, apresentacao, tipologias
   };
 }
-module.exports = { extrairAoCubo };
+module.exports = { extrairAoCubo, lerTipologias, linhasDoHtml };

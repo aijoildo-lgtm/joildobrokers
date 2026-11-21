@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const axios = require('axios');
 const cheerio = require('cheerio');
 const cors = require('cors');
-const { extrairAoCubo } = require('./aocubo');
+const { extrairAoCubo, lerTipologias, linhasDoHtml } = require('./aocubo');
 const orulo = require('./orulo');
 
 const app = express();
@@ -604,6 +604,25 @@ app.post(['/api/minerar-orulo', '/api/importar-link'], exigirLogin, async (req, 
       : `Não consegui falar com a API da Órulo (${st ? 'HTTP ' + st : e.code || e.message}).`;
     res.json({ success: false, precisaTexto: true, error: msg + ' Você pode usar a aba Assistente IA com o texto da página.' });
   }
+});
+
+// DIAGNÓSTICO: mostra o que a origem (AoCubo/Órulo) entrega, para achar por que tipologias e valores não vieram
+app.post('/api/diagnostico-link', exigirLogin, async (req, res) => {
+  const url = String((req.body || {}).url || '').trim();
+  let host = ''; try { host = new URL(url).hostname; } catch (e) {}
+  const corta = (o) => JSON.stringify(o, null, 1).slice(0, 3500);
+  try {
+    if (/(^|\.)orulo\.com\.br$/i.test(host)) {
+      const m = url.match(/buildings\/(\d+)/i);
+      if (!m) return res.json({ success: false, error: 'Link da Órulo sem o número do empreendimento.' });
+      if (!process.env.ORULO_CLIENT_ID || !process.env.ORULO_CLIENT_SECRET) return res.json({ success: false, error: 'A API da Órulo não está ligada (faltam ORULO_CLIENT_ID e ORULO_CLIENT_SECRET no Render). Sem ela, a Órulo não entrega tipologias. Use o link do AoCubo ou cadastre à mão.' });
+      return res.json({ success: true, fonte: 'Órulo', texto: corta(await orulo.bruto(m[1])) });
+    }
+    if (!/(^|\.)aocubo\.com$/i.test(host)) return res.json({ success: false, error: 'Use um link do AoCubo ou da Órulo.' });
+    const r = await axios.get(url, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122 Safari/537.36', 'Accept-Language': 'pt-BR,pt;q=0.9' }, timeout: 15000, maxRedirects: 3 });
+    const html = String(r.data), linhas = linhasDoHtml(html), i = linhas.findIndex(l => /^Op[çc][õo]es de planta/i.test(l));
+    res.json({ success: true, fonte: 'AoCubo', texto: corta({ status: r.status, tamanho_html: html.length, achou_opcoes_de_planta: i >= 0, linhas_depois: i >= 0 ? linhas.slice(i, i + 16) : [], linhas_com_quartos_ou_m2: linhas.filter(l => /quartos?|m²|banheiro/i.test(l)).slice(0, 12), tipologias_lidas: lerTipologias(linhas, ''), scripts_com_quartos: (html.match(/<script[\s\S]*?<\/script>/gi) || []).filter(x => /bedroom|quartos|dormit/i.test(x)).length }) });
+  } catch (e) { res.json({ success: false, error: 'Não consegui abrir o link (' + (e.response ? 'HTTP ' + e.response.status : e.message) + ').' }); }
 });
 
 // BUSCA NO ÓRULO (filtros) para escolher o empreendimento e importar
