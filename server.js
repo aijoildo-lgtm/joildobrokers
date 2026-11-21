@@ -345,6 +345,28 @@ async function consultarOverpass(q) {
   }
   throw new Error('Overpass: ' + (ultimo && ultimo.response ? 'HTTP ' + ultimo.response.status : (ultimo && ultimo.message) || 'sem resposta'));
 }
+// Localizador de endereços com reserva: Nominatim primeiro; se estiver ocupado (HTTP 429), tenta o Photon. Guarda o resultado por 7 dias.
+const geoCache = new Map(), proxCache = new Map();
+async function geocodificar(q, cidade) {
+  const k = semAcento(q), c = geoCache.get(k);
+  if (c && c.ate > Date.now()) return { r: c.v, erro: '' };
+  let r = null, erro = '';
+  const motivo = (n, e) => n + ': ' + (e.response ? 'HTTP ' + e.response.status : e.message);
+  try {
+    const g = await axios.get('https://nominatim.openstreetmap.org/search', { params: { format: 'json', limit: 3, countrycodes: 'br', q }, headers: UA_OSM, timeout: 15000 });
+    const ok = (g.data || []).find(x => !cidade || semAcento(x.display_name).includes(semAcento(cidade)));
+    if (ok) r = { lat: parseFloat(ok.lat), lng: parseFloat(ok.lon), achado: ok.display_name };
+  } catch (e) { erro = motivo('Nominatim', e); console.error(erro); }
+  if (!r) {
+    try {
+      const g = await axios.get('https://photon.komoot.io/api/', { params: { q, limit: 6 }, headers: UA_OSM, timeout: 15000 });
+      const f = ((g.data || {}).features || []).find(x => { const p = x.properties || {}; return /brasil|brazil/i.test(p.country || '') && (!cidade || semAcento([p.city, p.county, p.name].join(' ')).includes(semAcento(cidade))); });
+      if (f && f.geometry && f.geometry.coordinates) { const p = f.properties || {}; r = { lat: f.geometry.coordinates[1], lng: f.geometry.coordinates[0], achado: [p.name, p.street, p.district, p.city].filter(Boolean).join(', ') }; erro = ''; }
+    } catch (e) { erro += (erro ? ' | ' : '') + motivo('Photon', e); console.error(motivo('Photon', e)); }
+  }
+  if (r) geoCache.set(k, { v: r, ate: Date.now() + 7 * 24 * 3600e3 });
+  return { r, erro };
+}
 // Acha o ponto do imóvel: coordenadas > endereço > NOME do empreendimento > centro do bairro
 async function localizarImovel(b) {
   const lat0 = parseFloat(String(b.lat || '').replace(',', '.')), lng0 = parseFloat(String(b.lng || '').replace(',', '.'));
@@ -357,21 +379,33 @@ async function localizarImovel(b) {
   if (bairro) tentativas.push(['bairro', `${bairro}, ${cidade}`]);
   let erroRede = '';
   for (const [como, q] of tentativas) {
-    try {
-      const g = await axios.get('https://nominatim.openstreetmap.org/search', { params: { format: 'json', limit: 3, countrycodes: 'br', q: /brasil/i.test(q) ? q : q + ', Brasil' }, headers: UA_OSM, timeout: 15000 });
-      const ok = (g.data || []).find(x => !cidade || semAcento(x.display_name).includes(semAcento(cidade)));
-      if (ok) return { lat: parseFloat(ok.lat), lng: parseFloat(ok.lon), como, achado: ok.display_name };
-    } catch (e) { erroRede = 'Nominatim: ' + (e.response ? 'HTTP ' + e.response.status : e.message); console.error(erroRede); }
-    await pausa(1100); // regra do serviço gratuito: no máximo 1 consulta por segundo
+    const { r, erro } = await geocodificar(/brasil/i.test(q) ? q : q + ', Brasil', cidade);
+    if (r) return { lat: r.lat, lng: r.lng, como, achado: r.achado };
+    if (erro) erroRede = erro;
+    await pausa(700);
   }
   if (erroRede) throw new Error(erroRede);
   return null;
 }
+// Reserva: se o mapa não responder, a IA sugere (só pelo conhecimento do bairro) quais categorias costumam existir por perto. Sem distâncias.
+async function proximidadesPorIA(b) {
+  if (!iaProvedor()) return null;
+  const loc = s2(b.localizacao, 200).trim(), nome = s2(b.nome, 200).trim(), rua = s2(b.endereco, 250).trim();
+  if (!loc && !rua) return null;
+  const nomes = REGRAS_PROX.map(r => r[0]);
+  const t = await chamarIA(IA_SISTEMA, `Local: ${[rua, loc].filter(Boolean).join(', ')}${nome ? ' (empreendimento: ' + nome + ')' : ''}.\nDas categorias abaixo, liste SOMENTE as que existem com ALTA probabilidade em até 1,5 km deste local, pelo seu conhecimento do bairro. Na dúvida, NÃO inclua. Responda APENAS um JSON válido, sem crases: {"categorias":["..."]}, usando exatamente os nomes da lista.\nLISTA: ${nomes.join('; ')}`, 600);
+  const j = JSON.parse((String(t).replace(/```json|```/g, '').match(/\{[\s\S]*\}/) || ['{}'])[0]);
+  const lista = (Array.isArray(j.categorias) ? j.categorias : []).filter(c => nomes.includes(c));
+  return lista.length ? lista.map(c => ({ categoria: c, nome: '', metros: null })) : null;
+}
+const respostaIAProx = async (req, res) => { try { const d = await proximidadesPorIA(req.body || {}); if (d) { res.json({ success: true, fonte: 'ia', como: 'ia', lat: null, lng: null, detalhes: d }); return true; } } catch (e) { console.error('Proximidades por IA:', e.message); } return false; };
 app.post('/api/proximidades', exigirLogin, async (req, res) => {
   try {
     const pt = await localizarImovel(req.body || {});
-    if (!pt) return res.status(404).json({ success: false, error: 'Não consegui achar o local no mapa pelo nome nem pelo bairro. Preencha o logradouro e o número, ou a latitude e longitude, e tente de novo.' });
+    if (!pt) { if (await respostaIAProx(req, res)) return; return res.status(404).json({ success: false, error: 'Não consegui achar o local no mapa pelo nome nem pelo bairro. Preencha o logradouro e o número, ou a latitude e longitude, e tente de novo.' }); }
     const { lat, lng } = pt, vistos = new Set(), clausulas = [];
+    const ck = lat.toFixed(3) + ',' + lng.toFixed(3), em = proxCache.get(ck);
+    if (em && em.ate > Date.now()) return res.json({ success: true, lat: +lat.toFixed(6), lng: +lng.toFixed(6), como: pt.como, enderecoAchado: pt.achado || '', detalhes: em.v });
     REGRAS_PROX.forEach(([, raio, sels]) => sels.forEach(sel => { const c = `nwr(around:${raio},${lat},${lng})${sel};`; if (!vistos.has(c)) { vistos.add(c); clausulas.push(c); } }));
     const els = await consultarOverpass(`[out:json][timeout:30];(${clausulas.join('')});out center tags 2500;`);
     const detalhes = [];
@@ -386,9 +420,11 @@ app.post('/api/proximidades', exigirLogin, async (req, res) => {
       }
       if (melhor) detalhes.push({ categoria: nome, nome: melhor.nome, metros: Math.round(melhor.d) });
     }
+    proxCache.set(ck, { v: detalhes, ate: Date.now() + 24 * 3600e3 });
     res.json({ success: true, lat: +lat.toFixed(6), lng: +lng.toFixed(6), como: pt.como, enderecoAchado: pt.achado || '', detalhes });
   } catch (e) {
     console.error('Erro em proximidades:', e.message);
+    if (await respostaIAProx(req, res)) return;
     res.status(502).json({ success: false, error: 'Não consegui consultar o mapa agora (' + e.message + '). Os serviços gratuitos do OpenStreetMap às vezes ficam ocupados: tente de novo em alguns minutos ou marque à mão.' });
   }
 });

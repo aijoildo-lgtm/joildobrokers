@@ -444,7 +444,7 @@ const CAMPOS=[
 ['S','Localização'],['localizacao','Bairro, cidade - UF *'],['cep','CEP'],['logradouro','Logradouro'],['numero','Número'],['complemento','Complemento'],
 ['visibilidade','Visibilidade no site',[['bairro','Mostrar só o bairro'],['endereco','Mostrar endereço completo']]],['proximidade','Proximidade (ex.: 5 min do metrô)'],['lat','Latitude (opcional, para o mapa)'],['lng','Longitude (opcional)'],
 ['S','Valores'],['preco','Valor a partir de *'],['precoM2','Valor por m² (ex.: R$ 11.040)'],['condominio','Condomínio'],['iptu','IPTU'],['taxas','Taxas'],['obsValores','Observação sobre os valores'],
-['S','Medidas'],['area','Área útil (ex.: 142m²) *'],['areaTotal','Área total'],['areaPrivativa','Área privativa'],['areaConstruida','Área construída'],
+['S','Medidas'],['area','Área útil (ex.: 142m²; com várias plantas: 49 a 188m²) *'],['areaTotal','Área total (várias plantas: faixa ou lista)'],['areaPrivativa','Área privativa (várias plantas: faixa ou lista)'],['areaConstruida','Área construída (várias plantas: faixa ou lista)'],
 ['S','Características'],['perfil','Perfil',['','Novo','Em construção','Usado','Na planta']],['mobilia','Mobília',['','Não mobiliado','Semimobiliado','Mobiliado']],['dormitorios','Dormitórios (ex.: 3 Suítes) *'],['suites','Suítes'],['banheiros','Banheiros'],['salas','Salas'],['lavabos','Lavabos'],['vagas','Vagas (ex.: 2 vagas)'],['diferencial','Diferencial'],
 ['lazer','Lazer e características do condomínio','C'],['caracteristicasUnidade','Características da unidade','C'],['proximidades','O que tem perto?','C'],
 ['S','Informações técnicas e tipologias'],['infoTecnica','Informações técnicas — preenchidas sozinhas pela Órulo/AoCubo (uma por linha: item: valor)','X'],
@@ -701,6 +701,7 @@ function preencher(d){
   setTimeout(()=>{try{autoProx()}catch(e){}},500);
   setTimeout(()=>{try{autoTec()}catch(e){}},900);
   setTimeout(()=>{try{autoSeo()}catch(e){}},2500);
+  setTimeout(()=>{try{autoDivulgacao()}catch(e){}},5500);
 }
 const TEC_TENTADO=new Set();
 async function atualizarTecnico(silencioso){
@@ -1266,11 +1267,11 @@ async function buscarProx(auto){
     if(!r||!r.success){res.innerHTML='<span style="color:var(--red)">'+esc((r&&r.error)||'Não consegui buscar.')+'</span>';return}
     const novos=r.detalhes.map(x=>x.categoria),atual=getChk('proximidades');
     setChk('proximidades',[...new Set([...atual,...novos])]);
-    if($('f_lat')&&!$('f_lat').value)$('f_lat').value=r.lat;if($('f_lng')&&!$('f_lng').value)$('f_lng').value=r.lng;
-    const perto=r.detalhes.filter(x=>/Metrô|Trem/.test(x.categoria)).sort((a,b)=>a.metros-b.metros)[0];
+    if(r.lat!=null&&$('f_lat')&&!$('f_lat').value)$('f_lat').value=r.lat;if(r.lng!=null&&$('f_lng')&&!$('f_lng').value)$('f_lng').value=r.lng;
+    const perto=r.detalhes.filter(x=>/Metrô|Trem/.test(x.categoria)&&x.metros!=null).sort((a,b)=>a.metros-b.metros)[0];
     if(perto&&$('f_proximidade')&&!$('f_proximidade').value){$('f_proximidade').value=(/Metrô/.test(perto.categoria)?'Metrô ':'Trem ')+(perto.nome||'')+' a '+perto.metros+' m (cerca de '+Math.max(1,Math.round(perto.metros/80))+' min a pé)'}
-    const como={'coordenadas':'pelas coordenadas informadas','endereço':'pelo endereço','nome do empreendimento':'pelo nome do empreendimento','bairro':'pelo centro do bairro (aproximado: preencha logradouro e número para ficar exato)'}[r.como]||'';
-    res.innerHTML='<span class="dica">Local encontrado '+como+'.</span><br>'+(r.detalhes.length?r.detalhes.map(x=>'✓ <b>'+esc(x.categoria)+'</b>'+(x.nome?' — '+esc(x.nome):'')+' · '+x.metros+' m').join('<br>'):'Nada encontrado nos raios de busca.');
+    const como={'coordenadas':'pelas coordenadas informadas','endereço':'pelo endereço','nome do empreendimento':'pelo nome do empreendimento','bairro':'pelo centro do bairro (aproximado: preencha logradouro e número para ficar exato)','ia':'sugerido pela IA a partir do bairro, porque o mapa não respondeu (sem distâncias): confira cada item'}[r.como]||'';
+    res.innerHTML='<span class="dica">Local encontrado '+como+'.</span><br>'+(r.detalhes.length?r.detalhes.map(x=>'✓ <b>'+esc(x.categoria)+'</b>'+(x.nome?' — '+esc(x.nome):'')+(x.metros!=null?' · '+x.metros+' m':'')).join('<br>'):'Nada encontrado nos raios de busca.');
     aviso('Proximidades marcadas. Confira e clique em Salvar.');
   }catch(e){res.innerHTML='<span style="color:var(--red)">Não consegui consultar o mapa agora. Tente o botão de novo em alguns minutos.</span>'}
   finally{btn.disabled=false;btn.textContent=t0}
@@ -1360,11 +1361,27 @@ async function autoSeo(){
   if(!$('f_seoTitulo')||$('f_seoTitulo').value.trim()||$('f_seoDescricao').value.trim())return;
   const d=dadosIA();if(!d.titulo||!d.localizacao)return;
   const chave=(d.titulo+'|'+d.localizacao).toLowerCase();if(SEO_TENTADO.has(chave))return;SEO_TENTADO.add(chave);
+  let feitoIA=false;
   try{
     const r=await API('/api/ia',{method:'POST',body:JSON.stringify({tarefa:'seo',instrucao:'',dados:d})});
     const j=r&&r.success!==false&&iaSeoJSON(String(r.texto||''));
-    if(j&&!$('f_seoTitulo').value.trim()){$('f_seoTitulo').value=String(j.seoTitulo||'').slice(0,60);$('f_seoDescricao').value=String(j.seoDescricao||'').slice(0,160);if(!$('f_seoPalavras').value.trim())$('f_seoPalavras').value=String(j.seoPalavras||'').slice(0,120);seoPrev();aviso('Título e descrição do Google gerados pela IA. Confira a prévia.')}
+    if(j&&!$('f_seoTitulo').value.trim()){feitoIA=true;$('f_seoTitulo').value=String(j.seoTitulo||'').slice(0,60);$('f_seoDescricao').value=String(j.seoDescricao||'').slice(0,160);if(!$('f_seoPalavras').value.trim())$('f_seoPalavras').value=String(j.seoPalavras||'').slice(0,120);seoPrev();aviso('Título e descrição do Google gerados pela IA. Confira a prévia.')}
   }catch(e){}
+  // reserva: se a IA não respondeu, monta com os dados do cadastro para o campo não ficar vazio (o botão "Gerar SEO com IA" melhora depois)
+  if(!feitoIA&&!$('f_seoTitulo').value.trim()&&!$('f_seoDescricao').value.trim()){
+    SEO_TENTADO.delete(chave);const x={...coleta()};try{seoAuto(x)}catch(e){}
+    if(x.seoTitulo){$('f_seoTitulo').value=x.seoTitulo;$('f_seoDescricao').value=x.seoDescricao||'';if(!$('f_seoPalavras').value.trim())$('f_seoPalavras').value=x.seoPalavras||'';seoPrev();aviso('SEO preenchido com os dados do cadastro (a IA não respondeu). Use "Gerar SEO com IA" para melhorar.')}
+  }
+}
+const DIV_TENTADO=new Set();
+async function autoDivulgacao(){
+  const el=$('f_divulgacao');if(!el||el.value.trim())return;
+  const d=dadosIA();if(!d.titulo||!d.localizacao)return;
+  const chave=(d.titulo+'|'+d.localizacao).toLowerCase();if(DIV_TENTADO.has(chave))return;DIV_TENTADO.add(chave);
+  try{
+    const r=await API('/api/ia',{method:'POST',body:JSON.stringify({tarefa:'social',instrucao:'',dados:d})});
+    if(r&&r.success!==false&&r.texto&&!el.value.trim()){el.value=String(r.texto).trim();aviso('Texto de divulgação gerado pela IA.')}else DIV_TENTADO.delete(chave);
+  }catch(e){DIV_TENTADO.delete(chave)}
 }
 
 // ---------- COMPLETAR O ANÚNCIO (automático + botão) ----------
@@ -1382,6 +1399,7 @@ async function completarAnuncio(auto){
     const tips=(TIPS||[]),col=k=>tips.map(x=>num2(x[k])).filter(n=>n!=null);
     const faixa=a=>{if(!a.length)return '';const m=Math.min(...a),M=Math.max(...a);return m===M?String(m):m+' a '+M};
     poe('perfil',{lancamentos:'Na planta',construcao:'Em construção',prontos:'Novo',usados:'Usado'}[$('f_estagio').value]||'','perfil');
+    {const ar=col('area').filter(n=>n>0);if(ar.length){const m=Math.min(...ar),M=Math.max(...ar),f=n=>String(n).replace('.',',');poe('area',(m===M?f(m):f(m)+' a '+f(M))+'m²','área útil (faixa das plantas)')}}
     poe('suites',faixa(col('suites').filter(n=>n>0)),'suítes');
     poe('banheiros',faixa(col('banh').filter(n=>n>0)),'banheiros');
     if(vazioEl('precoM2')){const c=tips.map(x=>({p:num2(x.preco),a:num2(x.area)})).filter(x=>x.p>0&&x.a>0).sort((a,b)=>a.p-b.p)[0];if(c)poe('precoM2',brl2(c.p/c.a),'valor por m²')}
@@ -1394,6 +1412,7 @@ async function completarAnuncio(auto){
         if(vazioEl('diferencial')){const x=await pede('diferencial');poe('diferencial',x.split('\n')[0].replace(/["“”]/g,'').slice(0,80),'diferencial')}
         if(vazioEl('apresentacao')){const x=await pede('apresentacao');poe('apresentacao',x,'texto de apresentação')}
         if(vazioEl('seoTitulo')&&vazioEl('seoDescricao')){await autoSeo();if(!vazioEl('seoTitulo'))feitos.push('título e descrição do Google')}
+        if($('f_divulgacao')&&!$('f_divulgacao').value.trim()){await autoDivulgacao();if($('f_divulgacao').value.trim())feitos.push('texto de divulgação')}
       }
     }else if(!auto)feitos.push('(a IA não está ligada: só os cálculos foram feitos)');
     try{seoPrev();pend()}catch(e){}
