@@ -1409,7 +1409,7 @@ async function completarAnuncio(auto){
       const d=dadosIA();
       if(d.titulo&&d.localizacao){
         const pede=async(tarefa)=>{const r=await API('/api/ia',{method:'POST',body:JSON.stringify({tarefa,instrucao:'',dados:dadosIA()})}).catch(()=>null);return r&&r.success!==false?String(r.texto||'').trim():''};
-        if(vazioEl('diferencial')){const x=await pede('diferencial');poe('diferencial',x.split('\n')[0].replace(/["“”]/g,'').slice(0,80),'diferencial')}
+        if(vazioEl('diferencial')){const x=await pede('diferencial');poe('diferencial',x.split('\n')[0].replace(/["“”]/g,'').slice(0,40),'diferencial')}
         if(vazioEl('apresentacao')){const x=await pede('apresentacao');poe('apresentacao',x,'texto de apresentação')}
         if(vazioEl('seoTitulo')&&vazioEl('seoDescricao')){await autoSeo();if(!vazioEl('seoTitulo'))feitos.push('título e descrição do Google')}
         if($('f_divulgacao')&&!$('f_divulgacao').value.trim()){await autoDivulgacao();if($('f_divulgacao').value.trim())feitos.push('texto de divulgação')}
@@ -1444,7 +1444,7 @@ document.addEventListener('click',async e=>{
     const d=dadosIA();
     if(!d.titulo&&!d.localizacao&&a!=='revisar'&&a!=='resposta'){aviso('Preencha antes o título e a localização, ou importe o imóvel.');return}
     if(a==='titulos'){const t=await iaPedir('titulos','Títulos para o anúncio deste imóvel (nome do empreendimento ou chamada).',d,b);if(t)iaSugestoes('sug_titulo',linhasLimpas(t),'f_titulo');return}
-    if(a==='diferencial'){const t=await iaPedir('diferencial','',d,b);if(t){$('f_diferencial').value=t.split('\n')[0].replace(/["“”]/g,'').slice(0,80);aviso('Diferencial sugerido. Edite se quiser.')}return}
+    if(a==='diferencial'){const t=await iaPedir('diferencial','',d,b);if(t){$('f_diferencial').value=t.split('\n')[0].replace(/["“”]/g,'').slice(0,40);aviso('Diferencial sugerido. Edite se quiser.')}return}
     if(a==='apresentacao'){const el=$('f_apresentacao');if(el.value.trim()&&!confirm('Já existe um texto. Substituir pelo da IA?'))return;const t=await iaPedir('apresentacao','',d,b);if(t){el.value=t;aviso('Texto gerado. Revise antes de salvar.')}return}
     if(a==='revisar'){const el=$('f_apresentacao');if(!el.value.trim()){aviso('Escreva ou cole o texto primeiro.');return}const t=await iaPedir('revisar',el.value,d,b);if(t){el.value=t;aviso('Texto revisado.')}return}
     if(a==='seo'){const t=await iaPedir('seo','',d,b);const j=t&&iaSeoJSON(t);if(!j){if(t)aviso('Não entendi a resposta da IA. Tente de novo.');return}

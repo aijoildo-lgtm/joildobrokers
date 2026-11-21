@@ -1465,7 +1465,7 @@ const tarjasDo = i => { const l = Array.isArray(i.destaques) ? i.destaques : (i.
     function cartaoOpp(i) {
         return `<article class="opp-card" tabindex="0" style="background-image:url('${capa(i)}')" onclick="abrirModal('${esc(i.id)}')" onkeydown="if(event.key==='Enter')abrirModal('${esc(i.id)}')">
             <span class="opp-tag">${esc(FASES[i.estagio] || 'Oportunidade')}</span>
-            ${i.diferencial ? `<span class="opp-dif">${esc(i.diferencial)}</span>` : ''}
+            ${i.diferencial ? `<span class="opp-dif" title="${esc(i.diferencial)}">${esc(i.diferencial)}</span>` : ''}
             <div class="opp-info">
                 <h3 title="${esc(i.titulo)}">${esc(tituloCurto(i.titulo))}</h3>
                 <p class="opp-loc">${esc(bairroDe(i.localizacao))}</p>

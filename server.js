@@ -970,7 +970,7 @@ app.post('/api/ia', exigirLogin, async (req, res) => {
     post: `Escreva um texto (300 a 500 palavras, com subtítulos simples) sobre o tema abaixo, útil para quem quer comprar imóvel em São Paulo. Não cite números de mercado que você não possa garantir.\nPedido: ${ins}\nDados de apoio: ${ctx}`,
     revisar: `Revise e melhore o texto abaixo (correção, clareza e tom profissional), mantendo todos os fatos. Devolva só o texto revisado.\n${ins}`,
     titulos: `Sugira 5 títulos curtos e atraentes para este conteúdo, um por linha, sem numeração, sem aspas.\n${ins}\n${ctx}`,
-    diferencial: `Escreva UM diferencial curto (até 60 caracteres) que resuma o que há de mais forte neste imóvel, usando SOMENTE os dados abaixo. Só a frase, sem ponto final.\n${ctx}`,
+    diferencial: `Escreva UM diferencial CURTO, como uma etiqueta de cartão: no máximo 30 caracteres (2 a 4 palavras, ex.: \"Lazer completo\", \"Pronto para morar\", \"Metrô a 5 min\"), usando SOMENTE os dados abaixo. Só a etiqueta, sem ponto final e sem repetir o bairro.\n${ctx}`,
     seo: promptSEO(ctx),
     social: `Escreva dois textos para divulgar este imóvel, usando SOMENTE os dados abaixo. Formato exato:\nINSTAGRAM:\n(legenda de 3 a 5 linhas, com 5 hashtags no final)\nWHATSAPP:\n(mensagem curta e cordial de 3 a 4 linhas, convidando para uma visita)\n${ctx}`,
     resposta: `Escreva uma resposta cordial e objetiva, em nome do corretor Joildo, para a mensagem de cliente abaixo. Use SOMENTE os dados do imóvel quando citar algo dele; se a pergunta exigir um dado que não está aí, diga que vai confirmar e retornar. Convide para uma conversa ou visita.\nMENSAGEM DO CLIENTE:\n${ins}\nDADOS DO IMÓVEL:\n${ctx}`,
