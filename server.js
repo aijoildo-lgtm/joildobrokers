@@ -746,34 +746,78 @@ app.patch('/api/conteudos/:id', exigirLogin, ah(async (req, res) => res.json({ s
 app.delete('/api/conteudos/:id', exigirLogin, ah(async (req, res) => res.json({ success: await cDel(req.params.id) })));
 
 // ===== ASSISTENTE DE IA =====
-// Funciona com Gemini (GEMINI_API_KEY) ou Claude (ANTHROPIC_API_KEY). Se as duas existirem, usa o Gemini;
-// para forçar um, crie IA_PROVEDOR = claude ou gemini. As chaves ficam SÓ nas variáveis de ambiente do Render.
+// Provedores de IA: Gemini (GEMINI_API_KEY), DeepSeek (DEEPSEEK_API_KEY), Qwen (QWEN_API_KEY ou DASHSCOPE_API_KEY) e Claude (ANTHROPIC_API_KEY).
+// Ordem de uso: o de IA_PROVEDOR primeiro (gemini, deepseek, qwen ou claude); depois os outros que tiverem chave.
+// Se um falhar (limite, saldo, instabilidade), o sistema tenta o próximo automaticamente. As chaves ficam SÓ no Render > Environment.
 const IA_MODELO = process.env.ANTHROPIC_MODEL || 'claude-sonnet-5-5';
-const GEMINI_MODELO = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
-const iaProvedor = () => {
-  const p = String(process.env.IA_PROVEDOR || '').toLowerCase();
-  if (p === 'claude' && process.env.ANTHROPIC_API_KEY) return 'claude';
-  if (p === 'gemini' && process.env.GEMINI_API_KEY) return 'gemini';
-  if (process.env.GEMINI_API_KEY) return 'gemini';
-  if (process.env.ANTHROPIC_API_KEY) return 'claude';
-  return '';
+const DEEPSEEK_MODELO = process.env.DEEPSEEK_MODEL || 'deepseek-chat';
+const QWEN_MODELO = process.env.QWEN_MODEL || 'qwen-plus';
+const QWEN_URL = process.env.QWEN_BASE_URL || 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1'; // conta da China: https://dashscope.aliyuncs.com/compatible-mode/v1
+const chaveQwen = () => process.env.QWEN_API_KEY || process.env.DASHSCOPE_API_KEY || '';
+const TEM_CHAVE = { gemini: () => process.env.GEMINI_API_KEY, deepseek: () => process.env.DEEPSEEK_API_KEY, qwen: chaveQwen, claude: () => process.env.ANTHROPIC_API_KEY };
+const iaProvedores = () => {
+  const pref = String(process.env.IA_PROVEDOR || '').toLowerCase();
+  const ordem = [pref, 'gemini', 'deepseek', 'qwen', 'claude'].filter((p, i, a) => TEM_CHAVE[p] && a.indexOf(p) === i);
+  return ordem.filter(p => String(TEM_CHAVE[p]() || '').trim());
 };
-async function chamarIA(system, prompt, maxTokens = 1800) {
-  const prov = iaProvedor();
-  if (!prov) { const e = new Error('IA não configurada'); e.semChave = true; throw e; }
+const iaProvedor = () => iaProvedores()[0] || '';
+const NOME_IA = { gemini: 'Gemini', deepseek: 'DeepSeek', qwen: 'Qwen', claude: 'Claude' };
+// Descobre sozinho qual modelo Gemini a sua chave pode usar (o Google aposenta modelos com frequência).
+const geminiCache = { modelo: '', ate: 0 };
+async function modeloGemini(chave, forcar) {
+  if (!forcar && geminiCache.modelo && geminiCache.ate > Date.now()) return geminiCache.modelo;
+  const r = await axios.get('https://generativelanguage.googleapis.com/v1beta/models', { params: { pageSize: 200 }, headers: { 'x-goog-api-key': chave }, timeout: 20000 });
+  const nomes = (r.data.models || []).filter(m => (m.supportedGenerationMethods || []).includes('generateContent')).map(m => String(m.name).replace(/^models\//, ''));
+  const versao = (n) => { const m = n.match(/gemini-(\d+(?:\.\d+)?)/); return m ? parseFloat(m[1]) : 0; };
+  const base = nomes.filter(n => /^gemini-\d/.test(n) && !/image|tts|live|audio|embed|omni|robotics|computer|customtools|exp|thinking|preview|latest/i.test(n));
+  const rank = (lista) => lista.sort((a, b) => versao(b) - versao(a) || a.length - b.length)[0];
+  const escolhido = rank(base.filter(n => /flash/.test(n) && !/lite/.test(n))) || rank(base.filter(n => /flash/.test(n))) || rank(base) || rank(nomes.filter(n => /^gemini-/.test(n)));
+  if (!escolhido) throw new Error('A chave do Gemini não tem nenhum modelo liberado');
+  console.log('Gemini: usando o modelo', escolhido);
+  geminiCache.modelo = escolhido; geminiCache.ate = Date.now() + 6 * 3600 * 1000;
+  return escolhido;
+}
+async function chamarProvedor(prov, system, prompt, maxTokens) {
   if (prov === 'gemini') {
-    const r = await axios.post(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODELO}:generateContent`, {
-      systemInstruction: { parts: [{ text: system }] },
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: { maxOutputTokens: maxTokens * 3, temperature: 0.7 }
-    }, { headers: { 'x-goog-api-key': process.env.GEMINI_API_KEY, 'content-type': 'application/json' }, timeout: 60000 });
-    const partes = (((r.data.candidates || [])[0] || {}).content || {}).parts || [];
-    return partes.map(p => p.text || '').join('').trim();
+    const chave = String(process.env.GEMINI_API_KEY).trim();
+    const chamar = async (modelo) => {
+      const r = await axios.post(`https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent`, {
+        systemInstruction: { parts: [{ text: system }] },
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: { maxOutputTokens: maxTokens * 3, temperature: 0.7 }
+      }, { headers: { 'x-goog-api-key': chave, 'content-type': 'application/json' }, timeout: 60000 });
+      const partes = (((r.data.candidates || [])[0] || {}).content || {}).parts || [];
+      return partes.filter(p => !p.thought).map(p => p.text || '').join('').trim();
+    };
+    if (process.env.GEMINI_MODEL) return chamar(process.env.GEMINI_MODEL);   // modelo fixado por você no Render
+    for (let t = 0; t < 2; t++) {
+      const modelo = await modeloGemini(chave, t === 1);
+      try { const txt = await chamar(modelo); if (txt) return txt; }
+      catch (e) { if (!(e.response && e.response.status === 404 && t === 0)) throw e; geminiCache.modelo = ''; }  // modelo saiu do ar: descobre outro e tenta de novo
+    }
+    throw new Error('Gemini sem modelo disponível');
+  }
+  if (prov === 'deepseek' || prov === 'qwen') {
+    const url = prov === 'deepseek' ? 'https://api.deepseek.com/chat/completions' : QWEN_URL.replace(/\/$/, '') + '/chat/completions';
+    const chave = String(prov === 'deepseek' ? process.env.DEEPSEEK_API_KEY : chaveQwen()).trim();
+    const r = await axios.post(url, { model: prov === 'deepseek' ? DEEPSEEK_MODELO : QWEN_MODELO, max_tokens: maxTokens * 2, temperature: 0.7, messages: [{ role: 'system', content: system }, { role: 'user', content: prompt }] },
+      { headers: { Authorization: 'Bearer ' + chave, 'content-type': 'application/json' }, timeout: 90000 });
+    return String((((r.data.choices || [])[0] || {}).message || {}).content || '').replace(/<think>[\s\S]*?<\/think>/g, '').trim();
   }
   const r = await axios.post('https://api.anthropic.com/v1/messages',
     { model: IA_MODELO, max_tokens: maxTokens, system, messages: [{ role: 'user', content: prompt }] },
-    { headers: { 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' }, timeout: 60000 });
+    { headers: { 'x-api-key': String(process.env.ANTHROPIC_API_KEY).trim(), 'anthropic-version': '2023-06-01', 'content-type': 'application/json' }, timeout: 60000 });
   return (r.data.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
+}
+async function chamarIA(system, prompt, maxTokens = 1800) {
+  const lista = iaProvedores();
+  if (!lista.length) { const e = new Error('IA não configurada'); e.semChave = true; throw e; }
+  let ultimo;
+  for (const prov of lista) {
+    try { const t = await chamarProvedor(prov, system, prompt, maxTokens); if (t) return t; ultimo = new Error(NOME_IA[prov] + ' devolveu resposta vazia'); }
+    catch (e) { ultimo = e; console.error(`IA ${NOME_IA[prov]} falhou:`, e.response ? JSON.stringify(e.response.data).slice(0, 300) : e.message); }
+  }
+  throw ultimo;
 }
 const IA_SISTEMA = 'Você é o assistente de conteúdo da Joildo Brokers, consultoria imobiliária de alto padrão em São Paulo (CRECI 200298). Escreva em português do Brasil, tom elegante, claro e confiável, sem exageros. REGRA ABSOLUTA: nunca invente preço, metragem, prazo de entrega, nome de construtora, endereço ou qualquer dado que não esteja no que foi informado. Se faltar informação, escreva sem ela. Responda só com o texto pedido, sem comentários antes ou depois.';
 
@@ -784,9 +828,9 @@ function iaDentroDoLimite() {
   if (iaUso.janela !== h) { iaUso.janela = h; iaUso.n = 0; }
   return ++iaUso.n <= (+process.env.IA_LIMITE_HORA || 120);
 }
-app.get('/api/ia/status', exigirLogin, (req, res) => res.json({ ativa: !!iaProvedor(), provedor: iaProvedor() }));
+app.get('/api/ia/status', exigirLogin, (req, res) => res.json({ ativa: !!iaProvedor(), provedor: iaProvedor(), provedores: iaProvedores() }));
 app.post('/api/ia', exigirLogin, async (req, res) => {
-  if (!iaProvedor()) return res.status(503).json({ success: false, error: 'IA não configurada. No Render, adicione GEMINI_API_KEY ou ANTHROPIC_API_KEY em Environment.' });
+  if (!iaProvedor()) return res.status(503).json({ success: false, error: 'IA não configurada. No Render > Environment, adicione GEMINI_API_KEY (ou DEEPSEEK_API_KEY, QWEN_API_KEY, ANTHROPIC_API_KEY) e faça o deploy.' });
   if (!iaDentroDoLimite()) return res.status(429).json({ success: false, error: 'Limite de pedidos por hora atingido. Tente mais tarde.' });
   const { tarefa, dados, instrucao } = req.body || {};
   const ctx = String(JSON.stringify(dados || {})).slice(0, 8000);
@@ -811,7 +855,7 @@ app.post('/api/ia', exigirLogin, async (req, res) => {
     res.json({ success: true, texto });
   } catch (e) {
     console.error('Erro IA:', e.response ? JSON.stringify(e.response.data) : e.message);
-    res.status(502).json({ success: false, error: 'A IA não respondeu (' + (e.response ? 'HTTP ' + e.response.status : e.code || e.message) + '). Confira a chave e o modelo.' });
+    res.status(502).json({ success: false, error: 'A IA não respondeu (' + (e.response ? 'HTTP ' + e.response.status : e.code || e.message) + '). Confira a chave, o saldo e o modelo no Render.' });
   }
 });
 
